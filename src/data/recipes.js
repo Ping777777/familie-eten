@@ -12,7 +12,7 @@ export const recipes = [
       { name: "tomatenpuree", amount: "2 el" },
       { name: "olijfolie", amount: "2 el" },
     ],
-    tags: ["pasta", "vlees", "italiaans"],
+    tags: ["pasta", "vlees", "italiaans", "gehakt"],
   },
   {
     id: 2,
@@ -95,7 +95,7 @@ export const recipes = [
       { name: "geraspte kaas", amount: "150g" },
       { name: "zure room", amount: "150ml" },
     ],
-    tags: ["mexicaans", "vlees", "feest"],
+    tags: ["mexicaans", "vlees", "feest", "gehakt"],
   },
   {
     id: 8,
@@ -164,6 +164,6 @@ export const recipes = [
       { name: "geraspte kaas", amount: "200g" },
       { name: "ui", amount: "1 stuks" },
     ],
-    tags: ["pasta", "italiaans", "vlees"],
+    tags: ["pasta", "italiaans", "vlees", "gehakt"],
   },
 ];
