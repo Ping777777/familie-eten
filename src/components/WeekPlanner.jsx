@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -7,8 +7,109 @@ const MEMBER_COLORS = {
   Kevin: "#f4a261",
 };
 
-export default function WeekPlanner({ days, family, weekPlan, recipes, onAssign, onClear }) {
-  const [selecting, setSelecting] = useState(null); // { day, member }
+// Proteins/categories to watch for repetition, in priority order
+const VARIETY_RULES = [
+  { label: "kip",      keywords: ["kip", "chicken", "kipfilet", "kipstuk"],       threshold: 3 },
+  { label: "rund",     keywords: ["rund", "beef", "steak", "gehakt", "biefstuk", "boeuf"], threshold: 3 },
+  { label: "vis",      keywords: ["vis", "zalm", "tonijn", "zalmfilet"],           threshold: 3 },
+  { label: "garnalen", keywords: ["garnalen", "shrimp", "garnaal"],               threshold: 2 },
+  { label: "pasta",    keywords: ["pasta", "spaghetti", "lasagne", "penne", "tagliatelle", "vermicelli"], threshold: 2 },
+  { label: "rijst",    keywords: ["rijst", "sushirijst", "risotto", "jasmijnrijst"], threshold: 3 },
+];
+
+// Get the Monday of the week that is `offset` weeks from today
+function getMondayOfWeek(offset = 0) {
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sun
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+const NL_MONTHS = [
+  "januari","februari","maart","april","mei","juni",
+  "juli","augustus","september","oktober","november","december",
+];
+
+function formatWeekRange(offset) {
+  const monday = getMondayOfWeek(offset);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const d1 = monday.getDate();
+  const d2 = sunday.getDate();
+  const m1 = NL_MONTHS[monday.getMonth()];
+  const m2 = NL_MONTHS[sunday.getMonth()];
+  const y = sunday.getFullYear();
+
+  if (monday.getMonth() === sunday.getMonth()) {
+    return `${d1} — ${d2} ${m1} ${y}`;
+  }
+  return `${d1} ${m1} — ${d2} ${m2} ${y}`;
+}
+
+function getWeekLabel(offset) {
+  if (offset === 0) return "Deze week";
+  if (offset === 1) return "Volgende week";
+  if (offset === -1) return "Vorige week";
+  return offset > 0 ? `Over ${offset} weken` : `${Math.abs(offset)} weken geleden`;
+}
+
+// Get the date for a specific day index (0=Mon) within the offset week
+function getDayDate(offset, dayIndex) {
+  const monday = getMondayOfWeek(offset);
+  const d = new Date(monday);
+  d.setDate(monday.getDate() + dayIndex);
+  return d.getDate();
+}
+
+function computeWarnings(days, weekPlan, recipes) {
+  // Count how many unique recipe-days contain each category
+  const categoryCounts = {}; // label -> Set of days
+  const categoryDays = {};   // label -> [day names]
+
+  days.forEach((day) => {
+    // Collect unique recipe IDs planned this day (across all members)
+    const dayRecipeIds = new Set(
+      Object.values(weekPlan[day] ?? {}).filter(Boolean)
+    );
+
+    dayRecipeIds.forEach((id) => {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return;
+      const searchText = [recipe.name, ...(recipe.tags ?? [])].join(" ").toLowerCase();
+
+      VARIETY_RULES.forEach(({ label, keywords }) => {
+        if (keywords.some((kw) => searchText.includes(kw))) {
+          if (!categoryCounts[label]) { categoryCounts[label] = new Set(); categoryDays[label] = []; }
+          if (!categoryCounts[label].has(day)) {
+            categoryCounts[label].add(day);
+            categoryDays[label].push(day);
+          }
+        }
+      });
+    });
+  });
+
+  return VARIETY_RULES
+    .filter(({ label, threshold }) => (categoryCounts[label]?.size ?? 0) >= threshold)
+    .map(({ label, threshold }) => {
+      const affectedDays = categoryDays[label];
+      // Suggest swapping the last occurrence
+      const swapDay = affectedDays[affectedDays.length - 1];
+      return {
+        label,
+        count: categoryCounts[label].size,
+        threshold,
+        swapDay,
+      };
+    });
+}
+
+export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear }) {
+  const [selecting, setSelecting] = useState(null);
 
   const getRecipe = (id) => recipes.find((r) => r.id === id);
 
@@ -18,9 +119,41 @@ export default function WeekPlanner({ days, family, weekPlan, recipes, onAssign,
     setSelecting(null);
   };
 
+  const warnings = useMemo(
+    () => computeWarnings(days, weekPlan, recipes),
+    [days, weekPlan, recipes]
+  );
+
   return (
     <div className="week-planner">
-      <h2>Weekplanner</h2>
+      {/* Week selector */}
+      <div className="week-nav">
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title="Vorige week">‹</button>
+        <div className="week-label-group">
+          <span className="week-relative">{getWeekLabel(weekOffset)}</span>
+          <span className="week-dates">{formatWeekRange(weekOffset)}</span>
+        </div>
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title="Volgende week">›</button>
+        {weekOffset !== 0 && (
+          <button className="week-today-btn" onClick={() => onWeekChange(0)}>Vandaag</button>
+        )}
+      </div>
+
+      {/* Variety warnings */}
+      {warnings.length > 0 && (
+        <div className="variety-warnings">
+          {warnings.map((w) => (
+            <div key={w.label} className="variety-warning">
+              <span className="warning-icon">⚠️</span>
+              <span>
+                <strong>Veel {w.label} deze week</strong> ({w.count}×) —{" "}
+                overweeg iets anders op <strong>{w.swapDay}</strong>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <p className="hint">Klik op een vakje om een maaltijd te kiezen voor elk gezinslid.</p>
 
       <div className="planner-grid">
@@ -33,9 +166,12 @@ export default function WeekPlanner({ days, family, weekPlan, recipes, onAssign,
           ))}
         </div>
 
-        {days.map((day) => (
+        {days.map((day, idx) => (
           <div key={day} className="grid-row">
-            <div className="day-label">{day}</div>
+            <div className="day-label">
+              <span className="day-name">{day}</span>
+              <span className="day-date">{getDayDate(weekOffset, idx)}</span>
+            </div>
             {family.map((member) => {
               const recipeId = weekPlan[day][member];
               const recipe = recipeId ? getRecipe(recipeId) : null;

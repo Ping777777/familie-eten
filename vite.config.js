@@ -1,7 +1,53 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icon.svg', 'favicon.svg'],
+      manifest: {
+        name: 'Familie Eten',
+        short_name: 'FamEten',
+        description: 'Weekmaaltijdplanner voor het hele gezin',
+        theme_color: '#667eea',
+        background_color: '#f0f4f8',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: 'icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any',
+          },
+          {
+            src: 'icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        // Cache the app shell and all static assets
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        runtimeCaching: [
+          {
+            // Cache all navigation requests so the app loads offline
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
+      },
+    }),
+  ],
 })

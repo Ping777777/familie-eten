@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { recipes } from "./data/recipes";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
+import RoadmapModal from "./components/RoadmapModal";
 import "./App.css";
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
@@ -14,9 +15,68 @@ const emptyWeek = () =>
     return acc;
   }, {});
 
+const load = (key, fallback) => {
+  try {
+    const val = localStorage.getItem(key);
+    return val ? JSON.parse(val) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export default function App() {
   const [tab, setTab] = useState("planner");
-  const [weekPlan, setWeekPlan] = useState(emptyWeek());
+  const [showRoadmap, setShowRoadmap] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, 1 = next, -1 = last
+  // allWeekPlans: { [weekOffset]: weekPlan }
+  const [allWeekPlans, setAllWeekPlans] = useState(() => load("familie-eten:allWeekPlans", { 0: emptyWeek() }));
+  const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
+
+  // Migrate old single-week plan if it exists
+  useEffect(() => {
+    const old = localStorage.getItem("familie-eten:weekPlan");
+    if (old) {
+      try {
+        const parsed = JSON.parse(old);
+        setAllWeekPlans((prev) => ({ ...prev, 0: parsed }));
+        localStorage.removeItem("familie-eten:weekPlan");
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("familie-eten:allWeekPlans", JSON.stringify(allWeekPlans));
+  }, [allWeekPlans]);
+
+  useEffect(() => {
+    localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
+  }, [recipeList]);
+
+  const weekPlan = allWeekPlans[weekOffset] ?? emptyWeek();
+
+  const setWeekPlan = (updater) => {
+    setAllWeekPlans((prev) => ({
+      ...prev,
+      [weekOffset]: typeof updater === "function" ? updater(prev[weekOffset] ?? emptyWeek()) : updater,
+    }));
+  };
+
+  const deleteRecipe = (id) => {
+    setRecipeList((prev) => prev.filter((r) => r.id !== id));
+    setAllWeekPlans((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((offset) => {
+        DAYS.forEach((day) => {
+          FAMILY.forEach((member) => {
+            if (next[offset][day]?.[member] === id) {
+              next[offset] = { ...next[offset], [day]: { ...next[offset][day], [member]: null } };
+            }
+          });
+        });
+      });
+      return next;
+    });
+  };
 
   const assignMeal = (day, member, recipeId) => {
     setWeekPlan((prev) => ({
@@ -49,20 +109,25 @@ export default function App() {
         </nav>
       </header>
 
+      <button className="dev-btn" onClick={() => setShowRoadmap(true)} title="Developer roadmap">Dev</button>
+      {showRoadmap && <RoadmapModal onClose={() => setShowRoadmap(false)} />}
+
       <main className="app-main">
         {tab === "planner" && (
           <WeekPlanner
             days={DAYS}
             family={FAMILY}
             weekPlan={weekPlan}
-            recipes={recipes}
+            weekOffset={weekOffset}
+            onWeekChange={setWeekOffset}
+            recipes={recipeList}
             onAssign={assignMeal}
             onClear={clearMeal}
           />
         )}
-        {tab === "recipes" && <RecipeLibrary recipes={recipes} />}
+        {tab === "recipes" && <RecipeLibrary recipes={recipeList} onDelete={deleteRecipe} />}
         {tab === "shopping" && (
-          <ShoppingList weekPlan={weekPlan} recipes={recipes} family={FAMILY} days={DAYS} />
+          <ShoppingList weekPlan={weekPlan} recipes={recipeList} family={FAMILY} days={DAYS} />
         )}
       </main>
     </div>
