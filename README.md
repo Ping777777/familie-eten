@@ -2,12 +2,12 @@
 
 ## Login
 
-De app vereist nu login via `/api/login`.
+The app now requires login via `/api/login`.
 
-- Gebruikers: `Papa`, `Mama`, `Inga`, `Kevin`
-- Wachtwoord: gelijk aan de gebruikersnaam
-- De server valideert login door `cart.json` in Vercel Blob te lezen (`404` is oké, `403` niet).
-- Optioneel pad aanpassen met `CART_BLOB_PATH` (default: `cart.json`).
+- Users: `Papa`, `Mama`, `Inga`, `Kevin`
+- Password: same as the username
+- The server validates login by checking `cart.json` in Vercel Blob (`404` is allowed, `403` is not).
+- Optional path override with `CART_BLOB_PATH` (default: `cart.json`).
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
