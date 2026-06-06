@@ -6,6 +6,60 @@
   background: #f0f4f8;
 }
 
+.login-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  padding: 22px;
+}
+
+.login-card h1 {
+  margin: 0 0 4px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-form input {
+  border: 1px solid #d7deeb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.login-form button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #667eea;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.login-error {
+  color: #b91c1c;
+  margin: 2px 0 0;
+  font-size: 0.86rem;
+}
+
 .app-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -30,6 +84,20 @@
   display: flex;
   justify-content: center;
   gap: 4px;
+}
+
+.logout-btn {
+  margin: 10px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .tab-btn {
