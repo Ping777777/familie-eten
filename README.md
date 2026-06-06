@@ -1,5 +1,14 @@
 # React + Vite
 
+## Login
+
+The app now requires login via `/api/login`.
+
+- Users: `Papa`, `Mama`, `Inga`, `Kevin`
+- Password: same as the username
+- The server validates login by checking `cart.json` in Vercel Blob (`404` is allowed, `403` is not).
+- Optional path override with `CART_BLOB_PATH` (default: `cart.json`).
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
