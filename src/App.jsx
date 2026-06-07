@@ -25,34 +25,6 @@ const load = (key, fallback) => {
   }
 };
 
-const migrateLocalWeekPlans = () => {
-  const stored = load("familie-eten:allWeekPlans", null);
-  const old = localStorage.getItem("familie-eten:weekPlan");
-
-  if (!stored && !old) return null;
-
-  if (stored) {
-    if (old) {
-      try {
-        const parsed = JSON.parse(old);
-        localStorage.removeItem("familie-eten:weekPlan");
-        return { ...stored, 0: parsed };
-      } catch {
-        return stored;
-      }
-    }
-    return stored;
-  }
-
-  try {
-    const parsed = JSON.parse(old);
-    localStorage.removeItem("familie-eten:weekPlan");
-    return { 0: parsed };
-  } catch {
-    return null;
-  }
-};
-
 export default function App() {
   const [tab, setTab] = useState("planner");
   const [showRoadmap, setShowRoadmap] = useState(false);
@@ -77,17 +49,9 @@ export default function App() {
         return res.json();
       })
       .then((data) => {
-        if (data) {
-          setAllWeekPlans(data);
-        } else {
-          const migrated = migrateLocalWeekPlans();
-          setAllWeekPlans(migrated ?? { 0: emptyWeek() });
-        }
+        if (data) setAllWeekPlans(data);
       })
-      .catch(() => {
-        const migrated = migrateLocalWeekPlans();
-        setAllWeekPlans(migrated ?? { 0: emptyWeek() });
-      })
+      .catch(() => {})
       .finally(() => {
         setWeekPlanLoaded(true);
       });
