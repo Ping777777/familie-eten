@@ -25,17 +25,31 @@ const load = (key, fallback) => {
   }
 };
 
-const loadAllWeekPlans = () => {
-  const stored = load("familie-eten:allWeekPlans", { 0: emptyWeek() });
+const migrateLocalWeekPlans = () => {
+  const stored = load("familie-eten:allWeekPlans", null);
   const old = localStorage.getItem("familie-eten:weekPlan");
-  if (!old) return stored;
+
+  if (!stored && !old) return null;
+
+  if (stored) {
+    if (old) {
+      try {
+        const parsed = JSON.parse(old);
+        localStorage.removeItem("familie-eten:weekPlan");
+        return { ...stored, 0: parsed };
+      } catch {
+        return stored;
+      }
+    }
+    return stored;
+  }
 
   try {
     const parsed = JSON.parse(old);
     localStorage.removeItem("familie-eten:weekPlan");
-    return { ...stored, 0: parsed };
+    return { 0: parsed };
   } catch {
-    return stored;
+    return null;
   }
 };
 
@@ -48,12 +62,51 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   // allWeekPlans: { [weekOffset]: weekPlan }
-  const [allWeekPlans, setAllWeekPlans] = useState(loadAllWeekPlans);
+  const [allWeekPlans, setAllWeekPlans] = useState({ 0: emptyWeek() });
+  const [weekPlanLoaded, setWeekPlanLoaded] = useState(false);
   const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
 
+  // Load week plan from blob when user is logged in
   useEffect(() => {
-    localStorage.setItem("familie-eten:allWeekPlans", JSON.stringify(allWeekPlans));
-  }, [allWeekPlans]);
+    if (!currentUser) return;
+
+    fetch("/api/week-plan")
+      .then((res) => {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error("Failed to load week plan");
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setAllWeekPlans(data);
+        } else {
+          const migrated = migrateLocalWeekPlans();
+          setAllWeekPlans(migrated ?? { 0: emptyWeek() });
+        }
+      })
+      .catch(() => {
+        const migrated = migrateLocalWeekPlans();
+        setAllWeekPlans(migrated ?? { 0: emptyWeek() });
+      })
+      .finally(() => {
+        setWeekPlanLoaded(true);
+      });
+  }, [currentUser]);
+
+  // Save week plan to blob when it changes (debounced)
+  useEffect(() => {
+    if (!currentUser || !weekPlanLoaded) return;
+
+    const timer = setTimeout(() => {
+      fetch("/api/week-plan", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(allWeekPlans),
+      }).catch(() => {});
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [allWeekPlans, currentUser, weekPlanLoaded]);
 
   useEffect(() => {
     localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
@@ -123,6 +176,8 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setWeekPlanLoaded(false);
+    setAllWeekPlans({ 0: emptyWeek() });
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };

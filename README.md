@@ -9,6 +9,15 @@ The app now requires login via `/api/login`.
 - The server validates login by checking `cart.json` in Vercel Blob (`404` is allowed, `403` is not).
 - Optional path override with `CART_BLOB_PATH` (default: `cart.json`).
 
+## Week Plan Blob Storage
+
+The week plan is stored in Vercel Blob via `/api/week-plan`.
+
+- `GET /api/week-plan` — reads the shared family week plan from blob storage.
+- `PUT /api/week-plan` — saves the week plan to blob storage.
+- Optional path override with `WEEK_PLAN_BLOB_PATH` (default: `week-plan.json`).
+- On first load with no blob data, any existing `localStorage` week plan is automatically migrated.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
