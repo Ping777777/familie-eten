@@ -35,7 +35,6 @@ export default function App() {
   const [loginBusy, setLoginBusy] = useState(false);
   // allWeekPlans: { [weekOffset]: weekPlan }
   const [allWeekPlans, setAllWeekPlans] = useState({ 0: emptyWeek() });
-  const [weekPlanLoaded, setWeekPlanLoaded] = useState(false);
   const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
 
   // Load week plan from blob when user is logged in
@@ -51,26 +50,8 @@ export default function App() {
       .then((data) => {
         if (data) setAllWeekPlans(data);
       })
-      .catch(() => {})
-      .finally(() => {
-        setWeekPlanLoaded(true);
-      });
+      .catch(() => {});
   }, [currentUser]);
-
-  // Save week plan to blob when it changes (debounced)
-  useEffect(() => {
-    if (!currentUser || !weekPlanLoaded) return;
-
-    const timer = setTimeout(() => {
-      fetch("/api/week-plan", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(allWeekPlans),
-      }).catch(() => {});
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [allWeekPlans, currentUser, weekPlanLoaded]);
 
   useEffect(() => {
     localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
@@ -100,6 +81,11 @@ export default function App() {
       });
       return next;
     });
+    fetch("/api/week-plan", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "clearRecipe", recipeId: id }),
+    }).catch(() => {});
   };
 
   const assignMeal = (day, member, recipeId) => {
@@ -107,6 +93,11 @@ export default function App() {
       ...prev,
       [day]: { ...prev[day], [member]: recipeId },
     }));
+    fetch("/api/week-plan", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "assign", weekOffset, day, member, recipeId }),
+    }).catch(() => {});
   };
 
   const clearMeal = (day, member) => assignMeal(day, member, null);
@@ -140,7 +131,6 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setWeekPlanLoaded(false);
     setAllWeekPlans({ 0: emptyWeek() });
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
