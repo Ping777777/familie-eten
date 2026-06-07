@@ -16,7 +16,7 @@ The week plan is stored in Vercel Blob via `/api/week-plan`.
 - `GET /api/week-plan` — reads the shared family week plan from blob storage.
 - `PUT /api/week-plan` — saves the week plan to blob storage.
 - Optional path override with `WEEK_PLAN_BLOB_PATH` (default: `week-plan.json`).
-- On first load with no blob data, any existing `localStorage` week plan is automatically migrated.
+- Each mutation reads the latest blob before applying the change to avoid overwriting concurrent updates.
 
 ## Run Locally
 
