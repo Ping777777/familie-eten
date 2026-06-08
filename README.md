@@ -6,8 +6,7 @@ The app now requires login via `/api/login`.
 
 - Users: `Papa`, `Mama`, `Inga`, `Kevin`
 - Password: same as the username
-- The server validates login by checking `cart.json` in Vercel Blob (`404` is allowed, `403` is not).
-- Optional path override with `CART_BLOB_PATH` (default: `cart.json`).
+- Login success is determined only by validating the provided credentials.
 
 ## Week Plan Blob Storage
 
