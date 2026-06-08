@@ -161,7 +161,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               <span className="day-date">{getDayDate(weekOffset, idx)}</span>
             </div>
             {family.map((member) => {
-              const recipeId = weekPlan[day][member];
+              const dayPlan = weekPlan?.[day] ?? {};
+              const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
