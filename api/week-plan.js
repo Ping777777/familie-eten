@@ -1,11 +1,31 @@
 import { put, get } from "@vercel/blob";
 
-const WEEK_PLAN_PATH = globalThis.process?.env?.WEEK_PLAN_BLOB_PATH || "week-plan.json";
+const WEEK_PLAN_PREFIX =
+  globalThis.process?.env?.WEEK_PLAN_BLOB_PREFIX
+  || globalThis.process?.env?.WEEK_PLAN_BLOB_PATH?.replace(/\.json$/i, "")
+  || "week-plan";
+const ISO_WEEK_KEY_PATTERN = /^\d{4}-W\d{2}$/;
+
+function getWeekPlanPath(weekKey) {
+  return `${WEEK_PLAN_PREFIX}/${weekKey}.json`;
+}
+
+function getWeekKey(req) {
+  const weekKey = req.query?.weekKey;
+  return typeof weekKey === "string" && ISO_WEEK_KEY_PATTERN.test(weekKey) ? weekKey : null;
+}
 
 export default async function handler(req, res) {
+  const weekKey = getWeekKey(req);
+  if (!weekKey) {
+    return res.status(400).json({ message: "Valid ISO weekKey is required (YYYY-Www)" });
+  }
+
+  const weekPlanPath = getWeekPlanPath(weekKey);
+
   if (req.method === "GET") {
     try {
-      const result = await get(WEEK_PLAN_PATH, { access: "private" });
+      const result = await get(weekPlanPath, { access: "private" });
       if (!result) return res.status(404).json({ message: "No week plan found" });
       if (result.statusCode !== 200 || !result.stream) {
         throw new Error("No blob stream available");
@@ -23,7 +43,7 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "PUT") {
     try {
-      await put(WEEK_PLAN_PATH, JSON.stringify(req.body), {
+      await put(weekPlanPath, JSON.stringify(req.body), {
         access: "private",
         contentType: "application/json",
         addRandomSuffix: false,

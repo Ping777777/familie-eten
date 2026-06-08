@@ -4,6 +4,7 @@ import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
 import RoadmapModal from "./components/RoadmapModal";
+import { getIsoWeekKey } from "./week";
 import "./App.css";
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
@@ -34,43 +35,49 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   // allWeekPlans: { [weekOffset]: weekPlan }
-  const [allWeekPlans, setAllWeekPlans] = useState({ 0: emptyWeek() });
+  const [allWeekPlans, setAllWeekPlans] = useState(() => ({ [getIsoWeekKey(0)]: emptyWeek() }));
   const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
   const allWeekPlansRef = useRef(allWeekPlans);
   const weekPlanMutationQueueRef = useRef(Promise.resolve());
+  const activeWeekKey = getIsoWeekKey(weekOffset);
+  const activeWeekKeyRef = useRef(activeWeekKey);
 
   useEffect(() => {
     allWeekPlansRef.current = allWeekPlans;
   }, [allWeekPlans]);
 
-  const fetchWeekPlans = async () => {
-    const response = await fetch("/api/week-plan");
-    if (response.status === 404) return { 0: emptyWeek() };
+  useEffect(() => {
+    activeWeekKeyRef.current = activeWeekKey;
+  }, [activeWeekKey]);
+
+  const fetchWeekPlan = async (weekKey) => {
+    const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`);
+    if (response.status === 404) return emptyWeek();
     if (!response.ok) throw new Error("Failed to load week plan");
     return response.json();
   };
 
-  const persistWeekPlans = async (nextWeekPlans) => {
-    const response = await fetch("/api/week-plan", {
+  const persistWeekPlan = async (weekKey, nextWeekPlan) => {
+    const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nextWeekPlans),
+      body: JSON.stringify(nextWeekPlan),
     });
     if (!response.ok) throw new Error("Failed to save week plan");
   };
 
-  const updateWeekPlans = (updater) => {
+  const updateWeekPlan = (updater) => {
     if (!currentUser) return;
 
     weekPlanMutationQueueRef.current = weekPlanMutationQueueRef.current
       .catch(() => {})
       .then(async () => {
-        const latestWeekPlans = await fetchWeekPlans().catch(() => allWeekPlansRef.current);
-        const nextWeekPlans = typeof updater === "function" ? updater(latestWeekPlans) : updater;
-        setAllWeekPlans(nextWeekPlans);
-
-        await persistWeekPlans(nextWeekPlans).catch(() => null);
+        const weekKey = activeWeekKeyRef.current;
+        const latestWeekPlan = await fetchWeekPlan(weekKey).catch(() => allWeekPlansRef.current[weekKey] ?? emptyWeek());
+        const nextWeekPlan = typeof updater === "function" ? updater(latestWeekPlan) : updater;
+        setAllWeekPlans((prev) => ({ ...prev, [weekKey]: nextWeekPlan }));
+        await persistWeekPlan(weekKey, nextWeekPlan).catch(() => null);
       });
   };
 
@@ -78,42 +85,59 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
 
-    fetchWeekPlans()
+    fetchWeekPlan(activeWeekKey)
       .then((data) => {
-        setAllWeekPlans(data);
+        setAllWeekPlans((prev) => ({ ...prev, [activeWeekKey]: data }));
       })
       .catch(() => {})
       .finally(() => {
         setWeekPlanLoaded(true);
       });
-  }, [currentUser]);
+  }, [activeWeekKey, currentUser]);
 
   useEffect(() => {
     localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
   }, [recipeList]);
 
-  const weekPlan = allWeekPlans[weekOffset] ?? emptyWeek();
+  const weekPlan = allWeekPlans[activeWeekKey] ?? emptyWeek();
 
   const setWeekPlan = (updater) => {
-    updateWeekPlans((prev) => ({
-      ...prev,
-      [weekOffset]: typeof updater === "function" ? updater(prev[weekOffset] ?? emptyWeek()) : updater,
-    }));
+    updateWeekPlan(updater);
   };
 
   const deleteRecipe = (id) => {
     setRecipeList((prev) => prev.filter((r) => r.id !== id));
-    updateWeekPlans((prev) => {
+    setAllWeekPlans((prev) => {
       const next = { ...prev };
+      const changed = [];
       Object.keys(next).forEach((offset) => {
+        let weekChanged = false;
+        let nextWeek = next[offset];
         DAYS.forEach((day) => {
           FAMILY.forEach((member) => {
-            if (next[offset][day]?.[member] === id) {
-              next[offset] = { ...next[offset], [day]: { ...next[offset][day], [member]: null } };
+            if (nextWeek[day]?.[member] === id) {
+              nextWeek = {
+                ...nextWeek,
+                [day]: { ...nextWeek[day], [member]: null },
+              };
+              weekChanged = true;
             }
           });
         });
+        if (weekChanged) {
+          next[offset] = nextWeek;
+          changed.push({ weekKey: offset, weekPlan: nextWeek });
+        }
       });
+
+      changed.forEach(({ weekKey, weekPlan }) => {
+        weekPlanMutationQueueRef.current = weekPlanMutationQueueRef.current
+          .catch(() => {})
+          .then(async () => {
+            await persistWeekPlan(weekKey, weekPlan).catch(() => null);
+          });
+      });
+
       return next;
     });
   };
@@ -126,6 +150,12 @@ export default function App() {
   };
 
   const clearMeal = (day, member) => assignMeal(day, member, null);
+
+  const handleWeekChange = (nextWeekOffset) => {
+    if (nextWeekOffset === weekOffset) return;
+    setWeekPlanLoaded(false);
+    setWeekOffset(nextWeekOffset);
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -158,7 +188,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setWeekPlanLoaded(true);
-    setAllWeekPlans({ 0: emptyWeek() });
+    setAllWeekPlans({ [getIsoWeekKey(0)]: emptyWeek() });
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
@@ -241,7 +271,7 @@ export default function App() {
             family={FAMILY}
             weekPlan={weekPlan}
             weekOffset={weekOffset}
-            onWeekChange={setWeekOffset}
+            onWeekChange={handleWeekChange}
             recipes={recipeList}
             onAssign={assignMeal}
             onClear={clearMeal}
