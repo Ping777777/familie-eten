@@ -5,17 +5,16 @@ const WEEK_PLAN_PATH = globalThis.process?.env?.WEEK_PLAN_BLOB_PATH || "week-pla
 export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
-      const blob = await get(WEEK_PLAN_PATH, { access: "private" });
-      if (!blob) throw new Error("Blob not found");
-      const data = JSON.parse(blob.toString());
+      const result = await get(WEEK_PLAN_PATH, { access: "private" });
+      if (!result) throw new Error("Blob not found");
+      if (result.statusCode !== 200 || !result.stream) {
+        throw new Error("No blob stream available");
+      }
+      const text = await new Response(result.stream).text();
+      const data = JSON.parse(text);
       res.status(200).json(data);
     } catch (error) {
-      console.error("[week-plan] GET failed", {
-        path: WEEK_PLAN_PATH,
-        name: error?.name,
-        message: error?.message,
-        status: error?.status,
-      });
+      console.error("[week-plan] GET failed", error?.message);
       if (error?.status === 404) {
         res.status(404).json({ message: "No week plan found" });
       } else {
@@ -32,12 +31,7 @@ export default async function handler(req, res) {
       });
       res.status(200).json({ ok: true });
     } catch (error) {
-      console.error("[week-plan] PUT failed", {
-        path: WEEK_PLAN_PATH,
-        name: error?.name,
-        message: error?.message,
-        status: error?.status,
-      });
+      console.error("[week-plan] PUT failed", error?.message);
       res.status(500).json({ message: "Failed to save week plan" });
     }
   } else {
