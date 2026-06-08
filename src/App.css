@@ -194,6 +194,32 @@
 }
 .warning-icon { flex-shrink: 0; }
 
+/* Save conflict banner */
+.save-failed-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #fdecea;
+  border: 1px solid #f5b1a8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #8a2417;
+  margin-bottom: 14px;
+}
+.save-failed-reload {
+  margin-left: auto;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.save-failed-reload:hover { background: #a93226; }
+
 /* Day label with date */
 .day-label {
   display: flex;

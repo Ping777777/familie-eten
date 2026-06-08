@@ -96,7 +96,7 @@ function computeWarnings(days, weekPlan, recipes) {
     });
 }
 
-export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear }) {
+export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan }) {
   const [selecting, setSelecting] = useState(null);
 
   const getRecipe = (id) => recipes.find((r) => r.id === id);
@@ -126,6 +126,21 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           <button className="week-today-btn" onClick={() => onWeekChange(0)}>Vandaag</button>
         )}
       </div>
+
+      {/* Save conflict notice */}
+      {saveFailed && (
+        <div className="save-failed-banner" role="alert">
+          <span className="warning-icon">⚠️</span>
+          <span>
+            <strong>Niet opgeslagen</strong> — iemand anders wijzigde deze week tegelijk. Je wijziging staat nog op het scherm maar is niet bewaard.
+          </span>
+          {onReloadWeekPlan && (
+            <button className="save-failed-reload" onClick={onReloadWeekPlan}>
+              Laad de laatste versie
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Variety warnings */}
       {warnings.length > 0 && (
