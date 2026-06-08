@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { recipes } from "./data/recipes";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
@@ -25,20 +25,6 @@ const load = (key, fallback) => {
   }
 };
 
-const loadAllWeekPlans = () => {
-  const stored = load("familie-eten:allWeekPlans", { 0: emptyWeek() });
-  const old = localStorage.getItem("familie-eten:weekPlan");
-  if (!old) return stored;
-
-  try {
-    const parsed = JSON.parse(old);
-    localStorage.removeItem("familie-eten:weekPlan");
-    return { ...stored, 0: parsed };
-  } catch {
-    return stored;
-  }
-};
-
 export default function App() {
   const [tab, setTab] = useState("planner");
   const [showRoadmap, setShowRoadmap] = useState(false);
@@ -48,12 +34,59 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   // allWeekPlans: { [weekOffset]: weekPlan }
-  const [allWeekPlans, setAllWeekPlans] = useState(loadAllWeekPlans);
+  const [allWeekPlans, setAllWeekPlans] = useState({ 0: emptyWeek() });
+  const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
+  const allWeekPlansRef = useRef(allWeekPlans);
+  const weekPlanMutationQueueRef = useRef(Promise.resolve());
 
   useEffect(() => {
-    localStorage.setItem("familie-eten:allWeekPlans", JSON.stringify(allWeekPlans));
+    allWeekPlansRef.current = allWeekPlans;
   }, [allWeekPlans]);
+
+  const fetchWeekPlans = async () => {
+    const response = await fetch("/api/week-plan");
+    if (response.status === 404) return { 0: emptyWeek() };
+    if (!response.ok) throw new Error("Failed to load week plan");
+    return response.json();
+  };
+
+  const persistWeekPlans = async (nextWeekPlans) => {
+    const response = await fetch("/api/week-plan", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nextWeekPlans),
+    });
+    if (!response.ok) throw new Error("Failed to save week plan");
+  };
+
+  const updateWeekPlans = (updater) => {
+    if (!currentUser) return;
+
+    weekPlanMutationQueueRef.current = weekPlanMutationQueueRef.current
+      .catch(() => {})
+      .then(async () => {
+        const latestWeekPlans = await fetchWeekPlans().catch(() => allWeekPlansRef.current);
+        const nextWeekPlans = typeof updater === "function" ? updater(latestWeekPlans) : updater;
+        setAllWeekPlans(nextWeekPlans);
+
+        await persistWeekPlans(nextWeekPlans).catch(() => null);
+      });
+  };
+
+  // Load week plan from blob when user is logged in
+  useEffect(() => {
+    if (!currentUser) return;
+
+    fetchWeekPlans()
+      .then((data) => {
+        setAllWeekPlans(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setWeekPlanLoaded(true);
+      });
+  }, [currentUser]);
 
   useEffect(() => {
     localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
@@ -62,7 +95,7 @@ export default function App() {
   const weekPlan = allWeekPlans[weekOffset] ?? emptyWeek();
 
   const setWeekPlan = (updater) => {
-    setAllWeekPlans((prev) => ({
+    updateWeekPlans((prev) => ({
       ...prev,
       [weekOffset]: typeof updater === "function" ? updater(prev[weekOffset] ?? emptyWeek()) : updater,
     }));
@@ -70,7 +103,7 @@ export default function App() {
 
   const deleteRecipe = (id) => {
     setRecipeList((prev) => prev.filter((r) => r.id !== id));
-    setAllWeekPlans((prev) => {
+    updateWeekPlans((prev) => {
       const next = { ...prev };
       Object.keys(next).forEach((offset) => {
         DAYS.forEach((day) => {
@@ -111,6 +144,7 @@ export default function App() {
         return;
       }
 
+      setWeekPlanLoaded(false);
       setCurrentUser(data.user);
       localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
@@ -123,6 +157,8 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setWeekPlanLoaded(true);
+    setAllWeekPlans({ 0: emptyWeek() });
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
@@ -156,6 +192,17 @@ export default function App() {
               {loginBusy ? "Bezig..." : "Inloggen"}
             </button>
           </form>
+        </main>
+      </div>
+    );
+  }
+
+  if (!weekPlanLoaded) {
+    return (
+      <div className="app login-screen">
+        <main className="login-card">
+          <h1>🍽️ Familie Eten</h1>
+          <p className="subtitle">Weekplanner laden…</p>
         </main>
       </div>
     );
