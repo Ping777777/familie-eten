@@ -126,6 +126,12 @@ export default function App() {
           }
 
           // Conflict: another device wrote. Rebase our change onto the latest and retry.
+          if (!result.etag) {
+            if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
+              setWeekPlanSaveFailed(true);
+            }
+            return;
+          }
           base = result.weekPlan ?? base;
           etag = result.etag;
           next = applyUpdater(base);
