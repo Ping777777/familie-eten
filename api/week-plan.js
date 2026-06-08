@@ -80,6 +80,7 @@ export default async function handler(req, res) {
           return res.status(503).json({ message: "Conflict detected but latest version could not be read" });
         }
         return res.status(412).json({ conflict: true, weekPlan: latestPlan, etag: latestEtag });
+      }
       console.error("[week-plan] PUT failed", error?.message);
       res.status(500).json({ message: "Failed to save week plan" });
     }
