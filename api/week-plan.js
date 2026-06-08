@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const result = await get(WEEK_PLAN_PATH, { access: "private" });
-      if (!result) throw new Error("Blob not found");
+      if (!result) return res.status(404).json({ message: "No week plan found" });
       if (result.statusCode !== 200 || !result.stream) {
         throw new Error("No blob stream available");
       }
