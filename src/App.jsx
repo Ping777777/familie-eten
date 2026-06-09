@@ -197,6 +197,17 @@ export default function App() {
         }
         if (!response.ok) throw new Error("Failed to load recipes");
         const data = await response.json();
+        // One-time migration: if blob still has bag/zakje units, overwrite with fixed bundled data
+        const BAD_UNITS = ["zakje", "zakjes", "zak", "bag", "doosjes"];
+        const needsMigration = (data.recipes ?? []).some((r) =>
+          r.ingredients?.some((i) => BAD_UNITS.includes((i.unit ?? "").toLowerCase()))
+        );
+        if (needsMigration) {
+          recipesEtagRef.current = null; // unconditional overwrite — skip ETag check
+          setRecipeList(defaultRecipes);
+          saveRecipesToBlob(defaultRecipes);
+          return;
+        }
         recipesEtagRef.current = data.etag ?? null;
         setRecipeList(data.recipes ?? defaultRecipes);
       })

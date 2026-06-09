@@ -1,5 +1,19 @@
 import { useState } from "react";
 
+const UNIT_OPTIONS = [
+  "g", "kg",
+  "ml", "dl", "l",
+  "el", "tl",
+  "mespunt", "snuf", "scheutje",
+  "stuks", "stukken",
+  "blikje", "blik",
+  "pakje", "pakjes",
+  "potje", "potjes",
+  "kuipje", "kuipjes",
+  "kroppen", "teen", "bol", "bos",
+  "plak",
+];
+
 export default function RecipeLibrary({ recipes, onDelete, onUpdate, saveFailed }) {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
@@ -316,12 +330,16 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
                     onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
                     placeholder="Hoev."
                   />
-                  <input
+                  <select
                     className="ing-edit-unit"
                     value={ing.unit}
                     onChange={(e) => updateIngredient(idx, "unit", e.target.value)}
-                    placeholder="Eenheid"
-                  />
+                  >
+                    <option value="">—</option>
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
                   <input
                     className="ing-edit-name"
                     value={ing.name}
