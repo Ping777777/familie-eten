@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 
@@ -13,6 +13,41 @@ const NL_MONTHS = [
   "januari","februari","maart","april","mei","juni",
   "juli","augustus","september","oktober","november","december",
 ];
+
+const VARIETY_RULES = [
+  { label: "kip",      keywords: ["kip", "chicken", "kipfilet", "kipstuk"],                         threshold: 3 },
+  { label: "rund",     keywords: ["rund", "beef", "steak", "gehakt", "biefstuk", "boeuf"],          threshold: 3 },
+  { label: "vis",      keywords: ["vis", "zalm", "tonijn", "zalmfilet"],                             threshold: 3 },
+  { label: "garnalen", keywords: ["garnalen", "shrimp", "garnaal"],                                  threshold: 2 },
+  { label: "pasta",    keywords: ["pasta", "spaghetti", "lasagne", "penne", "tagliatelle"],          threshold: 2 },
+  { label: "rijst",    keywords: ["rijst", "sushirijst", "risotto", "jasmijnrijst"],                 threshold: 3 },
+];
+
+function computeWarnings(days, weekPlan, recipes) {
+  const categoryCounts = {};
+  const categoryDays = {};
+  days.forEach((day) => {
+    const dayRecipeIds = new Set(Object.values(weekPlan[day] ?? {}).filter(Boolean));
+    dayRecipeIds.forEach((id) => {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return;
+      const text = [recipe.name, ...(recipe.tags ?? [])].join(" ").toLowerCase();
+      VARIETY_RULES.forEach(({ label, keywords }) => {
+        if (keywords.some((kw) => text.includes(kw))) {
+          if (!categoryCounts[label]) { categoryCounts[label] = new Set(); categoryDays[label] = []; }
+          if (!categoryCounts[label].has(day)) { categoryCounts[label].add(day); categoryDays[label].push(day); }
+        }
+      });
+    });
+  });
+  return VARIETY_RULES
+    .filter(({ label, threshold }) => (categoryCounts[label]?.size ?? 0) >= threshold)
+    .map(({ label }) => ({
+      label,
+      count: categoryCounts[label].size,
+      swapDay: categoryDays[label][categoryDays[label].length - 1],
+    }));
+}
 
 function formatWeekRange(offset) {
   const monday = getMondayOfWeek(offset);
@@ -55,6 +90,11 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     setSelecting(null);
   };
 
+  const warnings = useMemo(
+    () => computeWarnings(days, weekPlan, recipes),
+    [days, weekPlan, recipes]
+  );
+
   return (
     <div className="week-planner">
       {/* Week selector */}
@@ -85,6 +125,20 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         </div>
       )}
 
+      {warnings.length > 0 && (
+        <div className="variety-warnings">
+          {warnings.map((w) => (
+            <div key={w.label} className="variety-warning">
+              <span className="warning-icon">⚠️</span>
+              <span>
+                <strong>Veel {w.label} deze week</strong> ({w.count}×) —{" "}
+                overweeg iets anders op <strong>{w.swapDay}</strong>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="planner-grid">
         <div className="grid-header">
           <div className="corner-cell"></div>
@@ -102,16 +156,18 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               <span className="day-date">{getDayDate(weekOffset, idx)}</span>
             </div>
             {family.map((member) => {
-              const recipeId = weekPlan?.[day]?.[member] ?? null;
+              const dayPlan = weekPlan?.[day] ?? {};
+              const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
+              const isDayLocked = !recipe && family.some((m) => m !== member && (dayPlan[m] ?? null));
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
               return (
                 <div
                   key={member}
-                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"}`}
+                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : isDayLocked ? "locked" : "empty"}`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={() => setSelecting({ day, member })}
+                  onClick={isDayLocked ? undefined : () => setSelecting({ day, member })}
                 >
                   {recipe ? (
                     <div className="meal-tag">
@@ -126,7 +182,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       </button>
                       <span className="meal-edit-hint" aria-hidden="true">✎</span>
                     </div>
-                  ) : (
+                  ) : isDayLocked ? null : (
                     <span className="add-hint">+ Kies maaltijd</span>
                   )}
                 </div>
