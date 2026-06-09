@@ -145,7 +145,21 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
       </div>
       <p className="progress-label">{totalChecked} van {items.length} afgevinkt</p>
 
-      {/* Fresh / main list */}
+      {/* Combined checked section — always pinned to top */}
+      {totalChecked > 0 && (
+        <div className="checked-section">
+          <h4>✅ In winkelwagentje ({totalChecked})</h4>
+          <IngredientList
+            items={[...checkedFresh, ...checkedPantry]}
+            onCheck={toggleCheck}
+            onTogglePantry={toggleOverride}
+            isPantry={false}
+            done
+          />
+        </div>
+      )}
+
+      {/* Unchecked fresh items */}
       <IngredientList
         items={uncheckedFresh}
         onCheck={toggleCheck}
@@ -153,19 +167,12 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
         isPantry={false}
       />
 
-      {checkedFresh.length > 0 && (
-        <div className="checked-section">
-          <h4>✅ In winkelwagentje ({checkedFresh.length})</h4>
-          <IngredientList items={checkedFresh} onCheck={toggleCheck} onTogglePantry={toggleOverride} isPantry={false} done />
-        </div>
-      )}
-
-      {/* Pantry staples — collapsible */}
+      {/* Pantry staples — collapsible, only unchecked items shown here */}
       {pantryItems.length > 0 && (
         <div className="pantry-section">
           <button className="pantry-toggle" onClick={() => setPantryOpen((o) => !o)}>
             <span>🗄 Controleer in de kast</span>
-            <span className="pantry-count">{pantryItems.length} ingrediënten</span>
+            <span className="pantry-count">{uncheckedPantry.length} ingrediënten</span>
             <span className="pantry-chevron">{pantryOpen ? "▲" : "▼"}</span>
           </button>
 
@@ -180,12 +187,6 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
                 onTogglePantry={toggleOverride}
                 isPantry={true}
               />
-              {checkedPantry.length > 0 && (
-                <div className="checked-section">
-                  <h4>✅ In huis ({checkedPantry.length})</h4>
-                  <IngredientList items={checkedPantry} onCheck={toggleCheck} onTogglePantry={toggleOverride} isPantry={true} done />
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -210,13 +211,15 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
                 <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
               )}
             </div>
-            <button
-              className="pantry-move-btn"
-              title={isPantry ? "Naar boodschappenlijst" : "Naar kast"}
-              onClick={(e) => onTogglePantry(e, item.name)}
-            >
-              {isPantry ? "🛒" : "🗄"}
-            </button>
+            {!done && (
+              <button
+                className="pantry-move-btn"
+                title={isPantry ? "Naar boodschappenlijst" : "Naar kast"}
+                onClick={(e) => onTogglePantry(e, item.name)}
+              >
+                {isPantry ? "🛒" : "🗄"}
+              </button>
+            )}
           </li>
         );
       })}
