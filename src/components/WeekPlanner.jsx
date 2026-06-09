@@ -14,38 +14,29 @@ const NL_MONTHS = [
   "juli","augustus","september","oktober","november","december",
 ];
 
-const VARIETY_RULES = [
-  { label: "kip",      keywords: ["kip", "chicken", "kipfilet", "kipstuk"],                         threshold: 3 },
-  { label: "rund",     keywords: ["rund", "beef", "steak", "gehakt", "biefstuk", "boeuf"],          threshold: 3 },
-  { label: "vis",      keywords: ["vis", "zalm", "tonijn", "zalmfilet"],                             threshold: 3 },
-  { label: "garnalen", keywords: ["garnalen", "shrimp", "garnaal"],                                  threshold: 2 },
-  { label: "pasta",    keywords: ["pasta", "spaghetti", "lasagne", "penne", "tagliatelle"],          threshold: 2 },
-  { label: "rijst",    keywords: ["rijst", "sushirijst", "risotto", "jasmijnrijst"],                 threshold: 3 },
-];
-
 function computeWarnings(days, weekPlan, recipes) {
-  const categoryCounts = {};
-  const categoryDays = {};
+  const warningFilters = PICKER_FILTERS.filter((f) => f.threshold != null);
+  const counts = {};
+  const dayLists = {};
   days.forEach((day) => {
     const dayRecipeIds = new Set(Object.values(weekPlan[day] ?? {}).filter(Boolean));
     dayRecipeIds.forEach((id) => {
       const recipe = recipes.find((r) => r.id === id);
       if (!recipe) return;
-      const text = [recipe.name, ...(recipe.tags ?? [])].join(" ").toLowerCase();
-      VARIETY_RULES.forEach(({ label, keywords }) => {
-        if (keywords.some((kw) => text.includes(kw))) {
-          if (!categoryCounts[label]) { categoryCounts[label] = new Set(); categoryDays[label] = []; }
-          if (!categoryCounts[label].has(day)) { categoryCounts[label].add(day); categoryDays[label].push(day); }
+      warningFilters.forEach(({ key }) => {
+        if (matchesFilter(recipe, key)) {
+          if (!counts[key]) { counts[key] = new Set(); dayLists[key] = []; }
+          if (!counts[key].has(day)) { counts[key].add(day); dayLists[key].push(day); }
         }
       });
     });
   });
-  return VARIETY_RULES
-    .filter(({ label, threshold }) => (categoryCounts[label]?.size ?? 0) >= threshold)
-    .map(({ label }) => ({
+  return warningFilters
+    .filter(({ key, threshold }) => (counts[key]?.size ?? 0) >= threshold)
+    .map(({ key, label }) => ({
       label,
-      count: categoryCounts[label].size,
-      swapDay: categoryDays[label][categoryDays[label].length - 1],
+      count: counts[key].size,
+      swapDay: dayLists[key][dayLists[key].length - 1],
     }));
 }
 

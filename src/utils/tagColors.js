@@ -13,11 +13,12 @@ export function tagClass(tag) {
   return "";
 }
 
-// Same keyword sets used for the picker filter bar
+// Shared by the picker filter bar AND the variety warning logic.
+// threshold: warn when a category appears on this many days in one week.
 export const PICKER_FILTERS = [
-  { key: "vlees",       label: "Vlees",       emoji: "🥩", kws: ["vlees", "rund", "steak", "bacon", "spek", "gehakt", "chorizo"] },
-  { key: "vis",         label: "Vis",         emoji: "🐟", kws: ["vis", "zalm", "tonijn", "garnalen"] },
-  { key: "kip",         label: "Kip",         emoji: "🍗", kws: ["kip", "chicken"] },
+  { key: "vlees",       label: "Vlees",       emoji: "🥩", kws: ["vlees", "rund", "steak", "bacon", "spek", "gehakt", "chorizo"], threshold: 3 },
+  { key: "vis",         label: "Vis",         emoji: "🐟", kws: ["vis", "zalm", "tonijn", "garnalen"],                            threshold: 3 },
+  { key: "kip",         label: "Kip",         emoji: "🍗", kws: ["kip", "chicken"],                                               threshold: 3 },
   { key: "vegetarisch", label: "Vegetarisch", emoji: "🌱", kws: ["vegetarisch", "vegan", "groente"] },
 ];
 
