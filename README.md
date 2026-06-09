@@ -37,22 +37,23 @@ Use Vercel local dev so both the frontend and `/api/*` routes run together.
 	npm install
 	```
 
-2. Create a Vercel Blob read/write token:
+2. Copy the `.env.local` snippet from Vercel Blob Storage:
 
 	- Open your Vercel project dashboard.
 	- Go to **Storage**.
 	- Select your Blob store (or create one).
-	- Open **Tokens**.
-	- Create a token with **Read/Write** access.
-	- Copy the token value.
+	- Copy the `.env.local` snippet shown for the store.
 
-3. Export environment variables in your shell:
+3. Create a `.env` file in the project root and paste that snippet into it.
+
+	The file should include `BLOB_READ_WRITE_TOKEN` from the Blob snippet. Add optional overrides if needed:
 
 	```bash
-	export BLOB_READ_WRITE_TOKEN="your_token_here"
+	# from the Blob .env.local snippet:
+	BLOB_READ_WRITE_TOKEN="your_token_here"
 	# Optional overrides:
-	export CART_BLOB_PATH="cart.json"
-	export WEEK_PLAN_BLOB_PREFIX="week-plan"
+	CART_BLOB_PATH="cart.json"
+	WEEK_PLAN_BLOB_PREFIX="week-plan"
 	```
 
 4. Start local development:
