@@ -112,6 +112,13 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     [days, weekPlan, recipes]
   );
 
+  const memberDayCount = useMemo(
+    () => Object.fromEntries(
+      family.map((m) => [m, days.filter((d) => (weekPlan?.[d]?.[m] ?? null) !== null).length])
+    ),
+    [family, days, weekPlan]
+  );
+
   return (
     <div className="week-planner">
       {/* Week selector */}
@@ -157,7 +164,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         </div>
       )}
 
-      <p className="hint">Wie als eerste een maaltijd kiest, vergrendelt de dag voor het hele gezin.</p>
+      <p className="hint">Wie als eerste een maaltijd kiest, vergrendelt de dag voor het hele gezin. Ieder gezinslid kiest maximaal 2 dagen.</p>
 
       <div className="planner-grid">
         <div className="grid-header">
@@ -180,10 +187,11 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
 
-              // Day is locked when a DIFFERENT member already picked a meal
-              const dayPickerMember = family.find((m) => m !== member && (dayPlan[m] ?? null));
-              const isDayLocked = Boolean(dayPickerMember);
-              const lockedRecipe = isDayLocked ? getRecipe(dayPlan[dayPickerMember]) : null;
+              // Day-locking: another member already claimed this day
+              const isDayLocked = !recipe && family.some((m) => m !== member && (dayPlan[m] ?? null));
+              // Quota-locking: this member has already claimed their 2-day limit
+              const isQuotaLocked = !recipe && memberDayCount[member] >= 2;
+              const isLocked = isDayLocked || isQuotaLocked;
 
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
@@ -191,13 +199,12 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 <div
                   key={member}
                   className={`meal-cell ${isSelecting ? "selecting" : ""} ${
-                    recipe ? "filled" : isDayLocked ? "locked" : "empty"
+                    recipe ? "filled" : isLocked ? "locked" : "empty"
                   }`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={isDayLocked ? undefined : () => setSelecting({ day, member })}
+                  onClick={isLocked ? undefined : () => setSelecting({ day, member })}
                 >
                   {recipe ? (
-                    // This member is the picker — show their meal with × to unlock the day
                     <div className="meal-tag">
                       <span>{recipe.emoji}</span>
                       <span className="meal-name">{recipe.name}</span>
@@ -210,18 +217,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       </button>
                       <span className="meal-edit-hint" aria-hidden="true">✎</span>
                     </div>
-                  ) : isDayLocked ? (
-                    // Another member already picked — show their meal dimmed + lock
-                    <div className="locked-tag">
-                      {lockedRecipe && (
-                        <>
-                          <span className="locked-emoji">{lockedRecipe.emoji}</span>
-                          <span className="locked-name">{lockedRecipe.name}</span>
-                        </>
-                      )}
-                      <span className="locked-icon" aria-label="Vergrendeld">🔒</span>
-                    </div>
-                  ) : (
+                  ) : isLocked ? null : (
                     <span className="add-hint">+ Kies maaltijd</span>
                   )}
                 </div>
