@@ -89,14 +89,15 @@ export default function App() {
 
     // Capture the target week at enqueue time so a week switch mid-flight can't misroute the write.
     const weekKey = activeWeekKeyRef.current;
+    const applyUpdater = (base) => ({
+      ...base,
+      [day]: { ...base[day], [member]: recipeId },
+    });
     const seq = (weekPlanWriteSeqRef.current += 1);
 
     // Optimistic UI update from current local state for instant feedback.
     const optimisticBase = selectedWeekPlanRef.current ?? emptyWeek();
-    const optimistic = {
-      ...optimisticBase,
-      [day]: { ...optimisticBase[day], [member]: recipeId },
-    };
+    const optimistic = applyUpdater(optimisticBase);
     selectedWeekPlanRef.current = optimistic;
     setSelectedWeekPlan(optimistic);
 
@@ -108,10 +109,7 @@ export default function App() {
         // Rebase this edit onto the last server-acknowledged version (chains via ETag).
         let base = weekPlanBaseRef.current ?? emptyWeek();
         let etag = weekPlanEtagRef.current;
-        let next = {
-          ...base,
-          [day]: { ...base[day], [member]: recipeId },
-        };
+        let next = applyUpdater(base);
 
         for (let attempt = 0; attempt < MAX_WEEK_PLAN_WRITE_RETRIES; attempt += 1) {
           // Always guard with the ETag so we never overwrite another device's change.
@@ -140,10 +138,7 @@ export default function App() {
           }
           base = result.weekPlan ?? base;
           etag = result.etag;
-          next = {
-            ...base,
-            [day]: { ...base[day], [member]: recipeId },
-          };
+          next = applyUpdater(base);
         }
 
         // Retries exhausted while someone else kept editing this week. Cancel the write
