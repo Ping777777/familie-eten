@@ -91,7 +91,7 @@ export default function App() {
     const weekKey = activeWeekKeyRef.current;
     const applyUpdater = (base) => ({
       ...base,
-      [day]: { ...base[day], [member]: recipeId },
+      [day]: { ...(base[day] ?? {}), [member]: recipeId },
     });
     const seq = (weekPlanWriteSeqRef.current += 1);
 
