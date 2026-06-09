@@ -84,16 +84,19 @@ export default function App() {
     return { conflict: false, etag: data.etag ?? null };
   };
 
-  const updateSelectedWeekPlan = (updater) => {
+  const updateSelectedWeekPlan = (day, member, recipeId) => {
     if (!currentUser) return;
 
     // Capture the target week at enqueue time so a week switch mid-flight can't misroute the write.
     const weekKey = activeWeekKeyRef.current;
-    const applyUpdater = (base) => (typeof updater === "function" ? updater(base) : updater);
     const seq = (weekPlanWriteSeqRef.current += 1);
 
     // Optimistic UI update from current local state for instant feedback.
-    const optimistic = applyUpdater(selectedWeekPlanRef.current ?? emptyWeek());
+    const optimisticBase = selectedWeekPlanRef.current ?? emptyWeek();
+    const optimistic = {
+      ...optimisticBase,
+      [day]: { ...optimisticBase[day], [member]: recipeId },
+    };
     selectedWeekPlanRef.current = optimistic;
     setSelectedWeekPlan(optimistic);
 
@@ -105,7 +108,10 @@ export default function App() {
         // Rebase this edit onto the last server-acknowledged version (chains via ETag).
         let base = weekPlanBaseRef.current ?? emptyWeek();
         let etag = weekPlanEtagRef.current;
-        let next = applyUpdater(base);
+        let next = {
+          ...base,
+          [day]: { ...base[day], [member]: recipeId },
+        };
 
         for (let attempt = 0; attempt < MAX_WEEK_PLAN_WRITE_RETRIES; attempt += 1) {
           // Always guard with the ETag so we never overwrite another device's change.
@@ -134,7 +140,10 @@ export default function App() {
           }
           base = result.weekPlan ?? base;
           etag = result.etag;
-          next = applyUpdater(base);
+          next = {
+            ...base,
+            [day]: { ...base[day], [member]: recipeId },
+          };
         }
 
         // Retries exhausted while someone else kept editing this week. Cancel the write
@@ -185,19 +194,12 @@ export default function App() {
 
   const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
 
-  const applySelectedWeekPlanUpdate = (updater) => {
-    updateSelectedWeekPlan(updater);
-  };
-
   const deleteRecipe = (id) => {
     setRecipeList((prev) => prev.filter((r) => r.id !== id));
   };
 
   const assignMeal = (day, member, recipeId) => {
-    applySelectedWeekPlanUpdate((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [member]: recipeId },
-    }));
+    updateSelectedWeekPlan(day, member, recipeId);
   };
 
   const clearMeal = (day, member) => assignMeal(day, member, null);
