@@ -64,8 +64,8 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
 
   const totalPlanned = days.reduce(
     (acc, day) => acc + family.filter((m) => {
-      const id = weekPlan[day][m];
-      return id && recipes.find((r) => r.id === id);
+      const id = weekPlan[day]?.[m];
+      return Boolean(id) && recipes.some((r) => r.id === id);
     }).length,
     0
   );
