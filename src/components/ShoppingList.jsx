@@ -179,7 +179,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
           {pantryOpen && (
             <div className="pantry-body">
               <p className="pantry-hint">
-                Zit dit al in de kast? Vink het af. Klik op 🛒 om een ingredient naar de hoofdlijst te verplaatsen.
+                Heb je dit al in huis? Laat het staan. Toch nodig? Vink het aan — dan gaat het naar je boodschappenlijst.
               </p>
               <IngredientList
                 items={uncheckedPantry}
@@ -211,13 +211,13 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
                 <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
               )}
             </div>
-            {!done && (
+            {!done && !isPantry && (
               <button
                 className="pantry-move-btn"
-                title={isPantry ? "Naar boodschappenlijst" : "Naar kast"}
+                title="Naar kast"
                 onClick={(e) => onTogglePantry(e, item.name)}
               >
-                {isPantry ? "🛒" : "🗄"}
+                🗄
               </button>
             )}
           </li>
