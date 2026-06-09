@@ -199,6 +199,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       >
                         ×
                       </button>
+                      <span className="meal-edit-hint" aria-hidden="true">✎</span>
                     </div>
                   ) : (
                     <span className="add-hint">+ Kies maaltijd</span>
@@ -210,33 +211,43 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         ))}
       </div>
 
-      {selecting && (
-        <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
-          <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
-            <div className="picker-header">
-              <h3>
-                Kies maaltijd voor <strong>{selecting.member}</strong> op <strong>{selecting.day}</strong>
-              </h3>
-              <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
-            </div>
-            <div className="picker-grid">
-              {recipes.filter((r) => !r.archived).map((r) => (
-                <button
-                  key={r.id}
-                  className="picker-card"
-                  onClick={() => handleSelect(r.id)}
-                >
-                  <span className="picker-emoji">{r.emoji}</span>
-                  <span className="picker-name">{r.name}</span>
-                  <div className="picker-tags">
-                    {r.tags.map((t) => <span key={t} className="tag">{t}</span>)}
-                  </div>
-                </button>
-              ))}
+      {selecting && (() => {
+        // The recipe currently in this cell (if any) — used to highlight in picker
+        const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
+        const isReplacing = Boolean(currentId && getRecipe(currentId));
+        return (
+          <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
+            <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
+              <div className="picker-header">
+                <h3>
+                  {isReplacing ? "Vervang maaltijd" : "Kies maaltijd"}{" "}
+                  voor <strong>{selecting.member}</strong> op <strong>{selecting.day}</strong>
+                </h3>
+                <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
+              </div>
+              <div className="picker-grid">
+                {recipes.filter((r) => !r.archived).map((r) => {
+                  const isCurrent = r.id === currentId;
+                  return (
+                    <button
+                      key={r.id}
+                      className={`picker-card ${isCurrent ? "picker-card--current" : ""}`}
+                      onClick={() => handleSelect(r.id)}
+                    >
+                      <span className="picker-emoji">{r.emoji}</span>
+                      <span className="picker-name">{r.name}</span>
+                      {isCurrent && <span className="picker-current-label">✓ Huidig</span>}
+                      <div className="picker-tags">
+                        {r.tags.map((t) => <span key={t} className="tag">{t}</span>)}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

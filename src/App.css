@@ -309,6 +309,19 @@
 }
 .meal-name { font-size: 0.78rem; text-align: center; color: #333; line-height: 1.2; }
 
+/* Pencil hint — shown on hover over filled cells */
+.meal-edit-hint {
+  position: absolute;
+  bottom: -2px;
+  right: 0;
+  font-size: 0.62rem;
+  color: #bbb;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.meal-cell.filled:hover .meal-edit-hint { opacity: 1; }
+
 .clear-btn {
   position: absolute;
   top: -8px;
@@ -389,6 +402,17 @@
   gap: 6px;
 }
 .picker-card:hover { border-color: #667eea; background: #eef0ff; }
+.picker-card--current {
+  border-color: #667eea;
+  background: #eef0ff;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.35);
+}
+.picker-current-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #667eea;
+  letter-spacing: 0.02em;
+}
 .picker-emoji { font-size: 2rem; }
 .picker-name { font-size: 0.82rem; font-weight: 600; color: #333; }
 .picker-tags { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
