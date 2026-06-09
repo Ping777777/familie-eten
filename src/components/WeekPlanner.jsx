@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
+import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -44,6 +45,7 @@ function getDayDate(offset, dayIndex) {
 
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan }) {
   const [selecting, setSelecting] = useState(null);
+  const [pickerFilter, setPickerFilter] = useState(null);
 
   const getRecipe = (id) => recipes.find((r) => r.id === id);
 
@@ -137,6 +139,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       {selecting && (() => {
         const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
         const isReplacing = Boolean(currentId && getRecipe(currentId));
+        const visibleRecipes = recipes
+          .filter((r) => !r.archived)
+          .filter((r) => matchesFilter(r, pickerFilter));
         return (
           <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
@@ -147,8 +152,24 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 </h3>
                 <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
               </div>
+
+              <div className="picker-filters">
+                {PICKER_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    className={`picker-filter-btn ${pickerFilter === f.key ? "active" : ""}`}
+                    onClick={() => setPickerFilter(pickerFilter === f.key ? null : f.key)}
+                  >
+                    {f.emoji} {f.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="picker-grid">
-                {recipes.filter((r) => !r.archived).map((r) => {
+                {visibleRecipes.length === 0 && (
+                  <p className="picker-empty">Geen recepten in deze categorie.</p>
+                )}
+                {visibleRecipes.map((r) => {
                   const isCurrent = r.id === currentId;
                   return (
                     <button
@@ -160,7 +181,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       <span className="picker-name">{r.name}</span>
                       {isCurrent && <span className="picker-current-label">✓ Huidig</span>}
                       <div className="picker-tags">
-                        {r.tags.map((t) => <span key={t} className="tag">{t}</span>)}
+                        {r.tags.map((t) => (
+                          <span key={t} className={`tag ${tagClass(t)}`}>{t}</span>
+                        ))}
                       </div>
                     </button>
                   );

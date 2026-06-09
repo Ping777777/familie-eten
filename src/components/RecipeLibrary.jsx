@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tagClass } from "../utils/tagColors";
 
 const UNIT_OPTIONS = [
   "g", "kg",
@@ -196,7 +197,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
           <h3>{recipe.name}</h3>
           <div className="recipe-meta">⏱ {recipe.cookTime} · {recipe.servings} pers.</div>
           <div className="recipe-tags">
-            {recipe.tags.map((t) => <span key={t} className="tag">{t}</span>)}
+            {recipe.tags.map((t) => <span key={t} className={`tag ${tagClass(t)}`}>{t}</span>)}
           </div>
         </div>
         <div className="card-actions">
