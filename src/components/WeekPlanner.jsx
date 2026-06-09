@@ -177,8 +177,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
             </div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
-              const recipeId = dayPlan[member] ?? null;
-              const recipe = recipeId ? getRecipe(recipeId) : null;
+              const rawId = dayPlan[member] ?? null;
+              const recipe = rawId ? getRecipe(rawId) : null;
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
               return (
