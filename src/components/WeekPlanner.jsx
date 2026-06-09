@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -16,17 +17,6 @@ const VARIETY_RULES = [
   { label: "pasta",    keywords: ["pasta", "spaghetti", "lasagne", "penne", "tagliatelle", "vermicelli"], threshold: 2 },
   { label: "rijst",    keywords: ["rijst", "sushirijst", "risotto", "jasmijnrijst"], threshold: 3 },
 ];
-
-// Get the Monday of the week that is `offset` weeks from today
-function getMondayOfWeek(offset = 0) {
-  const today = new Date();
-  const day = today.getDay(); // 0 = Sun
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diffToMonday + offset * 7);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
 
 const NL_MONTHS = [
   "januari","februari","maart","april","mei","juni",
@@ -51,10 +41,8 @@ function formatWeekRange(offset) {
 }
 
 function getWeekLabel(offset) {
-  if (offset === 0) return "Deze week";
-  if (offset === 1) return "Volgende week";
-  if (offset === -1) return "Vorige week";
-  return offset > 0 ? `Over ${offset} weken` : `${Math.abs(offset)} weken geleden`;
+  const { week, year } = getIsoWeekInfo(offset);
+  return `Week ${week} · ${year}`;
 }
 
 // Get the date for a specific day index (0=Mon) within the offset week
@@ -108,7 +96,7 @@ function computeWarnings(days, weekPlan, recipes) {
     });
 }
 
-export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear }) {
+export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan }) {
   const [selecting, setSelecting] = useState(null);
 
   const getRecipe = (id) => recipes.find((r) => r.id === id);
@@ -138,6 +126,21 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           <button className="week-today-btn" onClick={() => onWeekChange(0)}>Vandaag</button>
         )}
       </div>
+
+      {/* Save conflict notice */}
+      {saveFailed && (
+        <div className="save-failed-banner" role="alert">
+          <span className="warning-icon">⚠️</span>
+          <span>
+            <strong>Niet opgeslagen</strong> — iemand anders wijzigde deze week tegelijk. Je wijziging staat nog op het scherm maar is niet bewaard.
+          </span>
+          {onReloadWeekPlan && (
+            <button className="save-failed-reload" onClick={onReloadWeekPlan}>
+              Laad de laatste versie
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Variety warnings */}
       {warnings.length > 0 && (
@@ -173,7 +176,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               <span className="day-date">{getDayDate(weekOffset, idx)}</span>
             </div>
             {family.map((member) => {
-              const recipeId = weekPlan[day][member];
+              const dayPlan = weekPlan?.[day] ?? {};
+              const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
