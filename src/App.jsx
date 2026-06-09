@@ -191,25 +191,29 @@ export default function App() {
 
   const deleteRecipe = (id) => {
     setRecipeList((prev) => prev.filter((r) => r.id !== id));
-    updateSelectedWeekPlan((prev) => {
-      let weekChanged = false;
-      let nextWeek = prev;
+  };
 
+  // Whenever the recipe list or a newly-loaded week plan changes, remove any
+  // plan entries whose recipe no longer exists (lazy cleanup covers all weeks).
+  useEffect(() => {
+    if (!currentUser || !weekPlanLoaded) return;
+    updateSelectedWeekPlan((prev) => {
+      const recipeIds = new Set(recipeList.map((r) => r.id));
+      let weekChanged = false;
+      let next = prev;
       DAYS.forEach((day) => {
         FAMILY.forEach((member) => {
-          if (nextWeek[day]?.[member] === id) {
-            nextWeek = {
-              ...nextWeek,
-              [day]: { ...nextWeek[day], [member]: null },
-            };
+          const id = next[day]?.[member];
+          if (id && !recipeIds.has(id)) {
+            next = { ...next, [day]: { ...next[day], [member]: null } };
             weekChanged = true;
           }
         });
       });
-
-      return weekChanged ? nextWeek : prev;
+      return weekChanged ? next : prev;
     });
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipeList, weekPlanLoaded, currentUser]);
 
   const assignMeal = (day, member, recipeId) => {
     applySelectedWeekPlanUpdate((prev) => ({
