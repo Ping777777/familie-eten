@@ -84,12 +84,15 @@ export default function App() {
     return { conflict: false, etag: data.etag ?? null };
   };
 
-  const updateSelectedWeekPlan = (updater) => {
+  const updateSelectedWeekPlan = (day, member, recipeId) => {
     if (!currentUser) return;
 
     // Capture the target week at enqueue time so a week switch mid-flight can't misroute the write.
     const weekKey = activeWeekKeyRef.current;
-    const applyUpdater = (base) => (typeof updater === "function" ? updater(base) : updater);
+    const applyUpdater = (base) => ({
+      ...base,
+      [day]: { ...(base[day] ?? {}), [member]: recipeId },
+    });
     const seq = (weekPlanWriteSeqRef.current += 1);
 
     // Optimistic UI update from current local state for instant feedback.
@@ -185,37 +188,12 @@ export default function App() {
 
   const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
 
-  const applySelectedWeekPlanUpdate = (updater) => {
-    updateSelectedWeekPlan(updater);
-  };
-
   const deleteRecipe = (id) => {
     setRecipeList((prev) => prev.filter((r) => r.id !== id));
-    updateSelectedWeekPlan((prev) => {
-      let weekChanged = false;
-      let nextWeek = prev;
-
-      DAYS.forEach((day) => {
-        FAMILY.forEach((member) => {
-          if (nextWeek[day]?.[member] === id) {
-            nextWeek = {
-              ...nextWeek,
-              [day]: { ...nextWeek[day], [member]: null },
-            };
-            weekChanged = true;
-          }
-        });
-      });
-
-      return weekChanged ? nextWeek : prev;
-    });
   };
 
   const assignMeal = (day, member, recipeId) => {
-    applySelectedWeekPlanUpdate((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [member]: recipeId },
-    }));
+    updateSelectedWeekPlan(day, member, recipeId);
   };
 
   const clearMeal = (day, member) => assignMeal(day, member, null);
