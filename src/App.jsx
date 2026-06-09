@@ -96,8 +96,7 @@ export default function App() {
     const seq = (weekPlanWriteSeqRef.current += 1);
 
     // Optimistic UI update from current local state for instant feedback.
-    const optimisticBase = selectedWeekPlanRef.current ?? emptyWeek();
-    const optimistic = applyUpdater(optimisticBase);
+    const optimistic = applyUpdater(selectedWeekPlanRef.current ?? emptyWeek());
     selectedWeekPlanRef.current = optimistic;
     setSelectedWeekPlan(optimistic);
 
