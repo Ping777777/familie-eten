@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { recipes } from "./data/recipes";
+import { recipes as defaultRecipes } from "./data/recipes";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
@@ -18,46 +18,38 @@ const emptyWeek = () =>
     return acc;
   }, {});
 
-const load = (key, fallback) => {
-  try {
-    const val = localStorage.getItem(key);
-    return val ? JSON.parse(val) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
 export default function App() {
   const [tab, setTab] = useState("planner");
   const [showRoadmap, setShowRoadmap] = useState(false);
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, 1 = next, -1 = last
+  const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
+
+  // Week plan state
   const [selectedWeekPlan, setSelectedWeekPlan] = useState(() => emptyWeek());
   const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
-  // True when an edit could not be saved because another device kept changing the same week.
   const [weekPlanSaveFailed, setWeekPlanSaveFailed] = useState(false);
-  const [recipeList, setRecipeList] = useState(() => load("familie-eten:recipes", recipes));
   const selectedWeekPlanRef = useRef(selectedWeekPlan);
   const weekPlanMutationQueueRef = useRef(Promise.resolve());
-  // Last server-acknowledged plan + its ETag, used as the base for conditional writes.
   const weekPlanBaseRef = useRef(selectedWeekPlan);
   const weekPlanEtagRef = useRef(null);
-  // Monotonic counter so only the most recently queued edit reconciles the UI (avoids flicker).
   const weekPlanWriteSeqRef = useRef(0);
   const activeWeekKey = getIsoWeekKey(weekOffset);
   const activeWeekKeyRef = useRef(activeWeekKey);
 
-  useEffect(() => {
-    selectedWeekPlanRef.current = selectedWeekPlan;
-  }, [selectedWeekPlan]);
+  // Recipe state
+  const [recipeList, setRecipeList] = useState(defaultRecipes);
+  const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
+  const recipesEtagRef = useRef(null);
 
-  useEffect(() => {
-    activeWeekKeyRef.current = activeWeekKey;
-  }, [activeWeekKey]);
+  // ── Ref sync ──────────────────────────────────────────────────────────────
+  useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
+  useEffect(() => { activeWeekKeyRef.current = activeWeekKey; }, [activeWeekKey]);
 
+  // ── Week plan API ─────────────────────────────────────────────────────────
   const fetchWeekPlan = async (weekKey) => {
     const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, {
       cache: "no-store",
@@ -68,7 +60,6 @@ export default function App() {
     return { weekPlan: data.weekPlan ?? emptyWeek(), etag: data.etag ?? null };
   };
 
-  // Conditional write. Returns { conflict, weekPlan?, etag } so the caller can rebase on conflict.
   const persistWeekPlan = async (weekKey, nextWeekPlan, etag) => {
     const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, {
       method: "PUT",
@@ -86,8 +77,6 @@ export default function App() {
 
   const updateSelectedWeekPlan = (day, member, recipeId) => {
     if (!currentUser) return;
-
-    // Capture the target week at enqueue time so a week switch mid-flight can't misroute the write.
     const weekKey = activeWeekKeyRef.current;
     const applyUpdater = (base) => ({
       ...base,
@@ -95,7 +84,6 @@ export default function App() {
     });
     const seq = (weekPlanWriteSeqRef.current += 1);
 
-    // Optimistic UI update from current local state for instant feedback.
     const optimistic = applyUpdater(selectedWeekPlanRef.current ?? emptyWeek());
     selectedWeekPlanRef.current = optimistic;
     setSelectedWeekPlan(optimistic);
@@ -105,21 +93,17 @@ export default function App() {
       .then(async () => {
         if (activeWeekKeyRef.current !== weekKey) return;
 
-        // Rebase this edit onto the last server-acknowledged version (chains via ETag).
         let base = weekPlanBaseRef.current ?? emptyWeek();
         let etag = weekPlanEtagRef.current;
         let next = applyUpdater(base);
 
         for (let attempt = 0; attempt < MAX_WEEK_PLAN_WRITE_RETRIES; attempt += 1) {
-          // Always guard with the ETag so we never overwrite another device's change.
           const result = await persistWeekPlan(weekKey, next, etag).catch(() => null);
-
-          if (!result) return; // Network error: keep optimistic state; next edit retries.
+          if (!result) return;
 
           if (!result.conflict) {
             weekPlanBaseRef.current = next;
             weekPlanEtagRef.current = result.etag;
-            // Only the latest queued edit reconciles the UI, to avoid clobbering pending edits.
             if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
               selectedWeekPlanRef.current = next;
               setSelectedWeekPlan(next);
@@ -128,7 +112,6 @@ export default function App() {
             return;
           }
 
-          // Conflict: another device wrote. Rebase our change onto the latest and retry.
           if (!result.etag) {
             if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
               setWeekPlanSaveFailed(true);
@@ -140,19 +123,14 @@ export default function App() {
           next = applyUpdater(base);
         }
 
-        // Retries exhausted while someone else kept editing this week. Cancel the write
-        // rather than overwrite their change. Keep the user's attempt on screen and flag
-        // it as unsaved so they can decide what to do.
         if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
           setWeekPlanSaveFailed(true);
         }
       });
   };
 
-  // Load week plan from blob when user is logged in
   useEffect(() => {
     if (!currentUser) return;
-
     fetchWeekPlan(activeWeekKey)
       .then(({ weekPlan, etag }) => {
         weekPlanBaseRef.current = weekPlan;
@@ -162,16 +140,9 @@ export default function App() {
         setWeekPlanSaveFailed(false);
       })
       .catch(() => {})
-      .finally(() => {
-        setWeekPlanLoaded(true);
-      });
+      .finally(() => { setWeekPlanLoaded(true); });
   }, [activeWeekKey, currentUser]);
 
-  useEffect(() => {
-    localStorage.setItem("familie-eten:recipes", JSON.stringify(recipeList));
-  }, [recipeList]);
-
-  // Discard the unsaved local change and load the latest version from the server.
   const reloadWeekPlanFromServer = () => {
     const weekKey = activeWeekKeyRef.current;
     fetchWeekPlan(weekKey)
@@ -186,11 +157,71 @@ export default function App() {
       .catch(() => {});
   };
 
-  const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
-
-  const deleteRecipe = (id) => {
-    setRecipeList((prev) => prev.filter((r) => r.id !== id));
+  // ── Recipe API ────────────────────────────────────────────────────────────
+  const saveRecipesToBlob = async (nextRecipes) => {
+    try {
+      const response = await fetch("/api/recipes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipes: nextRecipes, etag: recipesEtagRef.current }),
+      });
+      if (response.status === 412) {
+        const data = await response.json().catch(() => ({}));
+        // Another client saved a different version — load theirs
+        if (data.recipes && data.etag) {
+          recipesEtagRef.current = data.etag;
+          setRecipeList(data.recipes);
+        }
+        setRecipesSaveFailed(true);
+        return;
+      }
+      if (!response.ok) { setRecipesSaveFailed(true); return; }
+      const data = await response.json().catch(() => ({}));
+      recipesEtagRef.current = data.etag ?? null;
+      setRecipesSaveFailed(false);
+    } catch {
+      setRecipesSaveFailed(true);
+    }
   };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/recipes", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          // No blob yet — seed it with bundled recipes
+          recipesEtagRef.current = null;
+          setRecipeList(defaultRecipes);
+          saveRecipesToBlob(defaultRecipes);
+          return;
+        }
+        if (!response.ok) throw new Error("Failed to load recipes");
+        const data = await response.json();
+        recipesEtagRef.current = data.etag ?? null;
+        setRecipeList(data.recipes ?? defaultRecipes);
+      })
+      .catch(() => {
+        // Network error — fall back to bundled recipes silently
+        setRecipeList(defaultRecipes);
+      })
+      .finally(() => { setRecipesLoaded(true); });
+  }, [currentUser]);
+
+  // ── Recipe mutations ──────────────────────────────────────────────────────
+  const deleteRecipe = (id) => {
+    const next = recipeList.filter((r) => r.id !== id);
+    setRecipeList(next);
+    saveRecipesToBlob(next);
+  };
+
+  const updateRecipe = (updated) => {
+    const next = recipeList.map((r) => r.id === updated.id ? updated : r);
+    setRecipeList(next);
+    saveRecipesToBlob(next);
+  };
+
+  // ── Week plan helpers ─────────────────────────────────────────────────────
+  const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
 
   const assignMeal = (day, member, recipeId) => {
     updateSelectedWeekPlan(day, member, recipeId);
@@ -204,11 +235,11 @@ export default function App() {
     setWeekOffset(nextWeekOffset);
   };
 
+  // ── Auth ──────────────────────────────────────────────────────────────────
   const handleLogin = async (event) => {
     event.preventDefault();
     setLoginError("");
     setLoginBusy(true);
-
     try {
       const response = await fetch("/api/login", {
         method: "POST",
@@ -220,8 +251,8 @@ export default function App() {
         setLoginError(data?.message || "Inloggen mislukt");
         return;
       }
-
       setWeekPlanLoaded(false);
+      setRecipesLoaded(false);
       setCurrentUser(data.user);
       localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
@@ -238,10 +269,15 @@ export default function App() {
     setSelectedWeekPlan(emptyWeek());
     weekPlanBaseRef.current = emptyWeek();
     weekPlanEtagRef.current = null;
+    setRecipesLoaded(true);
+    setRecipeList(defaultRecipes);
+    recipesEtagRef.current = null;
+    setRecipesSaveFailed(false);
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   if (!currentUser) {
     return (
       <div className="app login-screen">
@@ -276,12 +312,12 @@ export default function App() {
     );
   }
 
-  if (!weekPlanLoaded) {
+  if (!weekPlanLoaded || !recipesLoaded) {
     return (
       <div className="app login-screen">
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
-          <p className="subtitle">Weekplanner laden…</p>
+          <p className="subtitle">Laden…</p>
         </main>
       </div>
     );
@@ -328,7 +364,14 @@ export default function App() {
             onReloadWeekPlan={reloadWeekPlanFromServer}
           />
         )}
-        {tab === "recipes" && <RecipeLibrary recipes={recipeList} onDelete={deleteRecipe} />}
+        {tab === "recipes" && (
+          <RecipeLibrary
+            recipes={recipeList}
+            onDelete={deleteRecipe}
+            onUpdate={updateRecipe}
+            saveFailed={recipesSaveFailed}
+          />
+        )}
         {tab === "shopping" && (
           <ShoppingList weekPlan={selectedWeekPlanData} recipes={recipeList} family={FAMILY} days={DAYS} />
         )}

@@ -882,3 +882,264 @@
   .meal-cell { min-height: 56px; padding: 6px 4px; }
   .meal-name { font-size: 0.68rem; }
 }
+
+/* ── Recipe card action buttons (archive, edit, delete) ── */
+.card-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  padding: 2px 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.recipe-card:hover .card-action-btn { opacity: 0.55; }
+.card-action-btn:hover { opacity: 1 !important; transform: scale(1.2); }
+
+/* Keep old .delete-recipe-btn working (the delete confirmation still references it) */
+.delete-recipe-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.15s;
+  padding: 2px;
+  line-height: 1;
+}
+.recipe-card:hover .delete-recipe-btn { opacity: 0.7; }
+.delete-recipe-btn:hover { opacity: 1 !important; transform: scale(1.2); }
+
+/* ── Archive section ── */
+.archive-section {
+  margin-top: 32px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #ede7f6;
+}
+
+.archive-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3e5f5;
+  border: none;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6a1b9a;
+  text-align: left;
+}
+.archive-toggle:hover { background: #ead5f7; }
+.archive-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #ab47bc;
+}
+.archive-chevron { font-size: 0.75rem; color: #ab47bc; }
+
+.archive-body {
+  background: white;
+  padding: 12px 16px 16px;
+}
+.archive-hint {
+  font-size: 0.78rem;
+  color: #999;
+  margin-bottom: 12px;
+}
+
+.recipe-card--archived {
+  background: #fafafa;
+  opacity: 0.8;
+}
+.recipe-card--archived:hover { opacity: 1; }
+
+/* ── Edit recipe modal ── */
+.edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+}
+
+.edit-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.edit-modal-header h3 { margin: 0; font-size: 1.05rem; color: #222; }
+
+.edit-form {
+  overflow-y: auto;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-field-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 100px;
+}
+.edit-field--emoji { flex: 0 0 70px; min-width: 70px; }
+.edit-field--narrow { flex: 0 0 80px; min-width: 80px; }
+.edit-field--grow { flex: 1; }
+
+.edit-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.edit-label-hint {
+  font-weight: 400;
+  text-transform: none;
+  color: #aaa;
+  letter-spacing: 0;
+}
+
+.edit-field input {
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.edit-field input:focus { border-color: #667eea; }
+
+/* Ingredient editor */
+.ingredients-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ingredient-edit-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ing-edit-amount {
+  width: 70px;
+  flex-shrink: 0;
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.ing-edit-amount:focus { border-color: #667eea; }
+
+.ing-edit-unit {
+  width: 90px;
+  flex-shrink: 0;
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.ing-edit-unit:focus { border-color: #667eea; }
+
+.ing-edit-name {
+  flex: 1;
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.ing-edit-name:focus { border-color: #667eea; }
+
+.ing-remove-btn {
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #aaa;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ing-remove-btn:hover { border-color: #e53935; color: #e53935; }
+
+.ing-add-btn {
+  background: none;
+  border: 1.5px dashed #ccc;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: #888;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ing-add-btn:hover { border-color: #667eea; color: #667eea; }
+
+.edit-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.btn-save {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-save:hover { background: #5a6fd6; }

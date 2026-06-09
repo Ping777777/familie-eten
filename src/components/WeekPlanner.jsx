@@ -220,7 +220,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
             </div>
             <div className="picker-grid">
-              {recipes.map((r) => (
+              {recipes.filter((r) => !r.archived).map((r) => (
                 <button
                   key={r.id}
                   className="picker-card"
