@@ -299,6 +299,26 @@
 .meal-cell.selecting { box-shadow: 0 0 0 3px rgba(102,126,234,0.4); }
 .meal-cell.empty .add-hint { color: #aaa; font-size: 0.78rem; }
 
+/* Locked cell — day already claimed by another family member */
+.meal-cell.locked {
+  background: #f2f2f2;
+  cursor: default;
+  border-color: transparent;
+}
+.meal-cell.locked:hover { box-shadow: none; }
+
+.locked-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  opacity: 0.5;
+}
+.locked-emoji { font-size: 1.5rem; }
+.locked-name { font-size: 0.7rem; color: #888; text-align: center; line-height: 1.2; }
+.locked-icon { font-size: 0.62rem; margin-top: 1px; }
+
 .meal-tag {
   display: flex;
   flex-direction: column;
@@ -372,6 +392,7 @@
   border-bottom: 1px solid #eee;
 }
 .picker-header h3 { margin: 0; font-size: 1rem; color: #333; }
+.picker-lock-note { font-size: 0.72rem; font-weight: 400; color: #aaa; }
 .close-btn {
   background: none;
   border: none;

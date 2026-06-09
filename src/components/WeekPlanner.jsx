@@ -157,7 +157,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         </div>
       )}
 
-      <p className="hint">Klik op een vakje om een maaltijd te kiezen voor elk gezinslid.</p>
+      <p className="hint">Wie als eerste een maaltijd kiest, vergrendelt de dag voor het hele gezin.</p>
 
       <div className="planner-grid">
         <div className="grid-header">
@@ -179,27 +179,47 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
+
+              // Day is locked when a DIFFERENT member already picked a meal
+              const dayPickerMember = family.find((m) => m !== member && (dayPlan[m] ?? null));
+              const isDayLocked = Boolean(dayPickerMember);
+              const lockedRecipe = isDayLocked ? getRecipe(dayPlan[dayPickerMember]) : null;
+
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
               return (
                 <div
                   key={member}
-                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"}`}
+                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${
+                    recipe ? "filled" : isDayLocked ? "locked" : "empty"
+                  }`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={() => setSelecting({ day, member })}
+                  onClick={isDayLocked ? undefined : () => setSelecting({ day, member })}
                 >
                   {recipe ? (
+                    // This member is the picker — show their meal with × to unlock the day
                     <div className="meal-tag">
                       <span>{recipe.emoji}</span>
                       <span className="meal-name">{recipe.name}</span>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
-                        title="Verwijder"
+                        title="Verwijder — ontgrendelt de dag"
                       >
                         ×
                       </button>
                       <span className="meal-edit-hint" aria-hidden="true">✎</span>
+                    </div>
+                  ) : isDayLocked ? (
+                    // Another member already picked — show their meal dimmed + lock
+                    <div className="locked-tag">
+                      {lockedRecipe && (
+                        <>
+                          <span className="locked-emoji">{lockedRecipe.emoji}</span>
+                          <span className="locked-name">{lockedRecipe.name}</span>
+                        </>
+                      )}
+                      <span className="locked-icon" aria-label="Vergrendeld">🔒</span>
                     </div>
                   ) : (
                     <span className="add-hint">+ Kies maaltijd</span>
@@ -221,7 +241,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               <div className="picker-header">
                 <h3>
                   {isReplacing ? "Vervang maaltijd" : "Kies maaltijd"}{" "}
-                  voor <strong>{selecting.member}</strong> op <strong>{selecting.day}</strong>
+                  voor <strong>{selecting.day}</strong>
+                  <span className="picker-lock-note"> · vergrendelt dag voor iedereen</span>
                 </h3>
                 <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
               </div>
