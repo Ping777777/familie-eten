@@ -218,16 +218,31 @@ export default function App() {
           saveRecipesToBlob(defaultRecipes);
           return;
         }
-        // Append new default recipes not yet in blob (picks up newly bundled recipes on deploy)
-        const blobIds = new Set((data.recipes ?? []).map((r) => r.id));
-        const missing = defaultRecipes.filter((r) => !blobIds.has(r.id));
-        if (missing.length > 0) {
-          const merged = [...(data.recipes ?? []), ...missing];
+        // Migration: patch existing recipes missing instructions + add any completely new ones
+        const applyMigration = (blobRecipes) => {
+          const patched = blobRecipes.map((blobR) => {
+            const def = defaultRecipes.find((d) => d.id === blobR.id);
+            if (def?.instructions?.length > 0 && !(blobR.instructions?.length > 0)) {
+              return { ...blobR, instructions: def.instructions };
+            }
+            return blobR;
+          });
+          const ids = new Set(blobRecipes.map((r) => r.id));
+          const newOnes = defaultRecipes.filter((r) => !ids.has(r.id));
+          return [...patched, ...newOnes];
+        };
+
+        const migrated = applyMigration(data.recipes ?? []);
+        const needsMigrate = migrated.some(
+          (r, i) => r !== (data.recipes ?? [])[i]
+        ) || migrated.length !== (data.recipes ?? []).length;
+
+        if (needsMigrate) {
           recipesEtagRef.current = data.etag ?? null;
-          setRecipeList(merged);
+          setRecipeList(migrated);
           // Migration save: retry up to 3× on 412, never show error banner
           (async () => {
-            let toSave = merged;
+            let toSave = migrated;
             let etag = data.etag ?? null;
             for (let attempt = 0; attempt < 3; attempt++) {
               try {
@@ -241,23 +256,15 @@ export default function App() {
                   recipesEtagRef.current = d.etag ?? null;
                   return;
                 }
-                if (r.status !== 412) return; // non-retryable, keep merged in UI silently
+                if (r.status !== 412) return;
                 const d = await r.json().catch(() => ({}));
                 if (!d.recipes || !d.etag) return;
                 etag = d.etag;
-                const serverIds = new Set(d.recipes.map((x) => x.id));
-                const stillMissing = missing.filter((x) => !serverIds.has(x.id));
-                if (stillMissing.length === 0) {
-                  // Another client already wrote all needed recipes — use their version
-                  recipesEtagRef.current = etag;
-                  setRecipeList(d.recipes);
-                  return;
-                }
-                toSave = [...d.recipes, ...stillMissing];
+                toSave = applyMigration(d.recipes);
                 setRecipeList(toSave);
                 recipesEtagRef.current = etag;
               } catch {
-                return; // network error — recipe 113 stays visible in UI
+                return;
               }
             }
           })();

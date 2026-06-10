@@ -58,6 +58,14 @@ export const recipes = [
       { name: "olijfolie", amount: "2", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
     ],
+    instructions: [
+      "Verwarm de oven voor op 240°C. Schil de aardappels (of laat de schil erop) en snijd ze in vingerdikke frietjes. Laat je de schil zitten, was ze dan goed.",
+      "Verdeel de frietjes op een bakplaat, meng met 2 el olijfolie en bak 20–25 min in het midden van de oven tot ze goudbruin en gaar zijn.",
+      "Verhit een grote koekenpan op hoog vuur. Dep de entrecotes goed droog en wrijf in met olijfolie, zout en peper. Bak rondom stevig aan, ook de dikke vetrand. Laat het vlees afgedekt ca. 5 min rusten op een bord.",
+      "Knip of snijd de verse bieslook fijn in ringetjes.",
+      "Roer de bieslook door het kuipje yoghurt en breng goed op smaak met peper en zout.",
+      "Verwijder de harde kern van de sla en snijd in fijne reepjes. Maak een dressing van azijn, mosterd, een snuf suiker, zout en peper. Snijd het vlees in plakken. Verdeel friet, salade en vlees over de borden en serveer met de bieslookdip.",
+    ],
   },
   {
     id: 104,
@@ -79,6 +87,14 @@ export const recipes = [
       { name: "yoghurt", amount: "3", unit: "kuipjes" },
       { name: "olijfolie", amount: "2", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
+    ],
+    instructions: [
+      "Breng 900 ml water aan de kook in een grote pan. Voeg de bulgur en het kippenbouillonpoeder toe. Zet op laag vuur met het deksel erop en laat 5–7 min koken tot het water is opgenomen. Neem van het vuur en laat nog 3 min afgedekt rusten.",
+      "Dep de kipstukjes droog. Meng met de Noord-Afrikaanse kruidenmix, zout en peper. Pel en hak de knoflooktenen fijn.",
+      "Schil de wortels en rasp ze grof. Meng met 3 el azijn, een snuf zout en een snuf suiker. Zet apart om in te trekken.",
+      "Verwijder de zaadlijsten van de paprika's en snijd in blokjes. Verhit een grote koekenpan met 2 el olijfolie op middelhoog vuur. Bak de kip en knoflook 4–5 min. Voeg de paprika toe en bak alles gaar. Breng goed op smaak met peper en zout.",
+      "Hak de muntblaadjes en de dille fijn.",
+      "Roer de munt en dille door de yoghurt. Voeg de wortelrasp toe en roer goed door. Verdeel de bulgur en kip over de borden en serveer met de dilleyoghurt.",
     ],
   },
   {
@@ -103,6 +119,14 @@ export const recipes = [
       { name: "tamari-sojasaus", amount: "25", unit: "ml" },
       { name: "bio-kimchi", amount: "2", unit: "potjes" },
     ],
+    instructions: [
+      "Breng 600 ml licht gezouten water aan de kook. Voeg de sushirijst toe, breng opnieuw aan de kook en zet op laag vuur. Leg het deksel op de pan en kook 18–20 min. Neem van het vuur, roer er een druppel azijn door en laat 5 min rusten.",
+      "Pel en snijd de knoflook fijn. Meng met de Koreaanse chilipasta, sesamolie, tamari-sojasaus, een scheutje azijn, zout en suiker. Bewaar de helft van de saus voor het serveren.",
+      "Schil en rasp gember en wortels grof. Verhit een grote koekenpan op hoog vuur met 1 el plantaardige olie. Bak de gember en wortel 2–3 min. Breng op smaak met een snuf suiker, zout en peper. Schep in een kom en dep de pan droog.",
+      "Verhit 1 el olie in de pan op hoog vuur. Bak de runderreepjes 3–5 min goudbruin. Voeg de sesamzaadjes en de helft van de saus toe. Voeg de babyspinazie toe en bak tot geslonken. Breng op smaak.",
+      "Schaaf de komkommers met een dunschiller in lange, dunne linten. Draai telkens een kwartslag en stop als je alleen nog de kern ziet.",
+      "Verhit de pan met een scheutje olie op hoog vuur. Bak de eieren ca. 2 min als spiegelei. Verdeel de rijst over diepe borden. Schep de spinazie, wortel, komkommer en bio-kimchi ernaast. Leg een spiegelei bovenop en besprenkel met de overgebleven saus.",
+    ],
   },
   {
     id: 106,
@@ -122,6 +146,14 @@ export const recipes = [
       { name: "ananasschijfjes", amount: "1", unit: "blikje" },
       { name: "chilivlokken", amount: "1", unit: "tl" },
       { name: "plantaardige olie", amount: "2", unit: "el" },
+    ],
+    instructions: [
+      "Haal de boter vast uit de koelkast. Verwijder de zaadlijsten van de paprika's en snijd in grove stukken. Halveer de krieltjes. Spoel de garnalen af en dep ze HEEL goed droog — dit is cruciaal voor een mooie korst.",
+      "Breng een pan met gezouten water aan de kook. Kook de krieltjes 15–20 min tot gaar. Giet af en laat goed droogstomen, dan pas halveren.",
+      "Rijg de krieltjes en paprikastukken afwisselend op sjasliekstokjes. Bestrooi met olie en paprikapoeder. Rijg de garnalen op aparte stokjes (tip: leg ze op aluminiumfolie zodat ze niet door het rooster vallen). Voeg zout pas vlak voor het grillen toe.",
+      "Verhit de grillpan op middelhoog vuur. Grill de aardappel-paprika-sjasliekjes, regelmatig omdraaien, ca. 5 min tot ze goudbruin zijn.",
+      "Dep de biefstuken HEEL goed droog en wrijf in met peper. Voeg pas vlak voor het grillen zout toe. Grill het vlees 2 min per kant op hoog vuur. Grill de garnalen-sjasliekjes ca. 3 min tot ze roze zijn. Laat het vlees afgedekt ca. 3 min rusten.",
+      "Smelt de boter en meng met de kruidenmix, limoensap en chilivlokken. Snijd het vlees in plakken. Serveer met de garnalen- en aardappelsjasliekjes en schenk de limoenboter erover.",
     ],
   },
   {
@@ -143,6 +175,14 @@ export const recipes = [
       { name: "mayonaise", amount: "1", unit: "el" },
       { name: "tomatenketchup", amount: "1", unit: "el" },
       { name: "olijfolie", amount: "2", unit: "el" },
+    ],
+    instructions: [
+      "Verwarm de oven voor op 240°C (hetelucht). Snijd de broccoli in kleine roosjes. Meng met 2 el olijfolie en de cajunkruiden. Verdeel op een bakplaat met bakpapier en rooster 15 min tot licht krokant.",
+      "Snijd de babyromanasla in hapklare stukjes. Snijd 2 tomaten in grove stukken. Maak een dressing van 3 el olijfolie, 2 el azijn, zout, peper en een snuf suiker. Snijd de overige tomaten in plakken voor op de burger.",
+      "Meng de mayonaise met de tomatenketchup. Dep de kipfilets droog en snijd elk filet horizontaal doormidden in 2 platte stukken. Haal door de mayo-ketchupsaus, wentel daarna door de cajunkruiden en druk stevig aan in de panko zodat alle kanten goed bedekt zijn.",
+      "Verhit een grote koekenpan op middelhoog vuur met 3 el olijfolie. Bak de kipfilets 2–3 min per kant tot goudbruin en gaar. Laat even uitlekken op keukenpapier.",
+      "Snijd de burgerbroodjes doormidden en bak ze 2–3 min in de oven tot licht geroosterd.",
+      "Beleg de broodjes met de kipfilets en de tomatenplakjes. Meng de broccoli, sla en tomatenstukjes met de dressing. Serveer de kipburgers met de salade ernaast.",
     ],
   },
   {
