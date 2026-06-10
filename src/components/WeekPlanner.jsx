@@ -75,7 +75,7 @@ function getDayDate(offset, dayIndex) {
   return d.getDate();
 }
 
-export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan }) {
+export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
   const [selecting, setSelecting] = useState(null);
   const [pickerFilter, setPickerFilter] = useState(null);
 
@@ -165,7 +165,13 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   key={member}
                   className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : isDayLocked ? "locked" : "empty"}`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={isDayLocked ? undefined : () => setSelecting({ day, member })}
+                  onClick={isDayLocked ? undefined : () => {
+                    if (recipe && recipe.id > 0) {
+                      onViewRecipe(recipe.id, day, member);
+                    } else {
+                      setSelecting({ day, member });
+                    }
+                  }}
                 >
                   {recipe ? (
                     <div className="meal-tag">
@@ -178,7 +184,11 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       >
                         ×
                       </button>
-                      <span className="meal-edit-hint" aria-hidden="true">✎</span>
+                      <button
+                        className="meal-edit-btn"
+                        title="Andere maaltijd kiezen"
+                        onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
+                      >✎</button>
                     </div>
                   ) : isDayLocked ? null : (
                     <span className="add-hint">+ Kies maaltijd</span>

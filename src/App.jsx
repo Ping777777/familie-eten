@@ -4,6 +4,7 @@ import { defaultStaples } from "./data/defaultStaples";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
+import RecipeDetail from "./components/RecipeDetail";
 import RoadmapModal from "./components/RoadmapModal";
 import { getIsoWeekKey } from "./week";
 import "./App.css";
@@ -45,6 +46,9 @@ export default function App() {
   const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
   const recipesEtagRef = useRef(null);
+
+  // Recipe detail view
+  const [recipeView, setRecipeView] = useState(null); // { recipeId, day, member }
 
   // Staples state
   const [staplesList, setStaplesList] = useState(defaultStaples);
@@ -482,6 +486,7 @@ export default function App() {
             onClear={clearMeal}
             saveFailed={weekPlanSaveFailed}
             onReloadWeekPlan={reloadWeekPlanFromServer}
+            onViewRecipe={(recipeId, day, member) => setRecipeView({ recipeId, day, member })}
           />
         )}
         {tab === "recipes" && (
@@ -504,6 +509,15 @@ export default function App() {
           />
         )}
       </main>
+
+      {recipeView && (
+        <RecipeDetail
+          recipe={recipeList.find((r) => r.id === recipeView.recipeId)}
+          day={recipeView.day}
+          member={recipeView.member}
+          onBack={() => setRecipeView(null)}
+        />
+      )}
     </div>
   );
 }
