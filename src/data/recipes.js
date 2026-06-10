@@ -223,6 +223,14 @@ export const recipes = [
       { name: "honing of suiker", amount: "1", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
     ],
+    instructions: [
+      "Breng 600 ml licht gezouten water aan de kook. Was de rijst grondig in een zeef. Voeg toe, breng opnieuw aan de kook, zet op laag vuur en leg een deksel op de pan. Kook 15–20 min tot de rijst gaar is en het water is opgenomen. Neem van het vuur en laat afgedekt rusten.",
+      "Dep de kipfilets droog en snijd elk horizontaal doormidden in 2 platte stukken. Leg het vlees tussen huishoudfolie en klop met een zware pan of vleesklopper op ca. 0,5 cm dik. Wrijf aan beide kanten in met een snuf peper en zout.",
+      "Verhit een grote koekenpan op middelhoog vuur met 1 el plantaardige olie. Braad het vlees 2–3 min per kant goudbruin en gaar. Bestrijk met de chilisaus, bestrooi met de sesamzaadjes en bak nog 1–2 min. Schep het vlees uit de pan en zet opzij — bewaar de braadsappen in de pan.",
+      "Rasp 1 limoenschil en pers het sap uit. Meng het limoensap met de sojasaus, 2 el olie, honing en een snuf suiker en zout. Verhit de koekenpan (met de braadsappen) op middelhoog vuur, roer zodat de aanbaksels loskomen en voeg de saus toe. Laat 1–2 min inkoken. Neem van het vuur.",
+      "Schil of schrob de wortels en rasp grof. Pluk de Thaise basilicumblaadjes en hak fijn. Verwijder de harde kern van de rode kool en snijd in dunne reepjes. Meng de kooltreepjes en wortelrasp met ¼ van het limoensap en een flinke snuf zout.",
+      "Verdeel de rijst over kommen of diepe borden en bedruppel met een deel van de saus. Snijd het vlees in plakken en leg bovenop de rijst samen met de slaw. Bedruppel met de rest van de saus en bestrooi met de rest van de Thaise basilicum.",
+    ],
   },
   {
     id: 109,
@@ -242,6 +250,14 @@ export const recipes = [
       { name: "kippenbouillonpoeder", amount: "1", unit: "el" },
       { name: "saffraan draden", amount: "2", unit: "mespunt" },
       { name: "olijfolie", amount: "2", unit: "el" },
+    ],
+    instructions: [
+      "Verwarm de oven op 240°C (220°C hetelucht). Breng 750 ml water aan de kook. Doe het hete water in een maatbeker, voeg het kippenbouillonpoeder toe en roer de saffraandraadjes erdoor. Zet even opzij.",
+      "Snijd de tomaten in grove stukken. Pel de knoflook en hak fijn. Spoel de garnalen af in een zeef met koud water en dep goed droog met keukenpapier.",
+      "Verhit een grote koekenpan op middelhoog vuur met 2 el olijfolie. Bak de chorizo ca. 3 min knapperig en goudbruin. Voeg de knoflook toe en bak ca. 1 min. Schep de tomaat erdoor en bak 3 min tot zacht.",
+      "Voeg de risottorijst toe aan de pan en rooster 1–2 min. Blus dan met de saffraanbouillon. Leg een deksel op de pan, zet het vuur lager en laat 15–18 min zachtjes koken tot de rijst bijna alle bouillon heeft opgenomen.",
+      "Schil het onderste deel (ca. ⅓) van de asperges. Leg op een bakplaat met bakpapier, meng met een flinke snuf zout en 2 el olijfolie en rooster 10–12 min tot ze goudbruin en gaar zijn.",
+      "Voeg als de rijst 15–18 min heeft gekookt de garnalen toe aan de paella. Bak nog 4–5 min zonder te roeren — zo ontstaat aan de onderkant een mooi korstje. Test met een spatel of de onderkant knapperig is. Verdeel over de borden en serveer de asperges erbovenop.",
     ],
   },
   {
