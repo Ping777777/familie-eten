@@ -681,6 +681,29 @@
 /* ── Shopping List ── */
 .shopping-list h2 { color: #333; margin-bottom: 4px; }
 
+.shopping-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e8eaf6;
+  padding-bottom: 0;
+}
+.shopping-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.shopping-tab:hover { color: #667eea; }
+.shopping-tab.active { color: #667eea; border-bottom-color: #667eea; }
+
 .shopping-header {
   display: flex;
   align-items: flex-start;
@@ -888,28 +911,6 @@
 .staple-category-badge { color: #9ca3af; }
 
 /* ── Vaste boodschappen ── */
-.staples-section {
-  margin-top: 28px;
-  border: 2px solid #f3e8ff;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.staples-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: #faf5ff;
-  padding: 14px 16px;
-}
-.staples-header h3 {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #6b21a8;
-}
-
 .staples-edit-btn {
   background: none;
   border: 1px solid #d8b4fe;
