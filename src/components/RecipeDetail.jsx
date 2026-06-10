@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { tagClass } from "../utils/tagColors";
+import { useLanguage } from "../LanguageContext";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -9,6 +10,7 @@ const MEMBER_COLORS = {
 };
 
 export default function RecipeDetail({ recipe, day, member, onBack }) {
+  const { t, tDay } = useLanguage();
   const [doneSteps, setDoneSteps] = useState({});
 
   if (!recipe) return null;
@@ -23,10 +25,10 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
     <div className="recipe-detail">
       <div className="detail-topbar">
         <button className="detail-back" onClick={onBack}>
-          ← Terug naar planner
+          {t("backToPlanner")}
         </button>
         <div className="detail-ctx">
-          <span className="detail-ctx-day">{day}</span>
+          <span className="detail-ctx-day">{tDay(day)}</span>
           <span className="detail-ctx-sep">·</span>
           <span
             className="detail-ctx-member"
@@ -44,7 +46,7 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
           <div className="detail-meta-row">
             {recipe.cookTime && <span>⏱ {recipe.cookTime}</span>}
             {recipe.cookTime && <span className="detail-meta-dot">·</span>}
-            <span>👥 {recipe.servings} personen</span>
+            <span>👥 {t("persons", { n: recipe.servings })}</span>
             {recipe.addedBy && (
               <>
                 <span className="detail-meta-dot">·</span>
@@ -54,8 +56,8 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
           </div>
           {recipe.tags.length > 0 && (
             <div className="detail-tags">
-              {recipe.tags.map((t) => (
-                <span key={t} className={`tag ${tagClass(t)}`}>{t}</span>
+              {recipe.tags.map((tag) => (
+                <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>
               ))}
             </div>
           )}
@@ -63,7 +65,7 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
 
         <div className="detail-body">
           <section className="detail-ingredients">
-            <h2 className="detail-section-title">Ingrediënten</h2>
+            <h2 className="detail-section-title">{t("sectionIngredients")}</h2>
             <ul className="detail-ing-list">
               {recipe.ingredients.map((ing, i) => (
                 <li key={i} className="detail-ing-row">
@@ -80,19 +82,18 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
 
           <section className="detail-instructions">
             <div className="detail-steps-header">
-              <h2 className="detail-section-title">Bereidingswijze</h2>
+              <h2 className="detail-section-title">{t("sectionInstructions")}</h2>
               {steps.length > 0 && (
                 <span className={`detail-steps-progress${doneCount === steps.length ? " detail-steps-progress--done" : ""}`}>
-                  {doneCount === steps.length ? "✅ Klaar!" : `${doneCount} / ${steps.length} stappen`}
+                  {doneCount === steps.length
+                    ? t("allDone")
+                    : t("stepsProgress", { done: doneCount, total: steps.length })}
                 </span>
               )}
             </div>
 
             {steps.length === 0 ? (
-              <p className="detail-no-steps">
-                Nog geen stappen toegevoegd. Ga naar de{" "}
-                <strong>Receptenbibliotheek</strong> om ze toe te voegen.
-              </p>
+              <p className="detail-no-steps">{t("noSteps")}</p>
             ) : (
               <ol className="detail-steps">
                 {steps.map((step, idx) => {

@@ -72,18 +72,21 @@ const ROADMAP = [
   },
 ];
 
-const STATUS_LABEL = { todo: "Te bouwen", inprogress: "In ontwikkeling", done: "Klaar" };
+import { useLanguage } from "../LanguageContext";
+
+const STATUS_KEY = { todo: "statusTodo", inprogress: "statusInProgress", done: "statusDone" };
 const STATUS_COLOR = { todo: "#e0e0e0", inprogress: "#fff3cd", done: "#d4edda" };
 const STATUS_TEXT  = { todo: "#555",    inprogress: "#856404",  done: "#155724" };
 
 export default function RoadmapModal({ onClose }) {
+  const { t } = useLanguage();
   return (
     <div className="roadmap-overlay" onClick={onClose}>
       <div className="roadmap-modal" onClick={(e) => e.stopPropagation()}>
         <div className="roadmap-header">
           <div>
-            <h2>🛠 Technische roadmap</h2>
-            <p className="roadmap-subtitle">Familie Eten — wat nog gebouwd moet worden</p>
+            <h2>{t("roadmapTitle")}</h2>
+            <p className="roadmap-subtitle">{t("roadmapSubtitle")}</p>
           </div>
           <button className="roadmap-close" onClick={onClose}>×</button>
         </div>
@@ -102,7 +105,7 @@ export default function RoadmapModal({ onClose }) {
                     className="roadmap-status"
                     style={{ background: STATUS_COLOR[item.status], color: STATUS_TEXT[item.status] }}
                   >
-                    {STATUS_LABEL[item.status]}
+                    {t(STATUS_KEY[item.status])}
                   </span>
                 </div>
                 <p className="roadmap-desc">{item.description}</p>
@@ -124,7 +127,7 @@ export default function RoadmapModal({ onClose }) {
         </div>
 
         <div className="roadmap-footer">
-          <span>🔒 Verborgen voor gewone gebruikers · alleen via de Dev-knop bereikbaar</span>
+          <span>{t("roadmapFooter")}</span>
         </div>
       </div>
     </div>

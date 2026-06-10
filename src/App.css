@@ -10,6 +10,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  position: relative;
 }
 
 .login-card {
@@ -63,8 +64,68 @@
 .app-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 24px 20px 0;
+  padding: 14px 20px 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.header-left {
+  text-align: center;
+}
+
+.header-right {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-switcher {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.lang-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid transparent;
+  border-radius: 7px;
+  padding: 3px 7px;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.lang-btn.active {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.login-screen .lang-switcher {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.login-screen .lang-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: transparent;
+  color: #444;
+}
+
+.login-screen .lang-btn.active {
+  border-color: #7c5cbf;
+  background: #f0eaff;
 }
 
 .app-header h1 {
@@ -87,13 +148,14 @@
 }
 
 .logout-btn {
-  margin: 10px 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   color: white;
   background: transparent;
   cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {

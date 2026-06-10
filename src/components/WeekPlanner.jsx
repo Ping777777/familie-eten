@@ -1,12 +1,7 @@
 import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
-
-const SPECIAL_MEALS = [
-  { id: -1, name: "Restjes",             emoji: "🍱", tags: [], ingredients: [] },
-  { id: -2, name: "Afhalen / Bezorging", emoji: "🥡", tags: [], ingredients: [] },
-  { id: -3, name: "Uiteten",             emoji: "🍽️", tags: [], ingredients: [] },
-];
+import { useLanguage } from "../LanguageContext";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -14,11 +9,6 @@ const MEMBER_COLORS = {
   Inga: "#7bc67e",
   Kevin: "#f4a261",
 };
-
-const NL_MONTHS = [
-  "januari","februari","maart","april","mei","juni",
-  "juli","augustus","september","oktober","november","december",
-];
 
 function computeWarnings(days, weekPlan, recipes) {
   const warningFilters = PICKER_FILTERS.filter((f) => f.threshold != null);
@@ -39,22 +29,22 @@ function computeWarnings(days, weekPlan, recipes) {
   });
   return warningFilters
     .filter(({ key, threshold }) => (counts[key]?.size ?? 0) >= threshold)
-    .map(({ key, label }) => ({
-      label,
+    .map(({ key }) => ({
+      key,
       count: counts[key].size,
       swapDay: dayLists[key][dayLists[key].length - 1],
     }));
 }
 
-function formatWeekRange(offset) {
+function formatWeekRange(offset, months) {
   const monday = getMondayOfWeek(offset);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
   const d1 = monday.getDate();
   const d2 = sunday.getDate();
-  const m1 = NL_MONTHS[monday.getMonth()];
-  const m2 = NL_MONTHS[sunday.getMonth()];
+  const m1 = months[monday.getMonth()];
+  const m2 = months[sunday.getMonth()];
   const y = sunday.getFullYear();
 
   if (monday.getMonth() === sunday.getMonth()) {
@@ -63,21 +53,19 @@ function formatWeekRange(offset) {
   return `${d1} ${m1} — ${d2} ${m2} ${y}`;
 }
 
-function getWeekLabel(offset) {
-  const { week, year } = getIsoWeekInfo(offset);
-  return `Week ${week} · ${year}`;
-}
-
-function getDayDate(offset, dayIndex) {
-  const monday = getMondayOfWeek(offset);
-  const d = new Date(monday);
-  d.setDate(monday.getDate() + dayIndex);
-  return d.getDate();
-}
-
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
+  const { t, tDay } = useLanguage();
   const [selecting, setSelecting] = useState(null);
   const [pickerFilter, setPickerFilter] = useState(null);
+
+  const months = t("months");
+  const { week, year } = getIsoWeekInfo(weekOffset);
+
+  const SPECIAL_MEALS = [
+    { id: -1, name: t("specialMeal1"), emoji: "🍱", tags: [], ingredients: [] },
+    { id: -2, name: t("specialMeal2"), emoji: "🥡", tags: [], ingredients: [] },
+    { id: -3, name: t("specialMeal3"), emoji: "🍽️", tags: [], ingredients: [] },
+  ];
 
   const getRecipe = (id) =>
     recipes.find((r) => r.id === id) ?? SPECIAL_MEALS.find((s) => s.id === id) ?? null;
@@ -93,31 +81,36 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     [days, weekPlan, recipes]
   );
 
+  function getDayDate(dayIndex) {
+    const monday = getMondayOfWeek(weekOffset);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + dayIndex);
+    return d.getDate();
+  }
+
   return (
     <div className="week-planner">
-      {/* Week selector */}
       <div className="week-nav">
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title="Vorige week">‹</button>
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>‹</button>
         <div className="week-label-group">
-          <span className="week-relative">{getWeekLabel(weekOffset)}</span>
-          <span className="week-dates">{formatWeekRange(weekOffset)}</span>
+          <span className="week-relative">{t("weekLabel", { n: week, year })}</span>
+          <span className="week-dates">{formatWeekRange(weekOffset, months)}</span>
         </div>
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title="Volgende week">›</button>
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>›</button>
         {weekOffset !== 0 && (
-          <button className="week-today-btn" onClick={() => onWeekChange(0)}>Vandaag</button>
+          <button className="week-today-btn" onClick={() => onWeekChange(0)}>{t("today")}</button>
         )}
       </div>
 
-      {/* Save conflict notice */}
       {saveFailed && (
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
           <span>
-            <strong>Niet opgeslagen</strong> — iemand anders wijzigde deze week tegelijk. Je wijziging staat nog op het scherm maar is niet bewaard.
+            <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
           </span>
           {onReloadWeekPlan && (
             <button className="save-failed-reload" onClick={onReloadWeekPlan}>
-              Laad de laatste versie
+              {t("loadLatest")}
             </button>
           )}
         </div>
@@ -126,11 +119,11 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       {warnings.length > 0 && (
         <div className="variety-warnings">
           {warnings.map((w) => (
-            <div key={w.label} className="variety-warning">
+            <div key={w.key} className="variety-warning">
               <span className="warning-icon">⚠️</span>
               <span>
-                <strong>Veel {w.label} deze week</strong> ({w.count}×) —{" "}
-                overweeg iets anders op <strong>{w.swapDay}</strong>
+                <strong>{t("varietyWarning", { label: t("filter_" + w.key) })}</strong> ({w.count}×) —{" "}
+                {t("varietyHint", { day: tDay(w.swapDay) })}
               </span>
             </div>
           ))}
@@ -150,8 +143,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         {days.map((day, idx) => (
           <div key={day} className="grid-row">
             <div className="day-label">
-              <span className="day-name">{day}</span>
-              <span className="day-date">{getDayDate(weekOffset, idx)}</span>
+              <span className="day-name">{tDay(day)}</span>
+              <span className="day-date">{getDayDate(idx)}</span>
             </div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
@@ -180,18 +173,18 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
-                        title="Verwijder maaltijd"
+                        title={t("removeMeal")}
                       >
                         ×
                       </button>
                       <button
                         className="meal-edit-btn"
-                        title="Andere maaltijd kiezen"
+                        title={t("changeMeal")}
                         onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
                       >✎</button>
                     </div>
                   ) : isDayLocked ? null : (
-                    <span className="add-hint">+ Kies maaltijd</span>
+                    <span className="add-hint">{t("addMeal")}</span>
                   )}
                 </div>
               );
@@ -211,8 +204,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
               <div className="picker-header">
                 <h3>
-                  {isReplacing ? "Vervang maaltijd" : "Kies maaltijd"}{" "}
-                  voor <strong>{selecting.day}</strong>
+                  {isReplacing ? t("replaceMeal") : t("chooseMeal")}{" "}
+                  {t("mealFor", { day: tDay(selecting.day) })}
                 </h3>
                 <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
               </div>
@@ -228,27 +221,33 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                     >
                       <span className="picker-special-emoji">{s.emoji}</span>
                       <span className="picker-special-name">{s.name}</span>
-                      {isCurrent && <span className="picker-current-label">✓ Huidig</span>}
+                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
                     </button>
                   );
                 })}
               </div>
 
               <div className="picker-filters">
+                <button
+                  className={`picker-filter-btn ${!pickerFilter ? "active" : ""}`}
+                  onClick={() => setPickerFilter(null)}
+                >
+                  {t("filterAll")}
+                </button>
                 {PICKER_FILTERS.map((f) => (
                   <button
                     key={f.key}
                     className={`picker-filter-btn ${pickerFilter === f.key ? "active" : ""}`}
                     onClick={() => setPickerFilter(pickerFilter === f.key ? null : f.key)}
                   >
-                    {f.emoji} {f.label}
+                    {f.emoji} {t("filter_" + f.key)}
                   </button>
                 ))}
               </div>
 
               <div className="picker-grid">
                 {visibleRecipes.length === 0 && (
-                  <p className="picker-empty">Geen recepten in deze categorie.</p>
+                  <p className="picker-empty">{t("noRecipesCategory")}</p>
                 )}
                 {visibleRecipes.map((r) => {
                   const isCurrent = r.id === currentId;
@@ -260,10 +259,10 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                     >
                       <span className="picker-emoji">{r.emoji}</span>
                       <span className="picker-name">{r.name}</span>
-                      {isCurrent && <span className="picker-current-label">✓ Huidig</span>}
+                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
                       <div className="picker-tags">
-                        {r.tags.map((t) => (
-                          <span key={t} className={`tag ${tagClass(t)}`}>{t}</span>
+                        {r.tags.map((tag) => (
+                          <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>
                         ))}
                       </div>
                     </button>

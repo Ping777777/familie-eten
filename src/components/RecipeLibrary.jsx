@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { tagClass } from "../utils/tagColors";
+import { useLanguage } from "../LanguageContext";
 
 const UNIT_OPTIONS = [
   "g", "kg",
@@ -31,6 +32,7 @@ function newRecipeTemplate() {
 }
 
 export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed }) {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -81,9 +83,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   return (
     <div className="recipe-library">
       <div className="library-header">
-        <h2>Receptenbibliotheek</h2>
+        <h2>{t("recipeLibrary")}</h2>
         <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
-          + Nieuw recept
+          {t("newRecipe")}
         </button>
       </div>
 
@@ -91,8 +93,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
           <span>
-            <strong>Niet opgeslagen</strong> — er ging iets mis bij het bewaren.
-            Ververs de pagina om de laatste versie te laden.
+            <strong>{t("saveFailedTitle")}</strong> — {t("saveFailedMsg")}
           </span>
         </div>
       )}
@@ -101,7 +102,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         <input
           className="search-input"
           type="text"
-          placeholder="🔍 Zoek recept..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -110,7 +111,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
             className={`tag-filter ${!activeTag ? "active" : ""}`}
             onClick={() => setActiveTag(null)}
           >
-            Alle
+            {t("filterAll")}
           </button>
           {allTags.map((tag) => (
             <button
@@ -124,7 +125,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       </div>
 
-      {/* Active recipe grid */}
       <div className="recipe-grid">
         {filtered.map((recipe) => (
           <RecipeCard
@@ -135,27 +135,24 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
             onEdit={(e) => handleEditClick(e, recipe)}
             onArchive={(e) => handleArchive(e, recipe)}
             onDelete={(e) => handleDeleteClick(e, recipe.id)}
-            archiveBtn={{ label: "📦", title: "Naar archief" }}
+            archiveBtn={{ label: "📦", title: t("toArchive") }}
           />
         ))}
         {filtered.length === 0 && (
-          <p className="no-results">Geen recepten gevonden.</p>
+          <p className="no-results">{t("noRecipesFound")}</p>
         )}
       </div>
 
-      {/* Archive section */}
       {archivedRecipes.length > 0 && (
         <div className="archive-section">
           <button className="archive-toggle" onClick={() => setArchiveOpen((o) => !o)}>
-            <span>📦 Archief</span>
-            <span className="archive-count">{archivedRecipes.length} recepten</span>
+            <span>{t("archiveLabel")}</span>
+            <span className="archive-count">{t("archiveCount", { n: archivedRecipes.length })}</span>
             <span className="archive-chevron">{archiveOpen ? "▲" : "▼"}</span>
           </button>
           {archiveOpen && (
             <div className="archive-body">
-              <p className="archive-hint">
-                Seizoensrecepten en tijdelijk verborgen gerechten. Ze verschijnen niet in de weekplanner. Klik op 🔄 om een recept te herstellen.
-              </p>
+              <p className="archive-hint">{t("archiveHint")}</p>
               <div className="recipe-grid">
                 {archivedRecipes.map((recipe) => (
                   <RecipeCard
@@ -166,7 +163,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
                     onEdit={(e) => handleEditClick(e, recipe)}
                     onArchive={(e) => handleRestore(e, recipe)}
                     onDelete={(e) => handleDeleteClick(e, recipe.id)}
-                    archiveBtn={{ label: "🔄", title: "Herstellen" }}
+                    archiveBtn={{ label: "🔄", title: t("restore") }}
                     dimmed
                   />
                 ))}
@@ -176,7 +173,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      {/* Edit modal */}
       {editingRecipe && (
         <EditRecipeModal
           recipe={editingRecipe}
@@ -186,19 +182,15 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         />
       )}
 
-      {/* Delete confirmation */}
       {confirmId && confirmRecipe && (
         <div className="confirm-overlay" onClick={handleCancel}>
           <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
             <span className="confirm-emoji">{confirmRecipe.emoji}</span>
-            <h3>Recept verwijderen?</h3>
-            <p>
-              Weet je zeker dat je <strong>{confirmRecipe.name}</strong> wilt
-              verwijderen? Dit kan niet ongedaan worden gemaakt.
-            </p>
+            <h3>{t("deleteTitle")}</h3>
+            <p>{t("deleteMsg", { name: confirmRecipe.name })}</p>
             <div className="confirm-actions">
-              <button className="btn-cancel" onClick={handleCancel}>Annuleren</button>
-              <button className="btn-delete" onClick={handleConfirm}>Ja, verwijderen</button>
+              <button className="btn-cancel" onClick={handleCancel}>{t("cancel")}</button>
+              <button className="btn-delete" onClick={handleConfirm}>{t("confirmDelete")}</button>
             </div>
           </div>
         </div>
@@ -207,8 +199,8 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   );
 }
 
-// ── Shared recipe card ────────────────────────────────────────────────────────
 function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, archiveBtn, dimmed }) {
+  const { t } = useLanguage();
   return (
     <div
       className={`recipe-card ${expanded ? "expanded" : ""} ${dimmed ? "recipe-card--archived" : ""}`}
@@ -218,19 +210,19 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
         <span className="recipe-big-emoji">{recipe.emoji}</span>
         <div className="recipe-info">
           <h3>{recipe.name}</h3>
-          <div className="recipe-meta">⏱ {recipe.cookTime} · {recipe.servings} pers.</div>
+          <div className="recipe-meta">⏱ {recipe.cookTime} · {t("perServings", { n: recipe.servings })}</div>
           <div className="recipe-tags">
-            {recipe.tags.map((t) => <span key={t} className={`tag ${tagClass(t)}`}>{t}</span>)}
+            {recipe.tags.map((tag) => <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>)}
           </div>
         </div>
         <div className="card-actions">
           <button className="card-action-btn" title={archiveBtn.title} onClick={onArchive}>
             {archiveBtn.label}
           </button>
-          <button className="card-action-btn" title="Bewerk recept" onClick={onEdit}>
+          <button className="card-action-btn" title={t("editRecipeBtn")} onClick={onEdit}>
             ✏️
           </button>
-          <button className="card-action-btn" title="Verwijder recept" onClick={onDelete}>
+          <button className="card-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>
             🗑️
           </button>
           <span className="expand-icon">{expanded ? "▲" : "▼"}</span>
@@ -240,7 +232,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
       {expanded && (
         <div className="recipe-expanded-body">
           <div className="recipe-ingredients">
-            <h4>Ingrediënten ({recipe.servings} personen)</h4>
+            <h4>{t("expandedIngredients", { n: recipe.servings })}</h4>
             <ul>
               {recipe.ingredients.map((ing, i) => (
                 <li key={i}>
@@ -252,7 +244,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
           </div>
           {recipe.instructions?.length > 0 && (
             <div className="recipe-instructions">
-              <h4>Bereidingswijze</h4>
+              <h4>{t("sectionInstructions")}</h4>
               <ol>
                 {recipe.instructions.map((step, i) => (
                   <li key={i}>{step}</li>
@@ -266,8 +258,8 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
   );
 }
 
-// ── Edit modal ────────────────────────────────────────────────────────────────
 function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
+  const { t } = useLanguage();
   const [name, setName] = useState(recipe.name);
   const [emoji, setEmoji] = useState(recipe.emoji);
   const [cookTime, setCookTime] = useState(recipe.cookTime);
@@ -302,7 +294,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
       cookTime: cookTime.trim(),
       servings: Math.max(1, parseInt(servings, 10) || recipe.servings),
       addedBy: addedBy.trim(),
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       ingredients: ingredients.filter((i) => i.name.trim()),
       instructions: instructions.map((s) => s.trim()).filter(Boolean),
     });
@@ -312,31 +304,29 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
     <div className="edit-overlay" onClick={onClose}>
       <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
         <div className="edit-modal-header">
-          <h3>{isNew ? "➕ Nieuw recept" : "✏️ Recept bewerken"}</h3>
+          <h3>{isNew ? t("newRecipeModal") : t("editRecipeModal")}</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         <form className="edit-form" onSubmit={handleSubmit}>
-          {/* Row 1: emoji + name */}
           <div className="edit-field-group">
             <div className="edit-field edit-field--emoji">
-              <label>Emoji</label>
+              <label>{t("fieldEmoji")}</label>
               <input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} />
             </div>
             <div className="edit-field edit-field--grow">
-              <label>Naam</label>
+              <label>{t("fieldName")}</label>
               <input value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
           </div>
 
-          {/* Row 2: cookTime + servings + addedBy */}
           <div className="edit-field-group">
             <div className="edit-field">
-              <label>Bereidingstijd</label>
+              <label>{t("fieldCookTime")}</label>
               <input value={cookTime} onChange={(e) => setCookTime(e.target.value)} placeholder="25 min" />
             </div>
             <div className="edit-field edit-field--narrow">
-              <label>Personen</label>
+              <label>{t("fieldServings")}</label>
               <input
                 type="number"
                 value={servings}
@@ -346,15 +336,14 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
               />
             </div>
             <div className="edit-field">
-              <label>Toegevoegd door</label>
+              <label>{t("fieldAddedBy")}</label>
               <input value={addedBy} onChange={(e) => setAddedBy(e.target.value)} />
             </div>
           </div>
 
-          {/* Tags */}
           <div className="edit-field">
             <label>
-              Tags <span className="edit-label-hint">(kommagescheiden)</span>
+              {t("fieldTags")} <span className="edit-label-hint">{t("tagHint")}</span>
             </label>
             <input
               value={tags}
@@ -363,9 +352,8 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
             />
           </div>
 
-          {/* Ingredients */}
           <div className="edit-field">
-            <label>Ingrediënten</label>
+            <label>{t("fieldIngredients")}</label>
             <div className="ingredients-edit-list">
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="ingredient-edit-row">
@@ -373,7 +361,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                     className="ing-edit-amount"
                     value={ing.amount}
                     onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
-                    placeholder="Hoev."
+                    placeholder={t("amountPlaceholder")}
                   />
                   <select
                     className="ing-edit-unit"
@@ -389,27 +377,26 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                     className="ing-edit-name"
                     value={ing.name}
                     onChange={(e) => updateIngredient(idx, "name", e.target.value)}
-                    placeholder="Naam ingrediënt"
+                    placeholder={t("ingredientPlaceholder")}
                   />
                   <button
                     type="button"
                     className="ing-remove-btn"
                     onClick={() => removeIngredient(idx)}
-                    title="Verwijder rij"
+                    title={t("removeRow")}
                   >
                     ×
                   </button>
                 </div>
               ))}
               <button type="button" className="ing-add-btn" onClick={addIngredient}>
-                + Ingrediënt toevoegen
+                {t("addIngredient")}
               </button>
             </div>
           </div>
 
-          {/* Instructions */}
           <div className="edit-field">
-            <label>Bereidingswijze <span className="edit-label-hint">(optioneel)</span></label>
+            <label>{t("fieldInstructions")} <span className="edit-label-hint">{t("instructionsHint")}</span></label>
             <div className="instructions-edit-list">
               {instructions.map((step, idx) => (
                 <div key={idx} className="instruction-edit-row">
@@ -418,28 +405,28 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                     className="ins-edit-text"
                     value={step}
                     onChange={(e) => updateInstruction(idx, e.target.value)}
-                    placeholder={`Stap ${idx + 1}…`}
+                    placeholder={t("stepPlaceholder", { n: idx + 1 })}
                     rows={2}
                   />
                   <button
                     type="button"
                     className="ing-remove-btn"
                     onClick={() => removeInstruction(idx)}
-                    title="Verwijder stap"
+                    title={t("removeStep")}
                   >
                     ×
                   </button>
                 </div>
               ))}
               <button type="button" className="ing-add-btn" onClick={addInstruction}>
-                + Stap toevoegen
+                {t("addStep")}
               </button>
             </div>
           </div>
 
           <div className="edit-modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>Annuleren</button>
-            <button type="submit" className="btn-save">Opslaan</button>
+            <button type="button" className="btn-cancel" onClick={onClose}>{t("cancel")}</button>
+            <button type="submit" className="btn-save">{t("save")}</button>
           </div>
         </form>
       </div>

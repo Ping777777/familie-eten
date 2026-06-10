@@ -7,7 +7,26 @@ import ShoppingList from "./components/ShoppingList";
 import RecipeDetail from "./components/RecipeDetail";
 import RoadmapModal from "./components/RoadmapModal";
 import { getIsoWeekKey } from "./week";
+import { useLanguage } from "./LanguageContext";
 import "./App.css";
+
+function LangSwitcher() {
+  const { lang, setLang } = useLanguage();
+  return (
+    <div className="lang-switcher">
+      {[{ code: "nl", flag: "🇳🇱" }, { code: "en", flag: "🇬🇧" }, { code: "ru", flag: "🇷🇺" }].map(({ code, flag }) => (
+        <button
+          key={code}
+          className={`lang-btn${lang === code ? " active" : ""}`}
+          onClick={() => setLang(code)}
+          title={code.toUpperCase()}
+        >
+          {flag}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
@@ -21,6 +40,7 @@ const emptyWeek = () =>
   }, {});
 
 export default function App() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("planner");
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -375,7 +395,7 @@ export default function App() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setLoginError(data?.message || "Inloggen mislukt");
+        setLoginError(data?.message || t("loginFailed"));
         return;
       }
       setWeekPlanLoaded(false);
@@ -385,7 +405,7 @@ export default function App() {
       localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
     } catch {
-      setLoginError("Kon server niet bereiken");
+      setLoginError(t("serverUnreachable"));
     } finally {
       setLoginBusy(false);
     }
@@ -412,11 +432,12 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className="app login-screen">
+        <LangSwitcher />
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
-          <p className="subtitle">Log in om de planner te openen</p>
+          <p className="subtitle">{t("loginSubtitle")}</p>
           <form className="login-form" onSubmit={handleLogin}>
-            <label htmlFor="username">Gebruikersnaam</label>
+            <label htmlFor="username">{t("username")}</label>
             <input
               id="username"
               value={loginForm.username}
@@ -424,7 +445,7 @@ export default function App() {
               autoComplete="username"
               required
             />
-            <label htmlFor="password">Wachtwoord</label>
+            <label htmlFor="password">{t("password")}</label>
             <input
               id="password"
               type="password"
@@ -435,7 +456,7 @@ export default function App() {
             />
             {loginError && <p className="login-error">{loginError}</p>}
             <button type="submit" disabled={loginBusy}>
-              {loginBusy ? "Bezig..." : "Inloggen"}
+              {loginBusy ? t("loginBusy") : t("loginBtn")}
             </button>
           </form>
         </main>
@@ -448,7 +469,7 @@ export default function App() {
       <div className="app login-screen">
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
-          <p className="subtitle">Laden…</p>
+          <p className="subtitle">{t("loading")}</p>
         </main>
       </div>
     );
@@ -457,13 +478,15 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🍽️ Familie Eten</h1>
-        <p className="subtitle">Ingelogd als {currentUser}</p>
+        <div className="header-left">
+          <h1>🍽️ Familie Eten</h1>
+          <p className="subtitle">{t("loggedInAs")} {currentUser}</p>
+        </div>
         <nav className="tabs">
           {[
-            { key: "planner", label: "📅 Weekplanner" },
-            { key: "recipes", label: "📖 Recepten" },
-            { key: "shopping", label: "🛒 Boodschappen" },
+            { key: "planner", label: t("tabPlanner") },
+            { key: "recipes", label: t("tabRecipes") },
+            { key: "shopping", label: t("tabShopping") },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -474,7 +497,10 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <button className="logout-btn" onClick={handleLogout}>Uitloggen</button>
+        <div className="header-right">
+          <LangSwitcher />
+          <button className="logout-btn" onClick={handleLogout}>{t("logout")}</button>
+        </div>
       </header>
 
       <button className="dev-btn" onClick={() => setShowRoadmap(true)} title="Developer roadmap">Dev</button>
