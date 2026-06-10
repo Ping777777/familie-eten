@@ -221,7 +221,42 @@ export default function App() {
           const merged = [...(data.recipes ?? []), ...missing];
           recipesEtagRef.current = data.etag ?? null;
           setRecipeList(merged);
-          saveRecipesToBlob(merged);
+          // Migration save: retry up to 3× on 412, never show error banner
+          (async () => {
+            let toSave = merged;
+            let etag = data.etag ?? null;
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try {
+                const r = await fetch("/api/recipes", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ recipes: toSave, etag }),
+                });
+                if (r.ok) {
+                  const d = await r.json().catch(() => ({}));
+                  recipesEtagRef.current = d.etag ?? null;
+                  return;
+                }
+                if (r.status !== 412) return; // non-retryable, keep merged in UI silently
+                const d = await r.json().catch(() => ({}));
+                if (!d.recipes || !d.etag) return;
+                etag = d.etag;
+                const serverIds = new Set(d.recipes.map((x) => x.id));
+                const stillMissing = missing.filter((x) => !serverIds.has(x.id));
+                if (stillMissing.length === 0) {
+                  // Another client already wrote all needed recipes — use their version
+                  recipesEtagRef.current = etag;
+                  setRecipeList(d.recipes);
+                  return;
+                }
+                toSave = [...d.recipes, ...stillMissing];
+                setRecipeList(toSave);
+                recipesEtagRef.current = etag;
+              } catch {
+                return; // network error — recipe 113 stays visible in UI
+              }
+            }
+          })();
           return;
         }
         recipesEtagRef.current = data.etag ?? null;
