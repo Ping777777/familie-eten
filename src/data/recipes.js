@@ -20,6 +20,14 @@ export const recipes = [
       { name: "bloem", amount: "2", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
     ],
+    instructions: [
+      "Verwarm de oven op 180°C (160°C hetelucht). Breng een middelgrote pan gezouten water aan de kook voor de aardappels. Haal de pies uit de verpakking, zet ze in hun metalen vormpjes op een bakplaat en bak 23–25 min tot ze volledig verhit zijn.",
+      "Schil de aardappels en snijd in gelijke kwarten. Kook 15–20 min in het kokende water tot gaar en zacht. Ze zijn klaar als je er zonder druk een mesje in kunt steken.",
+      "Doe de mais met het vocht in een kleine koekenpan en verwarm op middelhoog vuur met een snuf zout en ½ el azijn. Snijd de bieslook in dunne ringetjes. Schep de helft van de bieslook door de mais en zet apart.",
+      "Pel de sjalotjes, halveer in de lengte en snijd in dunne reepjes. Pel de knoflook en hak of pers heel fijn.",
+      "Smelt 2 el boter in een pan op middelhoog vuur. Bak de sjalot en knoflook 3–4 min. Roer 400 ml warm water en het kippenbouillonpoeder erdoor. Kook 2–3 min al roerend tot een dikke saus. Kruid met een flinke snuf peper.",
+      "Giet de aardappels af. Doe terug in de pan met 150 ml melk en 2 el boter. Stamp tot een romige puree en voeg extra melk toe naar smaak. Breng op smaak met peper en zout. Verdeel de pies over de borden, schenk de saus erover en bestrooi met de rest van de bieslook.",
+    ],
   },
   {
     id: 102,
@@ -38,6 +46,14 @@ export const recipes = [
       { name: "bloem", amount: "4", unit: "el" },
       { name: "olijfolie", amount: "2", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
+    ],
+    instructions: [
+      "Verwarm de oven op 240°C (220°C hetelucht). Schrob de aardappels schoon en snijd ze met schil in kleine blokjes. Meng met 2 el olijfolie en een flinke snuf zout. Verdeel over 1–2 bakplaten met bakpapier en rooster 20–25 min goudbruin en gaar. Schep halverwege om.",
+      "Snijd de broccoli in hapklare roosjes. Schil evt. de stronken en snijd in kleine plakjes. Pel de knoflook en snijd fijn.",
+      "Spoel de zalm af met koud water en dep goed droog. Wrijf rondom in met een snuf peper en zout en wentel door 4 el bloem.",
+      "Verhit een grote koekenpan op middelhoog vuur met 2 el olijfolie. Schud overtollig bloem van de zalm. Bak ca. 4 min op de huidkant. Draai om en bak nog ca. 2 min. Schep op een bord.",
+      "Voeg de teriyakisaus en 2 el water toe aan de pan. Leg de zalm terug met de huidkant naar beneden. Schep de saus regelmatig over de zalm en bak 1–2 min tot de zalm gaar is en mooi geglazuurd.",
+      "Voeg de broccoli en knoflook toe aan de pan en roerbak ca. 2 min. Voeg 2–3 el water toe, leg een deksel op de pan en stoom nog 3–4 min. Breng op smaak met peper en zout. Serveer de teriyakizalm met de broccoli en de aardappels.",
     ],
   },
   {
@@ -248,6 +264,14 @@ export const recipes = [
       { name: "olijfolie", amount: "2", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
     ],
+    instructions: [
+      "Verwarm de oven op 200°C (180°C hetelucht). Pel en halveer de ui en snijd in zeer dunne reepjes. Pel de knoflook en hak fijn.",
+      "Dep de kipfilets droog met keukenpapier en snijd elk filet horizontaal doormidden in 2 platte stukken. Verhit een grote koekenpan op hoog vuur met 2 el olijfolie. Bak 1–2 min per kant stevig aan. Leg op een bakplaat, bestrooi met de helft van de oregano en rooster 8–10 min in de oven tot helemaal gaar.",
+      "Verwijder de harde kern van de tomaten en snijd in kleine blokjes. Snijd de komkommers in de lengte in vieren en dan in kleine blokjes.",
+      "Meng de ui, knoflook, tomaat, komkommer en de rest van de oregano met 2 el olijfolie tot een salade.",
+      "Verkruimel de feta en snijd de olijven in ringen.",
+      "Schep de feta en olijven door de salade. Breng op smaak met peper, zout, een snuf suiker en azijn. Snijd de kip in plakken en serveer met de salade.",
+    ],
   },
   {
     id: 111,
@@ -272,6 +296,14 @@ export const recipes = [
       { name: "tomatenketchup", amount: "4", unit: "el" },
       { name: "olijfolie", amount: "2", unit: "el" },
     ],
+    instructions: [
+      "Verwarm de oven op 220°C (200°C hetelucht). Snijd de aardappels in partjes en meng met 2 el olijfolie en de helft van de Mexicaanse kruidenmix. Verdeel op een bakplaat en rooster 20–25 min goudbruin en gaar. Schep halverwege om.",
+      "Pel de ui en snipper zo fijn mogelijk. Meng de helft van de ui met 4 el water en de ketchup en zet apart.",
+      "Verhit een ovenvaste koekenpan zonder olie op middelhoog vuur. Bak het spek 1–2 min per kant knapperig. Laat uitlekken op keukenpapier en maak de pan schoon.",
+      "Kneed het gehakt grondig met de rest van de ui, de rest van de kruidenmix en een snuf peper en zout. Vorm 4 burgers en druk een klein kuiltje in het midden. Bak de burgers in de pan 1–2 min stevig aan op hoog vuur, zet dan het vuur middelhoog en gaar nog 8–10 min.",
+      "Giet de mais af in een vergiet. Leg 4 tomatenplakjes apart en snijd de rest in kleine blokjes. Snijd de jalapeño fijn (verwijder de zaadjes voor minder pittig). Meng de sla, tomatenstukjes, mais, jalapeño, 2 el olijfolie, 2 el azijn en peper en zout.",
+      "Snijd de broodjes open en bak 3 min in de oven. Beleg met de burgers, spek en tomatenplakjes. Serveer met de aardappelwedges, de salade en een eetlepel mayonaise en ketchup per persoon.",
+    ],
   },
   {
     id: 112,
@@ -295,6 +327,14 @@ export const recipes = [
       { name: "mayonaise", amount: "1", unit: "el" },
       { name: "honing", amount: "1", unit: "el" },
       { name: "azijn", amount: "1", unit: "scheutje" },
+    ],
+    instructions: [
+      "Breng 600 ml licht gezouten water aan de kook in een middelgrote pan. Voeg de jasmijnrijst toe, breng opnieuw aan de kook, zet op laag vuur en leg een deksel op de pan. Kook 10–12 min tot het water is opgenomen. Neem van het vuur en laat afgedekt rusten.",
+      "Schil de komkommers in de lengte zodat er een streepjespatroon ontstaat. Snijd in de lengte doormidden en dan in dunne plakjes. Pel de ui en snijd in zeer fijne reepjes. Halveer de avocado's, verwijder de pitten, pel en snijd in dunne plakjes.",
+      "Spoel de tonijnsteaks af met koud water en dep droog met keukenpapier. Wrijf aan beide zijden in met de poke-kruidenmix.",
+      "Meng de sriracha met 3 el mayonaise en een snuf peper en zout. Klop in een andere kom de sojasaus, sesamolie, knoflook, 1 el honing en een scheutje azijn tot een dressing. Meng de uienreepjes door de dressing.",
+      "Verhit een grillpan of koekenpan op middelhoog tot hoog vuur. Besprenkel de vis aan beide zijden met plantaardige olie. Grill de tonijn 1–2 min per kant tot er mooie grillstrepen zijn. Laat 3–4 min rusten.",
+      "Snijd de vis in plakken. Verdeel de rijst over kommen of diepe borden en top met de vis, komkommer en avocado. Besprenkel met de dressing en de sriracha-mayo.",
     ],
   },
   {
