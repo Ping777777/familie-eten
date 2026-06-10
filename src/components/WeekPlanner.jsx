@@ -2,6 +2,12 @@ import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 
+const SPECIAL_MEALS = [
+  { id: -1, name: "Restjes",             emoji: "🍱", tags: [], ingredients: [] },
+  { id: -2, name: "Afhalen / Bezorging", emoji: "🥡", tags: [], ingredients: [] },
+  { id: -3, name: "Uiteten",             emoji: "🍽️", tags: [], ingredients: [] },
+];
+
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
   Mama: "#e8739a",
@@ -73,7 +79,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const [selecting, setSelecting] = useState(null);
   const [pickerFilter, setPickerFilter] = useState(null);
 
-  const getRecipe = (id) => recipes.find((r) => r.id === id);
+  const getRecipe = (id) =>
+    recipes.find((r) => r.id === id) ?? SPECIAL_MEALS.find((s) => s.id === id) ?? null;
 
   const handleSelect = (recipeId) => {
     if (!selecting) return;
@@ -198,6 +205,23 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   voor <strong>{selecting.day}</strong>
                 </h3>
                 <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
+              </div>
+
+              <div className="picker-specials">
+                {SPECIAL_MEALS.map((s) => {
+                  const isCurrent = s.id === currentId;
+                  return (
+                    <button
+                      key={s.id}
+                      className={`picker-special-btn${isCurrent ? " picker-special-btn--current" : ""}`}
+                      onClick={() => handleSelect(s.id)}
+                    >
+                      <span className="picker-special-emoji">{s.emoji}</span>
+                      <span className="picker-special-name">{s.name}</span>
+                      {isCurrent && <span className="picker-current-label">✓ Huidig</span>}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="picker-filters">

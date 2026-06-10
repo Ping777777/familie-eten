@@ -2,19 +2,21 @@ import { useMemo, useState, useEffect } from "react";
 import { isPantryByDefault } from "../data/pantryStaples";
 
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
+const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 
 const loadOverrides = () => {
   try { return new Set(JSON.parse(localStorage.getItem(LS_OVERRIDES)) ?? []); }
   catch { return new Set(); }
 };
 
-export default function ShoppingList({ weekPlan, recipes, family, days }) {
+export default function ShoppingList({ weekPlan, recipes, family, days, staples = [], onUpdateStaples }) {
   const [checked, setChecked] = useState({});
   const [picnicMsg, setPicnicMsg] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pantryOpen, setPantryOpen] = useState(false);
-  // overrides: keys that have been *flipped* from their default category
   const [overrides, setOverrides] = useState(loadOverrides);
+  const [staplesEditMode, setStaplesEditMode] = useState(false);
+  const [nameEdits, setNameEdits] = useState({});
 
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
@@ -39,9 +41,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
     return map;
   }, [weekPlan, recipes, family, days]);
 
-  const items = Object.values(ingredientMap).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  const items = Object.values(ingredientMap).sort((a, b) => a.name.localeCompare(b.name));
 
   const isPantry = (name) => {
     const key = name.toLowerCase();
@@ -73,40 +73,67 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
   const toggleCheck = (key) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const toggleStaple = (id) => toggleCheck(`s:${id}`);
+
   const clearAll = () => setChecked({});
 
+  // Checked/unchecked split for ingredient items
+  const uncheckedFresh = freshItems.filter((i) => !checked[i.name.toLowerCase()]);
+  const checkedFresh = freshItems.filter((i) => checked[i.name.toLowerCase()]);
+  const uncheckedPantry = pantryItems.filter((i) => !checked[i.name.toLowerCase()]);
+  const checkedPantry = pantryItems.filter((i) => checked[i.name.toLowerCase()]);
+
+  // Checked/unchecked split for staple items
+  const uncheckedStaples = staples.filter((s) => !checked[`s:${s.id}`]);
+  const checkedStapleItems = staples.filter((s) => checked[`s:${s.id}`]);
+
+  const totalChecked = checkedFresh.length + checkedPantry.length + checkedStapleItems.length;
+  const totalAllItems = items.length + staples.length;
+
   const copyList = () => {
-    const lines = [
-      "🛒 Boodschappenlijst",
-      "",
-      ...freshItems.map((i) => `• ${i.name} — ${i.amounts.join(", ")}`),
-      ...(pantryItems.length
-        ? ["", "🗄 Controleer in de kast:", ...pantryItems.map((i) => `• ${i.name} — ${i.amounts.join(", ")}`)]
-        : []),
-    ];
+    const lines = ["🛒 Boodschappenlijst", ""];
+    if (freshItems.length > 0) {
+      if (staples.length > 0) lines.push("📦 Maaltijdingrediënten:");
+      freshItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
+    }
+    if (pantryItems.length > 0) {
+      lines.push("", "🗄 Controleer in de kast:");
+      pantryItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
+    }
+    if (staples.length > 0) {
+      lines.push("", "🏡 Vaste boodschappen:");
+      STAPLE_CATEGORIES.forEach((cat) => {
+        const catItems = staples.filter((s) => s.category === cat);
+        if (catItems.length === 0) return;
+        lines.push(`${cat}:`);
+        catItems.forEach((s) => lines.push(`• ${s.name}`));
+      });
+    }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
   };
 
-  if (totalPlanned === 0) {
-    return (
-      <div className="shopping-list empty-shopping">
-        <h2>🛒 Boodschappenlijst</h2>
-        <div className="empty-state">
-          <p>Je hebt nog geen maaltijden gepland.</p>
-          <p>Ga naar de <strong>Weekplanner</strong> om maaltijden toe te voegen.</p>
-        </div>
-      </div>
-    );
-  }
+  // Staple edit handlers
+  const addStaple = (category, name) => {
+    onUpdateStaples([...staples, { id: Date.now(), category, name }]);
+  };
 
-  const uncheckedFresh = freshItems.filter((i) => !checked[i.name.toLowerCase()]);
-  const checkedFresh = freshItems.filter((i) => checked[i.name.toLowerCase()]);
-  const uncheckedPantry = pantryItems.filter((i) => !checked[i.name.toLowerCase()]);
-  const checkedPantry = pantryItems.filter((i) => checked[i.name.toLowerCase()]);
-  const totalChecked = checkedFresh.length + checkedPantry.length;
+  const removeStaple = (id) => {
+    onUpdateStaples(staples.filter((s) => s.id !== id));
+  };
+
+  const saveRename = (item) => {
+    const next = nameEdits[item.id];
+    if (next !== undefined) {
+      const trimmed = next.trim();
+      if (trimmed && trimmed !== item.name) {
+        onUpdateStaples(staples.map((s) => s.id === item.id ? { ...s, name: trimmed } : s));
+      }
+      setNameEdits((prev) => { const n = { ...prev }; delete n[item.id]; return n; });
+    }
+  };
 
   return (
     <div className="shopping-list">
@@ -114,7 +141,9 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
         <h2>🛒 Boodschappenlijst</h2>
         <div className="shopping-meta">
           <span>{totalPlanned} maaltijden gepland</span>
-          <span>{freshItems.length} vers · {pantryItems.length} in de kast</span>
+          {totalAllItems > 0 && (
+            <span>{items.length} ingrediënten · {staples.length} vaste items</span>
+          )}
           {totalChecked > 0 && (
             <button className="clear-checks-btn" onClick={clearAll}>Alles uitvinken</button>
           )}
@@ -137,13 +166,17 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
         </div>
       )}
 
-      <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${(totalChecked / items.length) * 100}%` }}
-        />
-      </div>
-      <p className="progress-label">{totalChecked} van {items.length} afgevinkt</p>
+      {totalAllItems > 0 && (
+        <>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${(totalChecked / totalAllItems) * 100}%` }}
+            />
+          </div>
+          <p className="progress-label">{totalChecked} van {totalAllItems} afgevinkt</p>
+        </>
+      )}
 
       {/* Combined checked section — always pinned to top */}
       {totalChecked > 0 && (
@@ -156,41 +189,128 @@ export default function ShoppingList({ weekPlan, recipes, family, days }) {
             isPantry={false}
             done
           />
-        </div>
-      )}
-
-      {/* Unchecked fresh items */}
-      <IngredientList
-        items={uncheckedFresh}
-        onCheck={toggleCheck}
-        onTogglePantry={toggleOverride}
-        isPantry={false}
-      />
-
-      {/* Pantry staples — collapsible, only unchecked items shown here */}
-      {pantryItems.length > 0 && (
-        <div className="pantry-section">
-          <button className="pantry-toggle" onClick={() => setPantryOpen((o) => !o)}>
-            <span>🗄 Controleer in de kast</span>
-            <span className="pantry-count">{uncheckedPantry.length} ingrediënten</span>
-            <span className="pantry-chevron">{pantryOpen ? "▲" : "▼"}</span>
-          </button>
-
-          {pantryOpen && (
-            <div className="pantry-body">
-              <p className="pantry-hint">
-                Heb je dit al in huis? Laat het staan. Toch nodig? Vink het aan — dan gaat het naar je boodschappenlijst.
-              </p>
-              <IngredientList
-                items={uncheckedPantry}
-                onCheck={toggleCheck}
-                onTogglePantry={toggleOverride}
-                isPantry={true}
-              />
-            </div>
+          {checkedStapleItems.length > 0 && (
+            <ul className="ingredient-list">
+              {checkedStapleItems.map((s) => (
+                <li
+                  key={s.id}
+                  className="ingredient-item done"
+                  onClick={() => toggleStaple(s.id)}
+                >
+                  <span className="check-box">☑</span>
+                  <div className="ingredient-details">
+                    <span className="ingredient-name">{s.name}</span>
+                    <span className="ingredient-amounts staple-category-badge">{s.category}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
+
+      {/* Meal ingredients section */}
+      {totalPlanned === 0 ? (
+        <div className="meal-empty-notice">
+          <p>Geen maaltijden gepland voor deze week.</p>
+          <p>Ga naar de <strong>Weekplanner</strong> om maaltijden toe te voegen.</p>
+        </div>
+      ) : (
+        <>
+          <IngredientList
+            items={uncheckedFresh}
+            onCheck={toggleCheck}
+            onTogglePantry={toggleOverride}
+            isPantry={false}
+          />
+
+          {pantryItems.length > 0 && (
+            <div className="pantry-section">
+              <button className="pantry-toggle" onClick={() => setPantryOpen((o) => !o)}>
+                <span>🗄 Controleer in de kast</span>
+                <span className="pantry-count">{uncheckedPantry.length} ingrediënten</span>
+                <span className="pantry-chevron">{pantryOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {pantryOpen && (
+                <div className="pantry-body">
+                  <p className="pantry-hint">
+                    Heb je dit al in huis? Laat het staan. Toch nodig? Vink het aan — dan gaat het naar je boodschappenlijst.
+                  </p>
+                  <IngredientList
+                    items={uncheckedPantry}
+                    onCheck={toggleCheck}
+                    onTogglePantry={toggleOverride}
+                    isPantry={true}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Vaste boodschappen section */}
+      <div className="staples-section">
+        <div className="staples-header">
+          <h3>🏡 Vaste boodschappen</h3>
+          <button
+            className={`staples-edit-btn${staplesEditMode ? " active" : ""}`}
+            onClick={() => {
+              if (staplesEditMode) setNameEdits({});
+              setStaplesEditMode((e) => !e);
+            }}
+          >
+            {staplesEditMode ? "Klaar" : "✏️ Bewerken"}
+          </button>
+        </div>
+
+        {STAPLE_CATEGORIES.map((cat) => {
+          const catItems = staples.filter((s) => s.category === cat);
+          const uncheckedCatItems = catItems.filter((s) => !checked[`s:${s.id}`]);
+          if (!staplesEditMode && uncheckedCatItems.length === 0) return null;
+          return (
+            <div key={cat} className="staples-category">
+              <h4 className="staples-category-title">{cat}</h4>
+              <ul className="staples-list">
+                {(staplesEditMode ? catItems : uncheckedCatItems).map((item) => (
+                  <li
+                    key={item.id}
+                    className={`staples-item${staplesEditMode ? " editing" : ""}`}
+                    onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
+                  >
+                    {!staplesEditMode && <span className="check-box">☐</span>}
+                    {staplesEditMode ? (
+                      <input
+                        className="staples-rename-input"
+                        value={nameEdits[item.id] ?? item.name}
+                        onChange={(e) =>
+                          setNameEdits((prev) => ({ ...prev, [item.id]: e.target.value }))
+                        }
+                        onBlur={() => saveRename(item)}
+                      />
+                    ) : (
+                      <span className="staples-item-name">{item.name}</span>
+                    )}
+                    {staplesEditMode && (
+                      <button
+                        className="staples-remove-btn"
+                        onClick={() => removeStaple(item.id)}
+                        title="Verwijder item"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {staplesEditMode && (
+                <AddStapleRow onAdd={(name) => addStaple(cat, name)} />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -224,5 +344,27 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
         );
       })}
     </ul>
+  );
+}
+
+function AddStapleRow({ onAdd }) {
+  const [name, setName] = useState("");
+  const submit = () => {
+    if (name.trim()) {
+      onAdd(name.trim());
+      setName("");
+    }
+  };
+  return (
+    <div className="staples-add-row">
+      <input
+        className="staples-add-input"
+        placeholder="Item toevoegen..."
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+      />
+      <button className="staples-add-btn" onClick={submit} disabled={!name.trim()}>+</button>
+    </div>
   );
 }

@@ -15,7 +15,22 @@ const UNIT_OPTIONS = [
   "plak",
 ];
 
-export default function RecipeLibrary({ recipes, onDelete, onUpdate, saveFailed }) {
+function newRecipeTemplate() {
+  return {
+    id: Date.now(),
+    name: "",
+    emoji: "🍽️",
+    addedBy: "",
+    servings: 4,
+    cookTime: "",
+    tags: [],
+    ingredients: [{ name: "", amount: "", unit: "" }],
+    instructions: [],
+    archived: false,
+  };
+}
+
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed }) {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -47,7 +62,9 @@ export default function RecipeLibrary({ recipes, onDelete, onUpdate, saveFailed 
 
   const handleEditClick = (e, recipe) => { e.stopPropagation(); setEditingRecipe(recipe); };
   const handleSaveEdit = (updated) => {
-    onUpdate(updated);
+    const isNew = !recipes.some((r) => r.id === updated.id);
+    if (isNew) onAdd(updated);
+    else onUpdate(updated);
     setEditingRecipe(null);
   };
 
@@ -63,7 +80,12 @@ export default function RecipeLibrary({ recipes, onDelete, onUpdate, saveFailed 
 
   return (
     <div className="recipe-library">
-      <h2>Receptenbibliotheek</h2>
+      <div className="library-header">
+        <h2>Receptenbibliotheek</h2>
+        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
+          + Nieuw recept
+        </button>
+      </div>
 
       {saveFailed && (
         <div className="save-failed-banner" role="alert">
@@ -158,6 +180,7 @@ export default function RecipeLibrary({ recipes, onDelete, onUpdate, saveFailed 
       {editingRecipe && (
         <EditRecipeModal
           recipe={editingRecipe}
+          isNew={!recipes.some((r) => r.id === editingRecipe.id)}
           onSave={handleSaveEdit}
           onClose={() => setEditingRecipe(null)}
         />
@@ -215,16 +238,28 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
       </div>
 
       {expanded && (
-        <div className="recipe-ingredients">
-          <h4>Ingrediënten ({recipe.servings} personen)</h4>
-          <ul>
-            {recipe.ingredients.map((ing, i) => (
-              <li key={i}>
-                <span className="ing-amount">{ing.amount} {ing.unit}</span>
-                <span className="ing-name">{ing.name}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="recipe-expanded-body">
+          <div className="recipe-ingredients">
+            <h4>Ingrediënten ({recipe.servings} personen)</h4>
+            <ul>
+              {recipe.ingredients.map((ing, i) => (
+                <li key={i}>
+                  <span className="ing-amount">{ing.amount} {ing.unit}</span>
+                  <span className="ing-name">{ing.name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {recipe.instructions?.length > 0 && (
+            <div className="recipe-instructions">
+              <h4>Bereidingswijze</h4>
+              <ol>
+                {recipe.instructions.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -232,7 +267,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
 }
 
 // ── Edit modal ────────────────────────────────────────────────────────────────
-function EditRecipeModal({ recipe, onSave, onClose }) {
+function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
   const [name, setName] = useState(recipe.name);
   const [emoji, setEmoji] = useState(recipe.emoji);
   const [cookTime, setCookTime] = useState(recipe.cookTime);
@@ -240,6 +275,7 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
   const [addedBy, setAddedBy] = useState(recipe.addedBy ?? "");
   const [tags, setTags] = useState(recipe.tags.join(", "));
   const [ingredients, setIngredients] = useState(recipe.ingredients.map((i) => ({ ...i })));
+  const [instructions, setInstructions] = useState(recipe.instructions ?? []);
 
   const updateIngredient = (idx, field, value) =>
     setIngredients((prev) =>
@@ -249,6 +285,13 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
     setIngredients((prev) => [...prev, { name: "", amount: "", unit: "" }]);
   const removeIngredient = (idx) =>
     setIngredients((prev) => prev.filter((_, i) => i !== idx));
+
+  const addInstruction = () =>
+    setInstructions((prev) => [...prev, ""]);
+  const updateInstruction = (idx, value) =>
+    setInstructions((prev) => prev.map((s, i) => (i === idx ? value : s)));
+  const removeInstruction = (idx) =>
+    setInstructions((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -261,6 +304,7 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
       addedBy: addedBy.trim(),
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
       ingredients: ingredients.filter((i) => i.name.trim()),
+      instructions: instructions.map((s) => s.trim()).filter(Boolean),
     });
   };
 
@@ -268,7 +312,7 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
     <div className="edit-overlay" onClick={onClose}>
       <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
         <div className="edit-modal-header">
-          <h3>✏️ Recept bewerken</h3>
+          <h3>{isNew ? "➕ Nieuw recept" : "✏️ Recept bewerken"}</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
@@ -359,6 +403,36 @@ function EditRecipeModal({ recipe, onSave, onClose }) {
               ))}
               <button type="button" className="ing-add-btn" onClick={addIngredient}>
                 + Ingrediënt toevoegen
+              </button>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="edit-field">
+            <label>Bereidingswijze <span className="edit-label-hint">(optioneel)</span></label>
+            <div className="instructions-edit-list">
+              {instructions.map((step, idx) => (
+                <div key={idx} className="instruction-edit-row">
+                  <span className="instruction-step-num">{idx + 1}</span>
+                  <textarea
+                    className="ins-edit-text"
+                    value={step}
+                    onChange={(e) => updateInstruction(idx, e.target.value)}
+                    placeholder={`Stap ${idx + 1}…`}
+                    rows={2}
+                  />
+                  <button
+                    type="button"
+                    className="ing-remove-btn"
+                    onClick={() => removeInstruction(idx)}
+                    title="Verwijder stap"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="ing-add-btn" onClick={addInstruction}>
+                + Stap toevoegen
               </button>
             </div>
           </div>

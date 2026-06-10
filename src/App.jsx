@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { recipes as defaultRecipes } from "./data/recipes";
+import { defaultStaples } from "./data/defaultStaples";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
@@ -44,6 +45,11 @@ export default function App() {
   const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
   const recipesEtagRef = useRef(null);
+
+  // Staples state
+  const [staplesList, setStaplesList] = useState(defaultStaples);
+  const [staplesLoaded, setStaplesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const staplesEtagRef = useRef(null);
 
   // ── Ref sync ──────────────────────────────────────────────────────────────
   useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
@@ -208,6 +214,16 @@ export default function App() {
           saveRecipesToBlob(defaultRecipes);
           return;
         }
+        // Append new default recipes not yet in blob (picks up newly bundled recipes on deploy)
+        const blobIds = new Set((data.recipes ?? []).map((r) => r.id));
+        const missing = defaultRecipes.filter((r) => !blobIds.has(r.id));
+        if (missing.length > 0) {
+          const merged = [...(data.recipes ?? []), ...missing];
+          recipesEtagRef.current = data.etag ?? null;
+          setRecipeList(merged);
+          saveRecipesToBlob(merged);
+          return;
+        }
         recipesEtagRef.current = data.etag ?? null;
         setRecipeList(data.recipes ?? defaultRecipes);
       })
@@ -216,6 +232,49 @@ export default function App() {
         setRecipeList(defaultRecipes);
       })
       .finally(() => { setRecipesLoaded(true); });
+  }, [currentUser]);
+
+  // ── Staples API ───────────────────────────────────────────────────────────
+  const saveStaplesToBlob = async (nextStaples) => {
+    try {
+      const response = await fetch("/api/staples", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staples: nextStaples, etag: staplesEtagRef.current }),
+      });
+      if (response.status === 412) {
+        const data = await response.json().catch(() => ({}));
+        if (data.staples && data.etag) {
+          staplesEtagRef.current = data.etag;
+          setStaplesList(data.staples);
+        }
+        return;
+      }
+      if (!response.ok) return;
+      const data = await response.json().catch(() => ({}));
+      staplesEtagRef.current = data.etag ?? null;
+    } catch {
+      // silent — staples are not critical path
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/staples", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          staplesEtagRef.current = null;
+          setStaplesList(defaultStaples);
+          saveStaplesToBlob(defaultStaples);
+          return;
+        }
+        if (!response.ok) throw new Error("Failed to load staples");
+        const data = await response.json();
+        staplesEtagRef.current = data.etag ?? null;
+        setStaplesList(data.staples ?? defaultStaples);
+      })
+      .catch(() => { setStaplesList(defaultStaples); })
+      .finally(() => { setStaplesLoaded(true); });
   }, [currentUser]);
 
   // ── Recipe mutations ──────────────────────────────────────────────────────
@@ -229,6 +288,17 @@ export default function App() {
     const next = recipeList.map((r) => r.id === updated.id ? updated : r);
     setRecipeList(next);
     saveRecipesToBlob(next);
+  };
+
+  const addRecipe = (newRecipe) => {
+    const next = [...recipeList, newRecipe];
+    setRecipeList(next);
+    saveRecipesToBlob(next);
+  };
+
+  const updateStaples = (nextStaples) => {
+    setStaplesList(nextStaples);
+    saveStaplesToBlob(nextStaples);
   };
 
   // ── Week plan helpers ─────────────────────────────────────────────────────
@@ -264,6 +334,7 @@ export default function App() {
       }
       setWeekPlanLoaded(false);
       setRecipesLoaded(false);
+      setStaplesLoaded(false);
       setCurrentUser(data.user);
       localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
@@ -284,6 +355,9 @@ export default function App() {
     setRecipeList(defaultRecipes);
     recipesEtagRef.current = null;
     setRecipesSaveFailed(false);
+    setStaplesLoaded(true);
+    setStaplesList(defaultStaples);
+    staplesEtagRef.current = null;
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
@@ -323,7 +397,7 @@ export default function App() {
     );
   }
 
-  if (!weekPlanLoaded || !recipesLoaded) {
+  if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded) {
     return (
       <div className="app login-screen">
         <main className="login-card">
@@ -378,13 +452,21 @@ export default function App() {
         {tab === "recipes" && (
           <RecipeLibrary
             recipes={recipeList}
+            onAdd={addRecipe}
             onDelete={deleteRecipe}
             onUpdate={updateRecipe}
             saveFailed={recipesSaveFailed}
           />
         )}
         {tab === "shopping" && (
-          <ShoppingList weekPlan={selectedWeekPlanData} recipes={recipeList} family={FAMILY} days={DAYS} />
+          <ShoppingList
+            weekPlan={selectedWeekPlanData}
+            recipes={recipeList}
+            family={FAMILY}
+            days={DAYS}
+            staples={staplesList}
+            onUpdateStaples={updateStaples}
+          />
         )}
       </main>
     </div>
