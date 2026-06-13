@@ -1950,10 +1950,11 @@
   background: none;
   border: 2px solid transparent;
   border-radius: 8px;
-  padding: 3px 5px;
-  font-size: 1.35rem;
+  padding: 3px 4px;
   cursor: pointer;
   line-height: 1;
+  display: flex;
+  align-items: center;
   transition: border-color 0.13s, background 0.13s;
 }
 .side-menu-flag-btn:hover { background: var(--surface2); }
@@ -1962,6 +1963,12 @@
   background: #eef0ff;
 }
 .dark .side-menu-flag-btn.active { border-color: #818cf8; background: #26284a; }
+.side-menu-flag-img {
+  width: 28px;
+  height: auto;
+  border-radius: 3px;
+  display: block;
+}
 
 .side-menu-section {
   padding: 14px 16px 10px;

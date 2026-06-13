@@ -14,7 +14,13 @@ import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
 
-function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
+const LANGUAGES = [
+  { code: "nl", img: "https://flagcdn.com/w40/nl.png", label: "Nederlands" },
+  { code: "en", img: "https://flagcdn.com/w40/gb.png", label: "English" },
+  { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
+];
+
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -80,17 +86,15 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
               <strong className="side-menu-user-name">{currentUser}</strong>
               <div className="side-menu-flag-group">
                 {[
-                  { code: "nl", flag: "🇳🇱" },
-                  { code: "en", flag: "🇬🇧" },
-                  { code: "ru", flag: "🇷🇺" },
-                ].map(({ code, flag }) => (
+                  ...LANGUAGES
+                ].map(({ code, img, label }) => (
                   <button
                     key={code}
                     className={`side-menu-flag-btn${lang === code ? " active" : ""}`}
                     onClick={() => setLang(code)}
-                    title={code}
+                    title={label}
                   >
-                    {flag}
+                    <img src={img} alt={label} className="side-menu-flag-img" />
                   </button>
                 ))}
               </div>
@@ -114,13 +118,6 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
             ))}
           </div>
         )}
-
-        <div className="side-menu-section">
-          <button className="side-menu-dark-toggle" onClick={onToggleDark}>
-            <span>{darkMode ? "☀️" : "🌙"}</span>
-            <span>{darkMode ? t("lightMode") : t("darkMode")}</span>
-          </button>
-        </div>
 
         <div className="side-menu-section">
           <p className="side-menu-label">{t("picnicSection")}</p>
@@ -671,7 +668,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
@@ -717,7 +714,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
