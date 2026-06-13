@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../LanguageContext";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
@@ -52,7 +52,7 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed }) {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
@@ -116,8 +116,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
           <span>
-            <strong>{t("saveFailedTitle")}</strong> — {t("saveFailedMsg")}
+            <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
           </span>
+          <button className="save-failed-reload" onClick={onDismissSaveFailed}>{t("refresh")}</button>
         </div>
       )}
 
@@ -323,27 +324,61 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
   const [ingredients, setIngredients] = useState(recipe.ingredients.map((i) => ({ ...i })));
   const [instructions, setInstructions] = useState(recipe.instructions ?? []);
 
+  // Refs for Enter-to-advance
+  const nameRef = useRef(null);
+  const cookTimeRef = useRef(null);
+  const servingsRef = useRef(null);
+  const addedByRef = useRef(null);
+  const tagsRef = useRef(null);
+  const ingNameRefs = useRef([]);
+  const ingUnitRefs = useRef([]);
+  const ingAmountRefs = useRef([]);
+
+  // Auto-focus name on open
+  useEffect(() => { nameRef.current?.focus(); }, []);
+
+  const advance = (ref) => (e) => {
+    if (e.key === "Enter") { e.preventDefault(); ref?.current?.focus(); }
+  };
+
   const updateIngredient = (idx, field, value) =>
     setIngredients((prev) =>
       prev.map((ing, i) => (i === idx ? { ...ing, [field]: value } : ing))
     );
-  const addIngredient = () =>
-    setIngredients((prev) => [...prev, { name: "", amount: "", unit: "" }]);
+
+  const addIngredient = useCallback(() => {
+    setIngredients((prev) => {
+      const next = [...prev, { name: "", amount: "", unit: "" }];
+      // Focus the new name field after render
+      setTimeout(() => ingNameRefs.current[next.length - 1]?.focus(), 0);
+      return next;
+    });
+  }, []);
+
   const removeIngredient = (idx) =>
     setIngredients((prev) => prev.filter((_, i) => i !== idx));
 
-  const addInstruction = () =>
-    setInstructions((prev) => [...prev, ""]);
+  const addInstruction = () => setInstructions((prev) => [...prev, ""]);
   const updateInstruction = (idx, value) =>
     setInstructions((prev) => prev.map((s, i) => (i === idx ? value : s)));
   const removeInstruction = (idx) =>
     setInstructions((prev) => prev.filter((_, i) => i !== idx));
 
+  // Enter on amount of last row → add new ingredient row
+  const onAmountEnter = (idx) => (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (idx === ingredients.length - 1) addIngredient();
+      else ingNameRefs.current[idx + 1]?.focus();
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!name.trim()) { nameRef.current?.focus(); return; }
     onSave({
       ...recipe,
-      name: name.trim() || recipe.name,
+      name: name.trim(),
       emoji,
       cookTime: cookTime.trim(),
       servings: Math.max(1, parseInt(servings, 10) || recipe.servings),
@@ -370,28 +405,46 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
             </div>
             <div className="edit-field edit-field--grow">
               <label>{t("fieldName")}</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
+              <input
+                ref={nameRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={advance(cookTimeRef)}
+                placeholder={t("recipeNamePlaceholder")}
+              />
             </div>
           </div>
 
           <div className="edit-field-group">
             <div className="edit-field">
               <label>{t("fieldCookTime")}</label>
-              <input value={cookTime} onChange={(e) => setCookTime(e.target.value)} placeholder="25 min" />
+              <input
+                ref={cookTimeRef}
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+                onKeyDown={advance(servingsRef)}
+                placeholder="25 min"
+              />
             </div>
             <div className="edit-field edit-field--narrow">
               <label>{t("fieldServings")}</label>
               <input
-                type="number"
+                ref={servingsRef}
+                type="text"
+                inputMode="numeric"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
-                min={1}
-                max={20}
+                onKeyDown={advance(addedByRef)}
               />
             </div>
             <div className="edit-field">
               <label>{t("fieldAddedBy")}</label>
-              <input value={addedBy} onChange={(e) => setAddedBy(e.target.value)} />
+              <input
+                ref={addedByRef}
+                value={addedBy}
+                onChange={(e) => setAddedBy(e.target.value)}
+                onKeyDown={advance(tagsRef)}
+              />
             </div>
           </div>
 
@@ -400,8 +453,12 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
               {t("fieldTags")} <span className="edit-label-hint">{t("tagHint")}</span>
             </label>
             <input
+              ref={tagsRef}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); ingNameRefs.current[0]?.focus(); }
+              }}
               placeholder="kip, gezond, oven"
             />
           </div>
@@ -417,15 +474,19 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="ingredient-edit-row">
                   <input
+                    ref={(el) => (ingNameRefs.current[idx] = el)}
                     className="ing-edit-name"
                     value={ing.name}
                     onChange={(e) => updateIngredient(idx, "name", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ingUnitRefs.current[idx]?.focus(); } }}
                     placeholder={t("ingredientPlaceholder")}
                   />
                   <select
+                    ref={(el) => (ingUnitRefs.current[idx] = el)}
                     className="ing-edit-unit"
                     value={ing.unit}
                     onChange={(e) => updateIngredient(idx, "unit", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ingAmountRefs.current[idx]?.focus(); } }}
                   >
                     <option value="">—</option>
                     {UNIT_OPTIONS.map((u) => (
@@ -433,13 +494,13 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                     ))}
                   </select>
                   <input
+                    ref={(el) => (ingAmountRefs.current[idx] = el)}
                     className="ing-edit-amount"
-                    type="number"
-                    min="0"
-                    step="any"
                     value={ing.amount}
                     onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
+                    onKeyDown={onAmountEnter(idx)}
                     placeholder="0"
+                    inputMode="decimal"
                   />
                   <button
                     type="button"

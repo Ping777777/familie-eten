@@ -418,6 +418,19 @@ export default function App() {
     saveRecipesToBlob(next);
   };
 
+  const reloadRecipes = () => {
+    fetch("/api/recipes", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.recipes) {
+          recipesEtagRef.current = data.etag ?? null;
+          setRecipeList(data.recipes);
+        }
+        setRecipesSaveFailed(false);
+      })
+      .catch(() => setRecipesSaveFailed(false));
+  };
+
   const updateStaples = (nextStaples) => {
     setStaplesList(nextStaples);
     saveStaplesToBlob(nextStaples);
@@ -583,6 +596,7 @@ export default function App() {
             onDelete={deleteRecipe}
             onUpdate={updateRecipe}
             saveFailed={recipesSaveFailed}
+            onDismissSaveFailed={reloadRecipes}
           />
         )}
         {tab === "shopping" && (
