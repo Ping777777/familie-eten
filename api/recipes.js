@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       }
       const text = await new Response(result.stream).text();
       const recipes = JSON.parse(text);
-      res.status(200).json({ recipes, etag: result.blob?.etag ?? null });
+      res.status(200).json({ recipes, etag: result.etag ?? result.blob?.etag ?? null });
     } catch (error) {
       console.error("[recipes] GET failed", error?.message);
       if (error?.status === 404) {
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
           const latest = await get(RECIPES_PATH, { access: "private" });
           if (latest?.statusCode === 200 && latest.stream) {
             latestRecipes = JSON.parse(await new Response(latest.stream).text());
-            latestEtag = latest.blob?.etag ?? null;
+            latestEtag = latest.etag ?? latest.blob?.etag ?? null;
           }
         } catch (readErr) {
           console.error("[recipes] conflict reread failed", readErr?.message);

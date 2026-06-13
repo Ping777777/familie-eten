@@ -236,29 +236,33 @@ export default function App() {
 
   // ── Recipe API ────────────────────────────────────────────────────────────
   const saveRecipesToBlob = async (nextRecipes) => {
-    try {
-      const response = await fetch("/api/recipes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipes: nextRecipes, etag: recipesEtagRef.current }),
-      });
-      if (response.status === 412) {
-        const data = await response.json().catch(() => ({}));
-        // Another client saved a different version — load theirs
-        if (data.recipes && data.etag) {
-          recipesEtagRef.current = data.etag;
-          setRecipeList(data.recipes);
+    const MAX_RETRIES = 3;
+    let etag = recipesEtagRef.current;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch("/api/recipes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipes: nextRecipes, etag }),
+        });
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}));
+          recipesEtagRef.current = data.etag ?? null;
+          setRecipesSaveFailed(false);
+          return;
         }
+        if (response.status !== 412) { setRecipesSaveFailed(true); return; }
+        const data = await response.json().catch(() => ({}));
+        if (!data.etag) { setRecipesSaveFailed(true); return; }
+        // Got 412 — update to latest etag and retry with our version
+        etag = data.etag;
+        recipesEtagRef.current = etag;
+      } catch {
         setRecipesSaveFailed(true);
         return;
       }
-      if (!response.ok) { setRecipesSaveFailed(true); return; }
-      const data = await response.json().catch(() => ({}));
-      recipesEtagRef.current = data.etag ?? null;
-      setRecipesSaveFailed(false);
-    } catch {
-      setRecipesSaveFailed(true);
     }
+    setRecipesSaveFailed(true);
   };
 
   useEffect(() => {
@@ -316,32 +320,20 @@ export default function App() {
         if (needsMigrate) {
           recipesEtagRef.current = data.etag ?? null;
           setRecipeList(migrated);
-          // Migration save: retry up to 3× on 412, never show error banner
+          // Migration save: unconditional write (etag: null) so ETag mismatches can't block it
           (async () => {
-            let toSave = migrated;
-            let etag = data.etag ?? null;
-            for (let attempt = 0; attempt < 3; attempt++) {
-              try {
-                const r = await fetch("/api/recipes", {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ recipes: toSave, etag }),
-                });
-                if (r.ok) {
-                  const d = await r.json().catch(() => ({}));
-                  recipesEtagRef.current = d.etag ?? null;
-                  return;
-                }
-                if (r.status !== 412) return;
+            try {
+              const r = await fetch("/api/recipes", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ recipes: migrated, etag: null }),
+              });
+              if (r.ok) {
                 const d = await r.json().catch(() => ({}));
-                if (!d.recipes || !d.etag) return;
-                etag = d.etag;
-                toSave = applyMigration(d.recipes);
-                setRecipeList(toSave);
-                recipesEtagRef.current = etag;
-              } catch {
-                return;
+                recipesEtagRef.current = d.etag ?? null;
               }
+            } catch {
+              // silent — migration will retry on next load
             }
           })();
           return;
