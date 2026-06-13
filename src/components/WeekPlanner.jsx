@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
+import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
+import { useLanguage } from "../LanguageContext";
+import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -8,30 +11,41 @@ const MEMBER_COLORS = {
   Kevin: "#f4a261",
 };
 
-// Proteins/categories to watch for repetition, in priority order
-const VARIETY_RULES = [
-  { label: "kip",      keywords: ["kip", "chicken", "kipfilet", "kipstuk"],       threshold: 3 },
-  { label: "rund",     keywords: ["rund", "beef", "steak", "gehakt", "biefstuk", "boeuf"], threshold: 3 },
-  { label: "vis",      keywords: ["vis", "zalm", "tonijn", "zalmfilet"],           threshold: 3 },
-  { label: "garnalen", keywords: ["garnalen", "shrimp", "garnaal"],               threshold: 2 },
-  { label: "pasta",    keywords: ["pasta", "spaghetti", "lasagne", "penne", "tagliatelle", "vermicelli"], threshold: 2 },
-  { label: "rijst",    keywords: ["rijst", "sushirijst", "risotto", "jasmijnrijst"], threshold: 3 },
-];
+function computeWarnings(days, weekPlan, recipes) {
+  const warningFilters = PICKER_FILTERS.filter((f) => f.threshold != null);
+  const counts = {};
+  const dayLists = {};
+  days.forEach((day) => {
+    const dayRecipeIds = new Set(Object.values(weekPlan[day] ?? {}).filter(Boolean));
+    dayRecipeIds.forEach((id) => {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return;
+      warningFilters.forEach(({ key }) => {
+        if (matchesFilter(recipe, key)) {
+          if (!counts[key]) { counts[key] = new Set(); dayLists[key] = []; }
+          if (!counts[key].has(day)) { counts[key].add(day); dayLists[key].push(day); }
+        }
+      });
+    });
+  });
+  return warningFilters
+    .filter(({ key, threshold }) => (counts[key]?.size ?? 0) >= threshold)
+    .map(({ key }) => ({
+      key,
+      count: counts[key].size,
+      swapDay: dayLists[key][dayLists[key].length - 1],
+    }));
+}
 
-const NL_MONTHS = [
-  "januari","februari","maart","april","mei","juni",
-  "juli","augustus","september","oktober","november","december",
-];
-
-function formatWeekRange(offset) {
+function formatWeekRange(offset, months) {
   const monday = getMondayOfWeek(offset);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
   const d1 = monday.getDate();
   const d2 = sunday.getDate();
-  const m1 = NL_MONTHS[monday.getMonth()];
-  const m2 = NL_MONTHS[sunday.getMonth()];
+  const m1 = months[monday.getMonth()];
+  const m2 = months[sunday.getMonth()];
   const y = sunday.getFullYear();
 
   if (monday.getMonth() === sunday.getMonth()) {
@@ -40,66 +54,22 @@ function formatWeekRange(offset) {
   return `${d1} ${m1} — ${d2} ${m2} ${y}`;
 }
 
-function getWeekLabel(offset) {
-  const { week, year } = getIsoWeekInfo(offset);
-  return `Week ${week} · ${year}`;
-}
-
-// Get the date for a specific day index (0=Mon) within the offset week
-function getDayDate(offset, dayIndex) {
-  const monday = getMondayOfWeek(offset);
-  const d = new Date(monday);
-  d.setDate(monday.getDate() + dayIndex);
-  return d.getDate();
-}
-
-function computeWarnings(days, weekPlan, recipes) {
-  // Count how many unique recipe-days contain each category
-  const categoryCounts = {}; // label -> Set of days
-  const categoryDays = {};   // label -> [day names]
-
-  days.forEach((day) => {
-    // Collect unique recipe IDs planned this day (across all members)
-    const dayRecipeIds = new Set(
-      Object.values(weekPlan[day] ?? {}).filter(Boolean)
-    );
-
-    dayRecipeIds.forEach((id) => {
-      const recipe = recipes.find((r) => r.id === id);
-      if (!recipe) return;
-      const searchText = [recipe.name, ...(recipe.tags ?? [])].join(" ").toLowerCase();
-
-      VARIETY_RULES.forEach(({ label, keywords }) => {
-        if (keywords.some((kw) => searchText.includes(kw))) {
-          if (!categoryCounts[label]) { categoryCounts[label] = new Set(); categoryDays[label] = []; }
-          if (!categoryCounts[label].has(day)) {
-            categoryCounts[label].add(day);
-            categoryDays[label].push(day);
-          }
-        }
-      });
-    });
-  });
-
-  return VARIETY_RULES
-    .filter(({ label, threshold }) => (categoryCounts[label]?.size ?? 0) >= threshold)
-    .map(({ label, threshold }) => {
-      const affectedDays = categoryDays[label];
-      // Suggest swapping the last occurrence
-      const swapDay = affectedDays[affectedDays.length - 1];
-      return {
-        label,
-        count: categoryCounts[label].size,
-        threshold,
-        swapDay,
-      };
-    });
-}
-
-export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan }) {
+export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
+  const { t, tDay, lang } = useLanguage();
   const [selecting, setSelecting] = useState(null);
+  const [pickerFilter, setPickerFilter] = useState(null);
 
-  const getRecipe = (id) => recipes.find((r) => r.id === id);
+  const months = t("months");
+  const { week, year } = getIsoWeekInfo(weekOffset);
+
+  const SPECIAL_MEALS = [
+    { id: -1, name: t("specialMeal1"), emoji: "🍱", tags: [], ingredients: [] },
+    { id: -2, name: t("specialMeal2"), emoji: "🥡", tags: [], ingredients: [] },
+    { id: -3, name: t("specialMeal3"), emoji: "🍽️", tags: [], ingredients: [] },
+  ];
+
+  const getRecipe = (id) =>
+    recipes.find((r) => r.id === id) ?? SPECIAL_MEALS.find((s) => s.id === id) ?? null;
 
   const handleSelect = (recipeId) => {
     if (!selecting) return;
@@ -112,52 +82,54 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     [days, weekPlan, recipes]
   );
 
+  function getDayDate(dayIndex) {
+    const monday = getMondayOfWeek(weekOffset);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + dayIndex);
+    return d.getDate();
+  }
+
   return (
     <div className="week-planner">
-      {/* Week selector */}
       <div className="week-nav">
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title="Vorige week">‹</button>
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>‹</button>
         <div className="week-label-group">
-          <span className="week-relative">{getWeekLabel(weekOffset)}</span>
-          <span className="week-dates">{formatWeekRange(weekOffset)}</span>
+          <span className="week-relative">{t("weekLabel", { n: week, year })}</span>
+          <span className="week-dates">{formatWeekRange(weekOffset, months)}</span>
         </div>
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title="Volgende week">›</button>
+        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>›</button>
         {weekOffset !== 0 && (
-          <button className="week-today-btn" onClick={() => onWeekChange(0)}>Vandaag</button>
+          <button className="week-today-btn" onClick={() => onWeekChange(0)}>{t("today")}</button>
         )}
       </div>
 
-      {/* Save conflict notice */}
       {saveFailed && (
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
           <span>
-            <strong>Niet opgeslagen</strong> — iemand anders wijzigde deze week tegelijk. Je wijziging staat nog op het scherm maar is niet bewaard.
+            <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
           </span>
           {onReloadWeekPlan && (
             <button className="save-failed-reload" onClick={onReloadWeekPlan}>
-              Laad de laatste versie
+              {t("loadLatest")}
             </button>
           )}
         </div>
       )}
 
-      {/* Variety warnings */}
       {warnings.length > 0 && (
         <div className="variety-warnings">
           {warnings.map((w) => (
-            <div key={w.label} className="variety-warning">
+            <div key={w.key} className="variety-warning">
               <span className="warning-icon">⚠️</span>
               <span>
-                <strong>Veel {w.label} deze week</strong> ({w.count}×) —{" "}
-                overweeg iets anders op <strong>{w.swapDay}</strong>
+                <strong>{t("varietyWarning", { label: t("filter_" + w.key) })}</strong> ({w.count}×) —{" "}
+                {t("varietyHint", { day: tDay(w.swapDay) })}
               </span>
             </div>
           ))}
         </div>
       )}
-
-      <p className="hint">Klik op een vakje om een maaltijd te kiezen voor elk gezinslid.</p>
 
       <div className="planner-grid">
         <div className="grid-header">
@@ -172,36 +144,48 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         {days.map((day, idx) => (
           <div key={day} className="grid-row">
             <div className="day-label">
-              <span className="day-name">{day}</span>
-              <span className="day-date">{getDayDate(weekOffset, idx)}</span>
+              <span className="day-name">{tDay(day)}</span>
+              <span className="day-date">{getDayDate(idx)}</span>
             </div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
+              const isDayLocked = !recipe && family.some((m) => m !== member && (dayPlan[m] ?? null));
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
               return (
                 <div
                   key={member}
-                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"}`}
+                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : isDayLocked ? "locked" : "empty"}`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={() => setSelecting({ day, member })}
+                  onClick={isDayLocked ? undefined : () => {
+                    if (recipe && recipe.id > 0) {
+                      onViewRecipe(recipe.id, day, member);
+                    } else {
+                      setSelecting({ day, member });
+                    }
+                  }}
                 >
                   {recipe ? (
                     <div className="meal-tag">
                       <span>{recipe.emoji}</span>
-                      <span className="meal-name">{recipe.name}</span>
+                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
-                        title="Verwijder"
+                        title={t("removeMeal")}
                       >
                         ×
                       </button>
+                      <button
+                        className="meal-edit-btn"
+                        title={t("changeMeal")}
+                        onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
+                      >✎</button>
                     </div>
-                  ) : (
-                    <span className="add-hint">+ Kies maaltijd</span>
+                  ) : isDayLocked ? null : (
+                    <span className="add-hint">{t("addMeal")}</span>
                   )}
                 </div>
               );
@@ -210,33 +194,86 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         ))}
       </div>
 
-      {selecting && (
-        <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
-          <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
-            <div className="picker-header">
-              <h3>
-                Kies maaltijd voor <strong>{selecting.member}</strong> op <strong>{selecting.day}</strong>
-              </h3>
-              <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
-            </div>
-            <div className="picker-grid">
-              {recipes.map((r) => (
+      {selecting && (() => {
+        const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
+        const isReplacing = Boolean(currentId && getRecipe(currentId));
+        const visibleRecipes = recipes
+          .filter((r) => !r.archived)
+          .filter((r) => matchesFilter(r, pickerFilter));
+        return (
+          <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
+            <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
+              <div className="picker-header">
+                <h3>
+                  {isReplacing ? t("replaceMeal") : t("chooseMeal")}{" "}
+                  {t("mealFor", { day: tDay(selecting.day) })}
+                </h3>
+                <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
+              </div>
+
+              <div className="picker-specials">
+                {SPECIAL_MEALS.map((s) => {
+                  const isCurrent = s.id === currentId;
+                  return (
+                    <button
+                      key={s.id}
+                      className={`picker-special-btn${isCurrent ? " picker-special-btn--current" : ""}`}
+                      onClick={() => handleSelect(s.id)}
+                    >
+                      <span className="picker-special-emoji">{s.emoji}</span>
+                      <span className="picker-special-name">{s.name}</span>
+                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="picker-filters">
                 <button
-                  key={r.id}
-                  className="picker-card"
-                  onClick={() => handleSelect(r.id)}
+                  className={`picker-filter-btn ${!pickerFilter ? "active" : ""}`}
+                  onClick={() => setPickerFilter(null)}
                 >
-                  <span className="picker-emoji">{r.emoji}</span>
-                  <span className="picker-name">{r.name}</span>
-                  <div className="picker-tags">
-                    {r.tags.map((t) => <span key={t} className="tag">{t}</span>)}
-                  </div>
+                  {t("filterAll")}
                 </button>
-              ))}
+                {PICKER_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    className={`picker-filter-btn ${pickerFilter === f.key ? "active" : ""}`}
+                    onClick={() => setPickerFilter(pickerFilter === f.key ? null : f.key)}
+                  >
+                    {f.emoji} {t("filter_" + f.key)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="picker-grid">
+                {visibleRecipes.length === 0 && (
+                  <p className="picker-empty">{t("noRecipesCategory")}</p>
+                )}
+                {visibleRecipes.map((r) => {
+                  const isCurrent = r.id === currentId;
+                  return (
+                    <button
+                      key={r.id}
+                      className={`picker-card ${isCurrent ? "picker-card--current" : ""}`}
+                      onClick={() => handleSelect(r.id)}
+                    >
+                      <span className="picker-emoji">{r.emoji}</span>
+                      <span className="picker-name">{getRecipeName(r, lang)}</span>
+                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
+                      <div className="picker-tags">
+                        {r.tags.map((tag) => (
+                          <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
