@@ -192,7 +192,6 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
-const PICNIC_USER_KEY = "familie-eten:picnic-user";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -216,11 +215,8 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
 
-  // Picnic state — authKey is kept in memory only; only the display name is persisted
-  const [picnicUser, setPicnicUser] = useState(() => {
-    const name = localStorage.getItem(PICNIC_USER_KEY);
-    return name ? { name } : null;
-  });
+  // Picnic state — keep user/auth state in memory only
+  const [picnicUser, setPicnicUser] = useState(null);
 
   const handlePicnicLogin = async (username, password) => {
     const response = await fetch("/api/picnic-login", {
@@ -237,7 +233,6 @@ export default function App() {
     }
     const user = { name: data.name, authKey: data.authKey };
     setPicnicUser(user);
-    localStorage.setItem(PICNIC_USER_KEY, data.name);
     return { requiresTwoFactor: false };
   };
 
@@ -253,12 +248,10 @@ export default function App() {
     }
     const user = { name: data.name, authKey: data.authKey };
     setPicnicUser(user);
-    localStorage.setItem(PICNIC_USER_KEY, data.name);
   };
 
   const handlePicnicLogout = () => {
     setPicnicUser(null);
-    localStorage.removeItem(PICNIC_USER_KEY);
   };
 
   // Week plan state
