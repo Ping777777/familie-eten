@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 import { useLanguage } from "../LanguageContext";
+import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -54,7 +55,7 @@ function formatWeekRange(offset, months) {
 }
 
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
-  const { t, tDay } = useLanguage();
+  const { t, tDay, lang } = useLanguage();
   const [selecting, setSelecting] = useState(null);
   const [pickerFilter, setPickerFilter] = useState(null);
 
@@ -169,7 +170,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   {recipe ? (
                     <div className="meal-tag">
                       <span>{recipe.emoji}</span>
-                      <span className="meal-name">{recipe.name}</span>
+                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
@@ -258,11 +259,11 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       onClick={() => handleSelect(r.id)}
                     >
                       <span className="picker-emoji">{r.emoji}</span>
-                      <span className="picker-name">{r.name}</span>
+                      <span className="picker-name">{getRecipeName(r, lang)}</span>
                       {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
                       <div className="picker-tags">
                         {r.tags.map((tag) => (
-                          <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>
+                          <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
                         ))}
                       </div>
                     </button>

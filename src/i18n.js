@@ -128,6 +128,10 @@ export const translations = {
     statusInProgress: "In ontwikkeling",
     statusDone: "Klaar",
     roadmapFooter: "🔒 Verborgen voor gewone gebruikers · alleen via de Dev-knop bereikbaar",
+
+    language: "Taal",
+    darkMode: "🌙 Donkere modus",
+    lightMode: "☀️ Lichte modus",
   },
 
   en: {
@@ -259,6 +263,10 @@ export const translations = {
     statusInProgress: "In development",
     statusDone: "Done",
     roadmapFooter: "🔒 Hidden from regular users · only accessible via the Dev button",
+
+    language: "Language",
+    darkMode: "🌙 Dark mode",
+    lightMode: "☀️ Light mode",
   },
 
   ru: {
@@ -390,5 +398,9 @@ export const translations = {
     statusInProgress: "В разработке",
     statusDone: "Готово",
     roadmapFooter: "🔒 Скрыто от обычных пользователей · доступно только через кнопку Dev",
+
+    language: "Язык",
+    darkMode: "🌙 Тёмная тема",
+    lightMode: "☀️ Светлая тема",
   },
 };

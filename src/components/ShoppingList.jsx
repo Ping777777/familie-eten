@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { isPantryByDefault } from "../data/pantryStaples";
 import { useLanguage } from "../LanguageContext";
+import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
+import { translateStapleName } from "../data/stapleTranslations";
 
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
@@ -12,7 +14,7 @@ const loadOverrides = () => {
 };
 
 export default function ShoppingList({ weekPlan, recipes, family, days, staples = [], onUpdateStaples }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
   const [picnicMsg, setPicnicMsg] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -34,16 +36,18 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
         if (!recipeId) return;
         const recipe = recipes.find((r) => r.id === recipeId);
         if (!recipe) return;
-        recipe.ingredients.forEach(({ name, amount, unit }) => {
-          const key = name.toLowerCase();
-          if (!map[key]) map[key] = { name, amounts: [], meals: new Set() };
-          map[key].amounts.push(unit ? `${amount} ${unit}` : amount);
-          map[key].meals.add(recipe.name);
+        recipe.ingredients.forEach(({ name, amount, unit }, ingIdx) => {
+          const id = name.toLowerCase();
+          const displayName = getIngredientName(recipe, ingIdx, lang) ?? name;
+          const mealName = getRecipeName(recipe, lang);
+          if (!map[id]) map[id] = { id, name: displayName, amounts: [], meals: new Set() };
+          map[id].amounts.push(unit ? `${amount} ${translateUnit(unit, lang)}` : amount);
+          map[id].meals.add(mealName);
         });
       });
     });
     return map;
-  }, [weekPlan, recipes, family, days]);
+  }, [weekPlan, recipes, family, days, lang]);
 
   const items = Object.values(ingredientMap).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -63,8 +67,8 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
     });
   };
 
-  const freshItems = items.filter((i) => !isPantry(i.name));
-  const pantryItems = items.filter((i) => isPantry(i.name));
+  const freshItems = items.filter((i) => !isPantry(i.id));
+  const pantryItems = items.filter((i) => isPantry(i.id));
 
   const totalPlanned = days.reduce(
     (acc, day) => acc + family.filter((m) => {
@@ -78,10 +82,10 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
-  const uncheckedFresh  = freshItems.filter((i) => !checked[i.name.toLowerCase()]);
-  const checkedFresh    = freshItems.filter((i) =>  checked[i.name.toLowerCase()]);
-  const uncheckedPantry = pantryItems.filter((i) => !checked[i.name.toLowerCase()]);
-  const checkedPantry   = pantryItems.filter((i) =>  checked[i.name.toLowerCase()]);
+  const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
+  const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
+  const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
+  const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
 
   const mealCheckedCount   = checkedFresh.length + checkedPantry.length;
@@ -106,7 +110,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
         const catItems = staples.filter((s) => s.category === cat);
         if (catItems.length === 0) return;
         lines.push(`${t(CAT_KEY[cat])}:`);
-        catItems.forEach((s) => lines.push(`• ${s.name}`));
+        catItems.forEach((s) => lines.push(`• ${translateStapleName(s.name, lang)}`));
       });
     }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
@@ -274,7 +278,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
                   <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
                     <span className="check-box">☑</span>
                     <div className="ingredient-details">
-                      <span className="ingredient-name">{s.name}</span>
+                      <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                       <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
                     </div>
                   </li>
@@ -306,7 +310,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
                           onBlur={() => saveRename(item)}
                         />
                       ) : (
-                        <span className="staples-item-name">{item.name}</span>
+                        <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
                       )}
                       {staplesEditMode && (
                         <button className="staples-remove-btn" onClick={() => removeStaple(item.id)} title={t("removeItem")}>×</button>
@@ -329,26 +333,23 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
   if (items.length === 0) return null;
   return (
     <ul className="ingredient-list">
-      {items.map((item) => {
-        const key = item.name.toLowerCase();
-        return (
-          <li key={key} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(key)}>
-            <span className="check-box">{done ? "☑" : "☐"}</span>
-            <div className="ingredient-details">
-              <span className="ingredient-name">{item.name}</span>
-              <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
-              {!done && item.meals && (
-                <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
-              )}
-            </div>
-            {!done && !isPantry && (
-              <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.name)}>
-                🗄
-              </button>
+      {items.map((item) => (
+        <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
+          <span className="check-box">{done ? "☑" : "☐"}</span>
+          <div className="ingredient-details">
+            <span className="ingredient-name">{item.name}</span>
+            <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
+            {!done && item.meals && (
+              <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
             )}
-          </li>
-        );
-      })}
+          </div>
+          {!done && !isPantry && (
+            <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
+              🗄
+            </button>
+          )}
+        </li>
+      ))}
     </ul>
   );
 }

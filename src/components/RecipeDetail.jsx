@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../LanguageContext";
+import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
   Papa: "#4a90d9",
@@ -10,7 +11,7 @@ const MEMBER_COLORS = {
 };
 
 export default function RecipeDetail({ recipe, day, member, onBack }) {
-  const { t, tDay } = useLanguage();
+  const { t, tDay, lang } = useLanguage();
   const [doneSteps, setDoneSteps] = useState({});
 
   if (!recipe) return null;
@@ -18,7 +19,7 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
   const toggleStep = (idx) =>
     setDoneSteps((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
-  const steps = recipe.instructions ?? [];
+  const steps = getInstructions(recipe, lang);
   const doneCount = Object.values(doneSteps).filter(Boolean).length;
 
   return (
@@ -42,7 +43,7 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
       <div className="detail-scroll">
         <div className="detail-hero">
           <span className="detail-hero-emoji">{recipe.emoji}</span>
-          <h1 className="detail-title">{recipe.name}</h1>
+          <h1 className="detail-title">{getRecipeName(recipe, lang)}</h1>
           <div className="detail-meta-row">
             {recipe.cookTime && <span>⏱ {recipe.cookTime}</span>}
             {recipe.cookTime && <span className="detail-meta-dot">·</span>}
@@ -57,7 +58,7 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
           {recipe.tags.length > 0 && (
             <div className="detail-tags">
               {recipe.tags.map((tag) => (
-                <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>
+                <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
               ))}
             </div>
           )}
@@ -71,10 +72,10 @@ export default function RecipeDetail({ recipe, day, member, onBack }) {
                 <li key={i} className="detail-ing-row">
                   {(ing.amount || ing.unit) && (
                     <span className="detail-ing-amount">
-                      {ing.amount}{ing.unit ? ` ${ing.unit}` : ""}
+                      {ing.amount}{ing.unit ? ` ${translateUnit(ing.unit, lang)}` : ""}
                     </span>
                   )}
-                  <span className="detail-ing-name">{ing.name}</span>
+                  <span className="detail-ing-name">{getIngredientName(recipe, i, lang)}</span>
                 </li>
               ))}
             </ul>

@@ -10,21 +10,59 @@ import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
 
-function LangSwitcher() {
-  const { lang, setLang } = useLanguage();
+function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser }) {
+  const { lang, setLang, t } = useLanguage();
   return (
-    <div className="lang-switcher">
-      {[{ code: "nl", flag: "🇳🇱" }, { code: "en", flag: "🇬🇧" }, { code: "ru", flag: "🇷🇺" }].map(({ code, flag }) => (
-        <button
-          key={code}
-          className={`lang-btn${lang === code ? " active" : ""}`}
-          onClick={() => setLang(code)}
-          title={code.toUpperCase()}
-        >
-          {flag}
-        </button>
-      ))}
-    </div>
+    <>
+      {open && <div className="menu-overlay" onClick={onClose} />}
+      <aside className={`side-menu${open ? " side-menu--open" : ""}`}>
+        <div className="side-menu-top">
+          <span className="side-menu-title">🍽️ Familie Eten</span>
+          <button className="side-menu-close" onClick={onClose}>✕</button>
+        </div>
+
+        {currentUser && (
+          <div className="side-menu-user">
+            <span className="side-menu-user-label">{t("loggedInAs")}</span>
+            <strong className="side-menu-user-name">{currentUser}</strong>
+          </div>
+        )}
+
+        <div className="side-menu-section">
+          <p className="side-menu-label">{t("language")}</p>
+          {[
+            { code: "nl", flag: "🇳🇱", name: "Nederlands" },
+            { code: "en", flag: "🇬🇧", name: "English" },
+            { code: "ru", flag: "🇷🇺", name: "Русский" },
+          ].map(({ code, flag, name }) => (
+            <button
+              key={code}
+              className={`side-menu-lang${lang === code ? " active" : ""}`}
+              onClick={() => setLang(code)}
+            >
+              <span className="side-menu-lang-flag">{flag}</span>
+              <span className="side-menu-lang-name">{name}</span>
+              {lang === code && <span className="side-menu-check">✓</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="side-menu-section">
+          <button className="side-menu-dark-toggle" onClick={onToggleDark}>
+            <span>{darkMode ? "☀️" : "🌙"}</span>
+            <span>{darkMode ? t("lightMode") : t("darkMode")}</span>
+          </button>
+        </div>
+
+        {currentUser && (
+          <div className="side-menu-footer">
+            <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
+              {t("logout")}
+            </button>
+          </div>
+        )}
+      </aside>
+    </>
   );
 }
 
@@ -39,10 +77,15 @@ const emptyWeek = () =>
     return acc;
   }, {});
 
+const LS_DARK = "familie-eten:dark";
+
 export default function App() {
   const { t } = useLanguage();
   const [tab, setTab] = useState("planner");
   const [showRoadmap, setShowRoadmap] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem(LS_DARK) === "1");
+  const toggleDark = () => setDarkMode((d) => { const next = !d; localStorage.setItem(LS_DARK, next ? "1" : "0"); return next; });
   const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -431,8 +474,9 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (!currentUser) {
     return (
-      <div className="app login-screen">
-        <LangSwitcher />
+      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} />
+        <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
           <p className="subtitle">{t("loginSubtitle")}</p>
@@ -466,7 +510,7 @@ export default function App() {
 
   if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded) {
     return (
-      <div className="app login-screen">
+      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
           <p className="subtitle">{t("loading")}</p>
@@ -476,11 +520,12 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app${darkMode ? " dark" : ""}`}>
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} />
       <header className="app-header">
+        <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
           <h1>🍽️ Familie Eten</h1>
-          <p className="subtitle">{t("loggedInAs")} {currentUser}</p>
         </div>
         <nav className="tabs">
           {[
@@ -497,10 +542,6 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="header-right">
-          <LangSwitcher />
-          <button className="logout-btn" onClick={handleLogout}>{t("logout")}</button>
-        </div>
       </header>
 
       <button className="dev-btn" onClick={() => setShowRoadmap(true)} title="Developer roadmap">Dev</button>

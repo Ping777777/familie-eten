@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../LanguageContext";
+import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const UNIT_OPTIONS = [
   "g", "kg",
@@ -32,7 +33,7 @@ function newRecipeTemplate() {
 }
 
 export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -46,7 +47,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   const allTags = [...new Set(activeRecipes.flatMap((r) => r.tags))].sort();
 
   const filtered = activeRecipes.filter((r) => {
-    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = r.name.toLowerCase().includes(q) ||
+      getRecipeName(r, lang).toLowerCase().includes(q);
     const matchTag = !activeTag || r.tags.includes(activeTag);
     return matchSearch && matchTag;
   });
@@ -119,7 +122,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               className={`tag-filter ${activeTag === tag ? "active" : ""}`}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
             >
-              {tag}
+              {translateTag(tag, lang)}
             </button>
           ))}
         </div>
@@ -200,7 +203,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
 }
 
 function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, archiveBtn, dimmed }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div
       className={`recipe-card ${expanded ? "expanded" : ""} ${dimmed ? "recipe-card--archived" : ""}`}
@@ -209,10 +212,10 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
       <div className="recipe-card-top">
         <span className="recipe-big-emoji">{recipe.emoji}</span>
         <div className="recipe-info">
-          <h3>{recipe.name}</h3>
+          <h3>{getRecipeName(recipe, lang)}</h3>
           <div className="recipe-meta">⏱ {recipe.cookTime} · {t("perServings", { n: recipe.servings })}</div>
           <div className="recipe-tags">
-            {recipe.tags.map((tag) => <span key={tag} className={`tag ${tagClass(tag)}`}>{tag}</span>)}
+            {recipe.tags.map((tag) => <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>)}
           </div>
         </div>
         <div className="card-actions">
@@ -236,8 +239,8 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
             <ul>
               {recipe.ingredients.map((ing, i) => (
                 <li key={i}>
-                  <span className="ing-amount">{ing.amount} {ing.unit}</span>
-                  <span className="ing-name">{ing.name}</span>
+                  <span className="ing-amount">{ing.amount} {translateUnit(ing.unit, lang)}</span>
+                  <span className="ing-name">{getIngredientName(recipe, i, lang)}</span>
                 </li>
               ))}
             </ul>
@@ -246,7 +249,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
             <div className="recipe-instructions">
               <h4>{t("sectionInstructions")}</h4>
               <ol>
-                {recipe.instructions.map((step, i) => (
+                {getInstructions(recipe, lang).map((step, i) => (
                   <li key={i}>{step}</li>
                 ))}
               </ol>
