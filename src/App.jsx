@@ -165,10 +165,10 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
 
-  // Picnic state
+  // Picnic state — authKey is kept in memory only; only the display name is persisted
   const [picnicUser, setPicnicUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(PICNIC_USER_KEY)) ?? null; }
-    catch { return null; }
+    const name = localStorage.getItem(PICNIC_USER_KEY);
+    return name ? { name } : null;
   });
 
   const handlePicnicLogin = async (username, password) => {
@@ -183,7 +183,7 @@ export default function App() {
     }
     const user = { name: data.name, authKey: data.authKey };
     setPicnicUser(user);
-    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
+    localStorage.setItem(PICNIC_USER_KEY, data.name);
   };
 
   const handlePicnicLogout = () => {
