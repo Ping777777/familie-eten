@@ -10,8 +10,28 @@ import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
 
-function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser }) {
+function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicLogout }) {
   const { lang, setLang, t } = useLanguage();
+  const [picnicFormOpen, setPicnicFormOpen] = useState(false);
+  const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
+  const [picnicError, setPicnicError] = useState("");
+  const [picnicBusy, setPicnicBusy] = useState(false);
+
+  const handlePicnicSubmit = async (e) => {
+    e.preventDefault();
+    setPicnicError("");
+    setPicnicBusy(true);
+    try {
+      await onPicnicLogin(picnicForm.username, picnicForm.password);
+      setPicnicForm({ username: "", password: "" });
+      setPicnicFormOpen(false);
+    } catch (err) {
+      setPicnicError(err?.message || t("picnicLoginFailed"));
+    } finally {
+      setPicnicBusy(false);
+    }
+  };
+
   return (
     <>
       {open && <div className="menu-overlay" onClick={onClose} />}
@@ -54,6 +74,58 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
           </button>
         </div>
 
+        <div className="side-menu-section">
+          <p className="side-menu-label">{t("picnicSection")}</p>
+          {picnicUser ? (
+            <>
+              <div className="side-menu-picnic-user">
+                <span className="side-menu-user-label">{t("picnicLoggedInAs")}</span>
+                <strong className="side-menu-user-name">{picnicUser.name}</strong>
+              </div>
+              <button
+                className="side-menu-picnic-logout"
+                onClick={() => { onPicnicLogout(); }}
+              >
+                {t("picnicLogout")}
+              </button>
+            </>
+          ) : picnicFormOpen ? (
+            <form className="side-menu-picnic-form" onSubmit={handlePicnicSubmit}>
+              <input
+                className="side-menu-picnic-input"
+                type="email"
+                placeholder={t("picnicLoginUsername")}
+                value={picnicForm.username}
+                onChange={(e) => setPicnicForm((p) => ({ ...p, username: e.target.value }))}
+                autoComplete="email"
+                required
+              />
+              <input
+                className="side-menu-picnic-input"
+                type="password"
+                placeholder={t("picnicLoginPassword")}
+                value={picnicForm.password}
+                onChange={(e) => setPicnicForm((p) => ({ ...p, password: e.target.value }))}
+                autoComplete="current-password"
+                required
+              />
+              {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
+              <div className="side-menu-picnic-actions">
+                <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
+                  {picnicBusy ? t("picnicLoginBusy") : t("picnicLoginBtn")}
+                </button>
+                <button type="button" className="side-menu-picnic-cancel" onClick={() => { setPicnicFormOpen(false); setPicnicError(""); setPicnicForm({ username: "", password: "" }); }}>
+                  {t("cancel")}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button className="side-menu-picnic-login-btn" onClick={() => setPicnicFormOpen(true)}>
+              🛵 {t("picnicLogin")}
+            </button>
+          )}
+        </div>
+
         {currentUser && (
           <div className="side-menu-footer">
             <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
@@ -69,6 +141,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
+const PICNIC_USER_KEY = "familie-eten:picnic-user";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -91,6 +164,32 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
+
+  // Picnic state
+  const [picnicUser, setPicnicUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(PICNIC_USER_KEY)) ?? null; }
+    catch { return null; }
+  });
+
+  const handlePicnicLogin = async (username, password) => {
+    const response = await fetch("/api/picnic-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.message || t("picnicLoginFailed"));
+    }
+    const user = { name: data.name, authKey: data.authKey };
+    setPicnicUser(user);
+    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
+  };
+
+  const handlePicnicLogout = () => {
+    setPicnicUser(null);
+    localStorage.removeItem(PICNIC_USER_KEY);
+  };
 
   // Week plan state
   const [selectedWeekPlan, setSelectedWeekPlan] = useState(() => emptyWeek());
@@ -475,7 +574,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicLogout={handlePicnicLogout} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
@@ -521,7 +620,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicLogout={handlePicnicLogout} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
