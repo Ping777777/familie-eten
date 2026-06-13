@@ -279,5 +279,5 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
 }
 
 function memberEmoji(name) {
-  return { Papa: "👱🏼‍♂️", Mama: "👩🏼", Inga: "👧🏽", Kevin: "👦🏼" }[name] ?? "👤";
+  return { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" }[name] ?? "👤";
 }
