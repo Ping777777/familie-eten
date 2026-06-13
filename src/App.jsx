@@ -125,7 +125,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder={t("picnic2faPlaceholder")}
+                placeholder={t("picnic2faPlaceholder")} aria-label={t("picnic2faPlaceholder")}
                 value={picnicOtp.code}
                 onChange={(e) => setPicnicOtp((p) => ({ ...p, code: e.target.value }))}
                 required
@@ -145,7 +145,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
               <input
                 className="side-menu-picnic-input"
                 type="email"
-                placeholder={t("picnicLoginUsername")}
+                placeholder={t("picnicLoginUsername")} aria-label={t("picnicLoginUsername")}
                 value={picnicForm.username}
                 onChange={(e) => setPicnicForm((p) => ({ ...p, username: e.target.value }))}
                 autoComplete="email"
@@ -154,7 +154,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
               <input
                 className="side-menu-picnic-input"
                 type="password"
-                placeholder={t("picnicLoginPassword")}
+                placeholder={t("picnicLoginPassword")} aria-label={t("picnicLoginPassword")}
                 value={picnicForm.password}
                 onChange={(e) => setPicnicForm((p) => ({ ...p, password: e.target.value }))}
                 autoComplete="current-password"
@@ -165,7 +165,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
                 <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
                   {picnicBusy ? t("picnicLoginBusy") : t("picnicLoginBtn")}
                 </button>
-                <button type="button" className="side-menu-picnic-cancel" onClick={() => { setPicnicFormOpen(false); setPicnicError(""); setPicnicForm({ username: "", password: "" }); }}>
+                <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
                   {t("cancel")}
                 </button>
               </div>
@@ -228,7 +228,7 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data?.message || t("picnicLoginFailed"));
     }
@@ -247,7 +247,7 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ authKey, code }),
     });
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data?.message || t("picnic2faFailed"));
     }
