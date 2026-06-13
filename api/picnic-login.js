@@ -17,6 +17,17 @@ export default async function handler(req, res) {
   try {
     const client = new PicnicClient({ countryCode: "NL" });
     const loginResult = await client.auth.login(username, password);
+
+    if (loginResult.second_factor_authentication_required) {
+      await client.auth.generate2FACode("SMS");
+      res.status(200).json({
+        ok: true,
+        requiresTwoFactor: true,
+        authKey: loginResult.authKey,
+      });
+      return;
+    }
+
     const userDetails = await client.user.getUserDetails();
     const name = `${userDetails.firstname} ${userDetails.lastname}`.trim();
 

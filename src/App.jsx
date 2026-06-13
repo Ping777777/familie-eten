@@ -10,26 +10,54 @@ import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
 
-function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicLogout }) {
+function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
   const [picnicError, setPicnicError] = useState("");
   const [picnicBusy, setPicnicBusy] = useState(false);
+  const [picnicOtp, setPicnicOtp] = useState({ open: false, authKey: "", code: "" });
 
   const handlePicnicSubmit = async (e) => {
     e.preventDefault();
     setPicnicError("");
     setPicnicBusy(true);
     try {
-      await onPicnicLogin(picnicForm.username, picnicForm.password);
-      setPicnicForm({ username: "", password: "" });
-      setPicnicFormOpen(false);
+      const result = await onPicnicLogin(picnicForm.username, picnicForm.password);
+      if (result?.requiresTwoFactor) {
+        setPicnicOtp({ open: true, authKey: result.authKey, code: "" });
+      } else {
+        setPicnicForm({ username: "", password: "" });
+        setPicnicFormOpen(false);
+      }
     } catch (err) {
       setPicnicError(err?.message || t("picnicLoginFailed"));
     } finally {
       setPicnicBusy(false);
     }
+  };
+
+  const handlePicnicOtpSubmit = async (e) => {
+    e.preventDefault();
+    setPicnicError("");
+    setPicnicBusy(true);
+    try {
+      await onPicnicVerify2FA(picnicOtp.authKey, picnicOtp.code);
+      setPicnicForm({ username: "", password: "" });
+      setPicnicFormOpen(false);
+      setPicnicOtp({ open: false, authKey: "", code: "" });
+    } catch (err) {
+      setPicnicError(err?.message || t("picnic2faFailed"));
+    } finally {
+      setPicnicBusy(false);
+    }
+  };
+
+  const resetPicnicForm = () => {
+    setPicnicFormOpen(false);
+    setPicnicOtp({ open: false, authKey: "", code: "" });
+    setPicnicError("");
+    setPicnicForm({ username: "", password: "" });
   };
 
   return (
@@ -89,6 +117,29 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
                 {t("picnicLogout")}
               </button>
             </>
+          ) : picnicOtp.open ? (
+            <form className="side-menu-picnic-form" onSubmit={handlePicnicOtpSubmit}>
+              <p className="side-menu-picnic-2fa-hint">{t("picnic2faHint")}</p>
+              <input
+                className="side-menu-picnic-input"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder={t("picnic2faPlaceholder")}
+                value={picnicOtp.code}
+                onChange={(e) => setPicnicOtp((p) => ({ ...p, code: e.target.value }))}
+                required
+              />
+              {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
+              <div className="side-menu-picnic-actions">
+                <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
+                  {picnicBusy ? t("picnic2faBusy") : t("picnic2faBtn")}
+                </button>
+                <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
+                  {t("cancel")}
+                </button>
+              </div>
+            </form>
           ) : picnicFormOpen ? (
             <form className="side-menu-picnic-form" onSubmit={handlePicnicSubmit}>
               <input
@@ -180,6 +231,25 @@ export default function App() {
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data?.message || t("picnicLoginFailed"));
+    }
+    if (data.requiresTwoFactor) {
+      return { requiresTwoFactor: true, authKey: data.authKey };
+    }
+    const user = { name: data.name, authKey: data.authKey };
+    setPicnicUser(user);
+    localStorage.setItem(PICNIC_USER_KEY, data.name);
+    return { requiresTwoFactor: false };
+  };
+
+  const handlePicnicVerify2FA = async (authKey, code) => {
+    const response = await fetch("/api/picnic-2fa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authKey, code }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.message || t("picnic2faFailed"));
     }
     const user = { name: data.name, authKey: data.authKey };
     setPicnicUser(user);
@@ -574,7 +644,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
@@ -620,7 +690,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} darkMode={darkMode} onToggleDark={toggleDark} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
