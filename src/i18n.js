@@ -139,13 +139,6 @@ export const translations = {
     copyPantry: "🗄 Controleer in de kast:",
     copyStaples: "🏡 Vaste boodschappen:",
 
-    roadmapTitle: "🛠 Technische roadmap",
-    roadmapSubtitle: "Familie Eten — wat nog gebouwd moet worden",
-    statusTodo: "Te bouwen",
-    statusInProgress: "In ontwikkeling",
-    statusDone: "Klaar",
-    roadmapFooter: "🔒 Verborgen voor gewone gebruikers · alleen via de Dev-knop bereikbaar",
-
     language: "Taal",
     darkMode: "🌙 Donkere modus",
     lightMode: "☀️ Lichte modus",
@@ -291,13 +284,6 @@ export const translations = {
     copyPantry: "🗄 Check in the pantry:",
     copyStaples: "🏡 Staples:",
 
-    roadmapTitle: "🛠 Technical roadmap",
-    roadmapSubtitle: "Family Meals — what still needs to be built",
-    statusTodo: "To build",
-    statusInProgress: "In development",
-    statusDone: "Done",
-    roadmapFooter: "🔒 Hidden from regular users · only accessible via the Dev button",
-
     language: "Language",
     darkMode: "🌙 Dark mode",
     lightMode: "☀️ Light mode",
@@ -442,13 +428,6 @@ export const translations = {
     copyMeals: "📦 Ингредиенты для блюд:",
     copyPantry: "🗄 Проверьте в кладовой:",
     copyStaples: "🏡 Постоянные покупки:",
-
-    roadmapTitle: "🛠 Технический план",
-    roadmapSubtitle: "Семейное питание — что ещё нужно построить",
-    statusTodo: "К разработке",
-    statusInProgress: "В разработке",
-    statusDone: "Готово",
-    roadmapFooter: "🔒 Скрыто от обычных пользователей · доступно только через кнопку Dev",
 
     language: "Язык",
     darkMode: "🌙 Тёмная тема",
