@@ -276,7 +276,15 @@
 .tag.tag--burger      { background: #ffedd5; color: #c2410c; }
 
 /* ── Week Planner ── */
-.week-planner h2 { margin-bottom: 4px; color: #333; }
+.week-planner h2 {
+  margin-bottom: 4px;
+  color: #333;
+  font-size: var(--font-label);
+  font-weight: var(--label-weight);
+  text-transform: var(--label-transform);
+  letter-spacing: var(--label-spacing);
+  color: var(--text-muted);
+}
 .hint { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
 
 .planner-grid {
@@ -533,7 +541,14 @@
   margin-bottom: 4px;
   gap: 12px;
 }
-.recipe-library h2 { color: #333; margin: 0; }
+.recipe-library h2 {
+  margin: 0;
+  font-size: var(--font-label);
+  font-weight: var(--label-weight);
+  text-transform: var(--label-transform);
+  letter-spacing: var(--label-spacing);
+  color: var(--text-muted);
+}
 
 .btn-add-recipe {
   display: inline-flex;
@@ -702,7 +717,14 @@
 .no-results { color: #aaa; padding: 20px; text-align: center; }
 
 /* ── Shopping List ── */
-.shopping-list h2 { color: #333; margin-bottom: 4px; }
+.shopping-list h2 {
+  margin-bottom: 4px;
+  font-size: var(--font-label);
+  font-weight: var(--label-weight);
+  text-transform: var(--label-transform);
+  letter-spacing: var(--label-spacing);
+  color: var(--text-muted);
+}
 
 .shopping-tabs {
   display: flex;
@@ -2118,8 +2140,10 @@
 /* Text colors */
 .dark h1, .dark h2, .dark h3, .dark h4 { color: var(--text); }
 .dark .week-relative { color: var(--text); }
-.dark .recipe-info h3, .dark .recipe-meta, .dark .recipe-library h2 { color: var(--text); }
-.dark .week-planner h2 { color: var(--text); }
+.dark .recipe-info h3, .dark .recipe-meta { color: var(--text); }
+.dark .week-planner h2,
+.dark .recipe-library h2,
+.dark .shopping-list h2 { color: var(--text-muted); }
 .dark .hint { color: var(--text-muted); }
 .dark .day-name { color: var(--text-muted); }
 .dark .meal-name { color: var(--text); }
@@ -2131,7 +2155,7 @@
 .dark .confirm-dialog h3 { color: var(--text); }
 .dark .confirm-dialog p { color: var(--text-muted); }
 .dark .ing-name { color: var(--text); }
-.dark .shopping-list h2 { color: var(--text); }
+.dark .shopping-list h2 { color: var(--text-muted); }
 .dark .staples-item-name { color: var(--text); }
 
 /* Borders / lines */
