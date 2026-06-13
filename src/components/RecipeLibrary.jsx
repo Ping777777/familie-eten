@@ -4,18 +4,38 @@ import { useLanguage } from "../LanguageContext";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const UNIT_OPTIONS = [
-  "g", "kg",
-  "ml", "dl", "l",
-  "el", "tl",
-  "mespunt", "snuf", "scheutje",
-  "stuks", "stukken",
-  "blikje", "blik",
-  "pakje", "pakjes",
-  "potje", "potjes",
-  "kuipje", "kuipjes",
-  "kroppen", "teen", "bol", "bos",
-  "plak",
+  { value: "g",        nl: "gram",     en: "gram",    ru: "г"          },
+  { value: "kg",       nl: "kg",       en: "kg",      ru: "кг"         },
+  { value: "ml",       nl: "ml",       en: "ml",      ru: "мл"         },
+  { value: "dl",       nl: "dl",       en: "dl",      ru: "дл"         },
+  { value: "l",        nl: "l",        en: "l",       ru: "л"          },
+  { value: "el",       nl: "el",       en: "tbsp",    ru: "ст.л."      },
+  { value: "tl",       nl: "tl",       en: "tsp",     ru: "ч.л."       },
+  { value: "mespunt",  nl: "mespunt",  en: "pinch",   ru: "щепотка"    },
+  { value: "scheutje", nl: "scheutje", en: "dash",    ru: "немного"    },
+  { value: "stuks",    nl: "stuks",    en: "pcs",     ru: "шт."        },
+  { value: "blik",     nl: "blik",     en: "can",     ru: "банка"      },
+  { value: "pakje",    nl: "pakje",    en: "packet",  ru: "пачка"      },
+  { value: "potje",    nl: "potje",    en: "jar",     ru: "банка"      },
+  { value: "kuipje",   nl: "kuipje",   en: "tub",     ru: "стак."      },
+  { value: "teen",     nl: "teen",     en: "clove",   ru: "зубчик"     },
+  { value: "bos",      nl: "bos",      en: "bunch",   ru: "пучок"      },
+  { value: "krop",     nl: "krop",     en: "head",    ru: "кочан"      },
+  { value: "plak",     nl: "plak",     en: "slice",   ru: "ломтик"     },
 ];
+
+const FOOD_EMOJIS = [
+  "🥩","🍗","🐟","🦐","🥚","🥓",
+  "🧀","🥛","🧄","🧅","🥦","🥕",
+  "🍅","🥔","🌽","🥑","🍋","🫒",
+  "🍝","🍜","🍚","🍳","🥘","🫕",
+  "🍔","🍣","🥧","🫙","🥗","🍱",
+  "🍽️","🥡","🍤","🍄","🥖","🧆",
+];
+
+function unitLabel(u, lang) {
+  return lang === "en" ? u.en : lang === "ru" ? u.ru : u.nl;
+}
 
 function newRecipeTemplate() {
   return {
@@ -261,8 +281,39 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
   );
 }
 
+function EmojiPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="emoji-picker-wrap">
+      <button
+        type="button"
+        className="emoji-picker-trigger"
+        onClick={() => setOpen((o) => !o)}
+        title="Choose emoji"
+      >
+        <span className="emoji-picker-current">{value}</span>
+        <span className="emoji-picker-caret">▾</span>
+      </button>
+      {open && (
+        <div className="emoji-picker-grid">
+          {FOOD_EMOJIS.map((em) => (
+            <button
+              key={em}
+              type="button"
+              className={`emoji-option${value === em ? " selected" : ""}`}
+              onClick={() => { onChange(em); setOpen(false); }}
+            >
+              {em}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [name, setName] = useState(recipe.name);
   const [emoji, setEmoji] = useState(recipe.emoji);
   const [cookTime, setCookTime] = useState(recipe.cookTime);
@@ -293,7 +344,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
     onSave({
       ...recipe,
       name: name.trim() || recipe.name,
-      emoji: emoji.trim() || recipe.emoji,
+      emoji,
       cookTime: cookTime.trim(),
       servings: Math.max(1, parseInt(servings, 10) || recipe.servings),
       addedBy: addedBy.trim(),
@@ -315,7 +366,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
           <div className="edit-field-group">
             <div className="edit-field edit-field--emoji">
               <label>{t("fieldEmoji")}</label>
-              <input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} />
+              <EmojiPicker value={emoji} onChange={setEmoji} />
             </div>
             <div className="edit-field edit-field--grow">
               <label>{t("fieldName")}</label>
@@ -358,13 +409,18 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
           <div className="edit-field">
             <label>{t("fieldIngredients")}</label>
             <div className="ingredients-edit-list">
+              <div className="ingredient-edit-header">
+                <span>{t("ingredientPlaceholder")}</span>
+                <span>{t("unitHeader")}</span>
+                <span>{t("amountPlaceholder")}</span>
+              </div>
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="ingredient-edit-row">
                   <input
-                    className="ing-edit-amount"
-                    value={ing.amount}
-                    onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
-                    placeholder={t("amountPlaceholder")}
+                    className="ing-edit-name"
+                    value={ing.name}
+                    onChange={(e) => updateIngredient(idx, "name", e.target.value)}
+                    placeholder={t("ingredientPlaceholder")}
                   />
                   <select
                     className="ing-edit-unit"
@@ -373,14 +429,17 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                   >
                     <option value="">—</option>
                     {UNIT_OPTIONS.map((u) => (
-                      <option key={u} value={u}>{u}</option>
+                      <option key={u.value} value={u.value}>{unitLabel(u, lang)}</option>
                     ))}
                   </select>
                   <input
-                    className="ing-edit-name"
-                    value={ing.name}
-                    onChange={(e) => updateIngredient(idx, "name", e.target.value)}
-                    placeholder={t("ingredientPlaceholder")}
+                    className="ing-edit-amount"
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={ing.amount}
+                    onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
+                    placeholder="0"
                   />
                   <button
                     type="button"

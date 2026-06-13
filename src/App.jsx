@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { recipes as defaultRecipes } from "./data/recipes";
+
+// Bump this string whenever recipe content (translations, instructions, ingredients) changes.
+// The migration will push the updated data to the blob on the next app load.
+const RECIPE_BUNDLE_VERSION = "2026-06-12";
 import { defaultStaples } from "./data/defaultStaples";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
@@ -281,14 +285,23 @@ export default function App() {
           saveRecipesToBlob(defaultRecipes);
           return;
         }
-        // Migration: patch existing recipes missing instructions + add any completely new ones
+        // Migration: sync recipe content from bundle to blob when version changes
         const applyMigration = (blobRecipes) => {
           const patched = blobRecipes.map((blobR) => {
             const def = defaultRecipes.find((d) => d.id === blobR.id);
-            if (def?.instructions?.length > 0 && !(blobR.instructions?.length > 0)) {
-              return { ...blobR, instructions: def.instructions };
+            if (!def) return blobR;
+            const needsSync = blobR._bundleVersion !== RECIPE_BUNDLE_VERSION;
+            let updated = blobR;
+            if (needsSync || (def.instructions?.length > 0 && !(blobR.instructions?.length > 0))) {
+              updated = { ...updated, instructions: def.instructions };
             }
-            return blobR;
+            if (needsSync || (def.translations && !blobR.translations)) {
+              updated = { ...updated, translations: def.translations };
+            }
+            if (needsSync) {
+              updated = { ...updated, _bundleVersion: RECIPE_BUNDLE_VERSION };
+            }
+            return updated;
           });
           const ids = new Set(blobRecipes.map((r) => r.id));
           const newOnes = defaultRecipes.filter((r) => !ids.has(r.id));

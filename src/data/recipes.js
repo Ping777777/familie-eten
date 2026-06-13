@@ -1,4 +1,6 @@
-export const recipes = [
+import { recipeTranslations } from "./recipeTranslations";
+
+const RAW_RECIPES = [
   {
     id: 101,
     name: "Steak & Stout Pie met aardappelpuree",
@@ -384,3 +386,11 @@ export const recipes = [
     ],
   },
 ];
+
+export const recipes = RAW_RECIPES.map((r) => ({
+  ...r,
+  translations: {
+    en: recipeTranslations.en[r.id] ?? null,
+    ru: recipeTranslations.ru[r.id] ?? null,
+  },
+}));
