@@ -1,19 +1,17 @@
-import { recipeTranslations } from "../data/recipeTranslations";
-
 export function getRecipeName(recipe, lang) {
   if (!recipe || lang === "nl") return recipe?.name;
-  return recipeTranslations[lang]?.[recipe.id]?.name ?? recipe.name;
+  return recipe.translations?.[lang]?.name ?? recipe.name;
 }
 
 export function getIngredientName(recipe, ingredientIndex, lang) {
   if (!recipe || lang === "nl") return recipe?.ingredients[ingredientIndex]?.name;
-  const names = recipeTranslations[lang]?.[recipe.id]?.ingredients;
+  const names = recipe.translations?.[lang]?.ingredients;
   return names?.[ingredientIndex] ?? recipe.ingredients[ingredientIndex]?.name;
 }
 
 export function getInstructions(recipe, lang) {
   if (!recipe || lang === "nl") return recipe?.instructions ?? [];
-  return recipeTranslations[lang]?.[recipe.id]?.instructions ?? recipe.instructions ?? [];
+  return recipe.translations?.[lang]?.instructions ?? recipe.instructions ?? [];
 }
 
 const TAG_MAP = {

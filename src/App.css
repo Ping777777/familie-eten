@@ -1340,7 +1340,7 @@
   flex: 1;
   min-width: 100px;
 }
-.edit-field--emoji { flex: 0 0 70px; min-width: 70px; }
+.edit-field--emoji { flex: 0 0 90px; min-width: 90px; }
 .edit-field--narrow { flex: 0 0 80px; min-width: 80px; }
 .edit-field--grow { flex: 1; }
 
@@ -1370,22 +1370,110 @@
 }
 .edit-field input:focus { border-color: #667eea; }
 
+/* Emoji picker */
+.emoji-picker-wrap { position: relative; }
+.emoji-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  min-width: 60px;
+  justify-content: center;
+  transition: border-color 0.15s;
+}
+.emoji-picker-trigger:hover { border-color: #667eea; }
+.emoji-picker-current { font-size: 1.6rem; line-height: 1; }
+.emoji-picker-caret { font-size: 0.65rem; color: var(--text-muted); line-height: 1; }
+.emoji-picker-grid {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 800;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(6, 36px);
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.emoji-option {
+  width: 36px;
+  height: 36px;
+  font-size: 1.3rem;
+  border: 1.5px solid transparent;
+  border-radius: 7px;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, border-color 0.1s;
+}
+.emoji-option:hover { background: var(--surface2); }
+.emoji-option.selected { border-color: #667eea; background: #eef0ff; }
+.dark .emoji-option.selected { background: #26284a; border-color: #818cf8; }
+
 /* Ingredient editor */
 .ingredients-edit-list {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
+}
+
+.ingredient-edit-header {
+  display: grid;
+  grid-template-columns: 1fr 90px 72px 28px;
+  gap: 6px;
+  padding: 0 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
 .ingredient-edit-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 90px 72px 28px;
   gap: 6px;
   align-items: center;
 }
 
+.ing-edit-name {
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+.ing-edit-name:focus { border-color: #667eea; }
+
+.ing-edit-unit {
+  width: 100%;
+  border: 1.5px solid #ddd;
+  border-radius: 7px;
+  padding: 7px 6px;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.ing-edit-unit:focus { border-color: #667eea; }
+
 .ing-edit-amount {
-  width: 70px;
-  flex-shrink: 0;
+  width: 100%;
   border: 1.5px solid #ddd;
   border-radius: 7px;
   padding: 7px 8px;
@@ -1394,32 +1482,6 @@
   box-sizing: border-box;
 }
 .ing-edit-amount:focus { border-color: #667eea; }
-
-.ing-edit-unit {
-  width: 90px;
-  flex-shrink: 0;
-  border: 1.5px solid #ddd;
-  border-radius: 7px;
-  padding: 7px 6px;
-  font-size: 0.88rem;
-  outline: none;
-  box-sizing: border-box;
-  appearance: none;
-  background-color: #fff;
-  cursor: pointer;
-}
-.ing-edit-unit:focus { border-color: #667eea; }
-
-.ing-edit-name {
-  flex: 1;
-  border: 1.5px solid #ddd;
-  border-radius: 7px;
-  padding: 7px 8px;
-  font-size: 0.88rem;
-  outline: none;
-  box-sizing: border-box;
-}
-.ing-edit-name:focus { border-color: #667eea; }
 
 .ing-remove-btn {
   background: none;

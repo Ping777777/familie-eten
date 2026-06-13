@@ -1,21 +1,41 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../LanguageContext";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const UNIT_OPTIONS = [
-  "g", "kg",
-  "ml", "dl", "l",
-  "el", "tl",
-  "mespunt", "snuf", "scheutje",
-  "stuks", "stukken",
-  "blikje", "blik",
-  "pakje", "pakjes",
-  "potje", "potjes",
-  "kuipje", "kuipjes",
-  "kroppen", "teen", "bol", "bos",
-  "plak",
+  { value: "g",        nl: "gram",     en: "gram",    ru: "г"          },
+  { value: "kg",       nl: "kg",       en: "kg",      ru: "кг"         },
+  { value: "ml",       nl: "ml",       en: "ml",      ru: "мл"         },
+  { value: "dl",       nl: "dl",       en: "dl",      ru: "дл"         },
+  { value: "l",        nl: "l",        en: "l",       ru: "л"          },
+  { value: "el",       nl: "el",       en: "tbsp",    ru: "ст.л."      },
+  { value: "tl",       nl: "tl",       en: "tsp",     ru: "ч.л."       },
+  { value: "mespunt",  nl: "mespunt",  en: "pinch",   ru: "щепотка"    },
+  { value: "scheutje", nl: "scheutje", en: "dash",    ru: "немного"    },
+  { value: "stuks",    nl: "stuks",    en: "pcs",     ru: "шт."        },
+  { value: "blik",     nl: "blik",     en: "can",     ru: "банка"      },
+  { value: "pakje",    nl: "pakje",    en: "packet",  ru: "пачка"      },
+  { value: "potje",    nl: "potje",    en: "jar",     ru: "банка"      },
+  { value: "kuipje",   nl: "kuipje",   en: "tub",     ru: "стак."      },
+  { value: "teen",     nl: "teen",     en: "clove",   ru: "зубчик"     },
+  { value: "bos",      nl: "bos",      en: "bunch",   ru: "пучок"      },
+  { value: "krop",     nl: "krop",     en: "head",    ru: "кочан"      },
+  { value: "plak",     nl: "plak",     en: "slice",   ru: "ломтик"     },
 ];
+
+const FOOD_EMOJIS = [
+  "🥩","🍗","🐟","🦐","🥚","🥓",
+  "🧀","🥛","🧄","🧅","🥦","🥕",
+  "🍅","🥔","🌽","🥑","🍋","🫒",
+  "🍝","🍜","🍚","🍳","🥘","🫕",
+  "🍔","🍣","🥧","🫙","🥗","🍱",
+  "🍽️","🥡","🍤","🍄","🥖","🧆",
+];
+
+function unitLabel(u, lang) {
+  return lang === "en" ? u.en : lang === "ru" ? u.ru : u.nl;
+}
 
 function newRecipeTemplate() {
   return {
@@ -32,7 +52,7 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed }) {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
@@ -96,8 +116,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
           <span>
-            <strong>{t("saveFailedTitle")}</strong> — {t("saveFailedMsg")}
+            <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
           </span>
+          <button className="save-failed-reload" onClick={onDismissSaveFailed}>{t("refresh")}</button>
         </div>
       )}
 
@@ -261,8 +282,39 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
   );
 }
 
+function EmojiPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="emoji-picker-wrap">
+      <button
+        type="button"
+        className="emoji-picker-trigger"
+        onClick={() => setOpen((o) => !o)}
+        title="Choose emoji"
+      >
+        <span className="emoji-picker-current">{value}</span>
+        <span className="emoji-picker-caret">▾</span>
+      </button>
+      {open && (
+        <div className="emoji-picker-grid">
+          {FOOD_EMOJIS.map((em) => (
+            <button
+              key={em}
+              type="button"
+              className={`emoji-option${value === em ? " selected" : ""}`}
+              onClick={() => { onChange(em); setOpen(false); }}
+            >
+              {em}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [name, setName] = useState(recipe.name);
   const [emoji, setEmoji] = useState(recipe.emoji);
   const [cookTime, setCookTime] = useState(recipe.cookTime);
@@ -272,28 +324,62 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
   const [ingredients, setIngredients] = useState(recipe.ingredients.map((i) => ({ ...i })));
   const [instructions, setInstructions] = useState(recipe.instructions ?? []);
 
+  // Refs for Enter-to-advance
+  const nameRef = useRef(null);
+  const cookTimeRef = useRef(null);
+  const servingsRef = useRef(null);
+  const addedByRef = useRef(null);
+  const tagsRef = useRef(null);
+  const ingNameRefs = useRef([]);
+  const ingUnitRefs = useRef([]);
+  const ingAmountRefs = useRef([]);
+
+  // Auto-focus name on open
+  useEffect(() => { nameRef.current?.focus(); }, []);
+
+  const advance = (ref) => (e) => {
+    if (e.key === "Enter") { e.preventDefault(); ref?.current?.focus(); }
+  };
+
   const updateIngredient = (idx, field, value) =>
     setIngredients((prev) =>
       prev.map((ing, i) => (i === idx ? { ...ing, [field]: value } : ing))
     );
-  const addIngredient = () =>
-    setIngredients((prev) => [...prev, { name: "", amount: "", unit: "" }]);
+
+  const addIngredient = useCallback(() => {
+    setIngredients((prev) => {
+      const next = [...prev, { name: "", amount: "", unit: "" }];
+      // Focus the new name field after render
+      setTimeout(() => ingNameRefs.current[next.length - 1]?.focus(), 0);
+      return next;
+    });
+  }, []);
+
   const removeIngredient = (idx) =>
     setIngredients((prev) => prev.filter((_, i) => i !== idx));
 
-  const addInstruction = () =>
-    setInstructions((prev) => [...prev, ""]);
+  const addInstruction = () => setInstructions((prev) => [...prev, ""]);
   const updateInstruction = (idx, value) =>
     setInstructions((prev) => prev.map((s, i) => (i === idx ? value : s)));
   const removeInstruction = (idx) =>
     setInstructions((prev) => prev.filter((_, i) => i !== idx));
 
+  // Enter on amount of last row → add new ingredient row
+  const onAmountEnter = (idx) => (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (idx === ingredients.length - 1) addIngredient();
+      else ingNameRefs.current[idx + 1]?.focus();
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!name.trim()) { nameRef.current?.focus(); return; }
     onSave({
       ...recipe,
-      name: name.trim() || recipe.name,
-      emoji: emoji.trim() || recipe.emoji,
+      name: name.trim(),
+      emoji,
       cookTime: cookTime.trim(),
       servings: Math.max(1, parseInt(servings, 10) || recipe.servings),
       addedBy: addedBy.trim(),
@@ -315,32 +401,50 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
           <div className="edit-field-group">
             <div className="edit-field edit-field--emoji">
               <label>{t("fieldEmoji")}</label>
-              <input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} />
+              <EmojiPicker value={emoji} onChange={setEmoji} />
             </div>
             <div className="edit-field edit-field--grow">
               <label>{t("fieldName")}</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
+              <input
+                ref={nameRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={advance(cookTimeRef)}
+                placeholder={t("recipeNamePlaceholder")}
+              />
             </div>
           </div>
 
           <div className="edit-field-group">
             <div className="edit-field">
               <label>{t("fieldCookTime")}</label>
-              <input value={cookTime} onChange={(e) => setCookTime(e.target.value)} placeholder="25 min" />
+              <input
+                ref={cookTimeRef}
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+                onKeyDown={advance(servingsRef)}
+                placeholder="25 min"
+              />
             </div>
             <div className="edit-field edit-field--narrow">
               <label>{t("fieldServings")}</label>
               <input
-                type="number"
+                ref={servingsRef}
+                type="text"
+                inputMode="numeric"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
-                min={1}
-                max={20}
+                onKeyDown={advance(addedByRef)}
               />
             </div>
             <div className="edit-field">
               <label>{t("fieldAddedBy")}</label>
-              <input value={addedBy} onChange={(e) => setAddedBy(e.target.value)} />
+              <input
+                ref={addedByRef}
+                value={addedBy}
+                onChange={(e) => setAddedBy(e.target.value)}
+                onKeyDown={advance(tagsRef)}
+              />
             </div>
           </div>
 
@@ -349,8 +453,12 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
               {t("fieldTags")} <span className="edit-label-hint">{t("tagHint")}</span>
             </label>
             <input
+              ref={tagsRef}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); ingNameRefs.current[0]?.focus(); }
+              }}
               placeholder="kip, gezond, oven"
             />
           </div>
@@ -358,29 +466,41 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
           <div className="edit-field">
             <label>{t("fieldIngredients")}</label>
             <div className="ingredients-edit-list">
+              <div className="ingredient-edit-header">
+                <span>{t("ingredientPlaceholder")}</span>
+                <span>{t("unitHeader")}</span>
+                <span>{t("amountPlaceholder")}</span>
+              </div>
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="ingredient-edit-row">
                   <input
-                    className="ing-edit-amount"
-                    value={ing.amount}
-                    onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
-                    placeholder={t("amountPlaceholder")}
-                  />
-                  <select
-                    className="ing-edit-unit"
-                    value={ing.unit}
-                    onChange={(e) => updateIngredient(idx, "unit", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {UNIT_OPTIONS.map((u) => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                  <input
+                    ref={(el) => (ingNameRefs.current[idx] = el)}
                     className="ing-edit-name"
                     value={ing.name}
                     onChange={(e) => updateIngredient(idx, "name", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ingUnitRefs.current[idx]?.focus(); } }}
                     placeholder={t("ingredientPlaceholder")}
+                  />
+                  <select
+                    ref={(el) => (ingUnitRefs.current[idx] = el)}
+                    className="ing-edit-unit"
+                    value={ing.unit}
+                    onChange={(e) => updateIngredient(idx, "unit", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ingAmountRefs.current[idx]?.focus(); } }}
+                  >
+                    <option value="">—</option>
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u.value} value={u.value}>{unitLabel(u, lang)}</option>
+                    ))}
+                  </select>
+                  <input
+                    ref={(el) => (ingAmountRefs.current[idx] = el)}
+                    className="ing-edit-amount"
+                    value={ing.amount}
+                    onChange={(e) => updateIngredient(idx, "amount", e.target.value)}
+                    onKeyDown={onAmountEnter(idx)}
+                    placeholder="0"
+                    inputMode="decimal"
                   />
                   <button
                     type="button"
