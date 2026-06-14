@@ -12,7 +12,7 @@ export default defineConfig({
         name: 'Familie Eten',
         short_name: 'FamEten',
         description: 'Weekmaaltijdplanner voor het hele gezin',
-        theme_color: '#667eea',
+        theme_color: '#2a9d8f',
         background_color: '#f0f4f8',
         display: 'standalone',
         orientation: 'portrait-primary',
@@ -36,6 +36,7 @@ export default defineConfig({
       workbox: {
         // Cache the app shell and all static assets
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globIgnores: ['**/logo.png'],
         runtimeCaching: [
           {
             // Cache all navigation requests so the app loads offline
