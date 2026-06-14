@@ -2185,19 +2185,25 @@
 
 .side-menu-logout {
   width: 100%;
-  padding: 10px 14px;
-  background: #fee2e2;
-  border: 1.5px solid #fca5a5;
-  border-radius: 9px;
-  color: #991b1b;
-  font-size: 0.93rem;
-  font-weight: 600;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  background: var(--surface2);
+  border: 2px solid #025c51;
+  border-radius: 20px;
+  color: #025c51;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   cursor: pointer;
   transition: background 0.13s;
 }
-.side-menu-logout:hover { background: #fecaca; }
-.dark .side-menu-logout { background: #3d1515; border-color: #7f1d1d; color: #fca5a5; }
-.dark .side-menu-logout:hover { background: #4f1c1c; }
+.side-menu-logout:hover { background: #e0f5f3; }
+.dark .side-menu-logout { border-color: #4dbfb5; color: #4dbfb5; }
+.dark .side-menu-logout:hover { background: #163e3a; }
 
 /* ── Side menu Picnic section ── */
 .side-menu-picnic-user {
@@ -2209,20 +2215,23 @@
 .side-menu-picnic-login-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 9px;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: none;
+  background: #fc7600;
   cursor: pointer;
-  font-size: 0.93rem;
-  color: var(--text);
-  font-weight: 500;
-  text-align: left;
-  transition: background 0.13s, border-color 0.13s;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: white;
+  transition: background 0.13s;
 }
-.side-menu-picnic-login-btn:hover { border-color: #025c51; }
+.side-menu-picnic-login-btn:hover { background: #e06a00; }
 .side-menu-picnic-form {
   display: flex;
   flex-direction: column;
