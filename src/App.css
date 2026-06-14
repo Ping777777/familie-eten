@@ -280,7 +280,7 @@
   background: #fff;
 }
 .day-name {
-  background: radial-gradient(circle, rgba(252, 118, 0, 1) 0%, rgba(2, 92, 81, 1) 100%);
+  background: #2c5e62;
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
@@ -2274,7 +2274,7 @@
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .hint { color: var(--text-muted); }
 .dark .day-label { background: var(--surface2); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); }
-.dark .day-name { background: #014a41; color: #fff; }
+.dark .day-name { background: #2c5e62; color: #fff; }
 .dark .day-date { color: var(--text); }
 .dark .meal-name { color: var(--text); }
 .dark .detail-title { color: #8de0da; }
