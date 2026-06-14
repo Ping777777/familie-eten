@@ -2,11 +2,34 @@
 
 ## Login
 
-The app now requires login via `/api/login`.
+The app requires login via `/api/login`.
 
 - Users: `Papa`, `Mama`, `Inga`, `Kevin`
 - Password: same as the username
 - Login success is determined only by validating the provided credentials.
+
+### Session management (HttpOnly cookies)
+
+Authentication is enforced through server-set `HttpOnly` cookies so that session
+tokens are never accessible to client-side JavaScript:
+
+| Cookie | Purpose | Flags |
+|---|---|---|
+| `auth_user` | Identifies the logged-in family member | HttpOnly, SameSite=Lax, Max-Age=7 days |
+| `picnic_auth_key` | Picnic API token after a successful Picnic login | HttpOnly, SameSite=Lax, session |
+| `picnic_auth_key_temp` | Temporary Picnic token while a 2FA challenge is in progress | HttpOnly, SameSite=Lax, session |
+
+In a production deployment (`NODE_ENV=production`) the `Secure` flag is also set
+so the cookies are only sent over HTTPS.
+
+Relevant API endpoints:
+
+- `POST /api/login` — validates credentials and sets `auth_user` cookie
+- `GET  /api/me` — returns `{ user }` if the cookie is valid, `401` otherwise
+- `POST /api/logout` — expires all auth cookies
+- `POST /api/picnic-login` — authenticates with Picnic; sets `picnic_auth_key` (or `picnic_auth_key_temp` when 2FA is required)
+- `POST /api/picnic-2fa` — completes 2FA; reads temp cookie, sets `picnic_auth_key`, clears temp cookie
+- `POST /api/picnic-logout` — expires Picnic cookies
 
 ## Week Plan Blob Storage
 

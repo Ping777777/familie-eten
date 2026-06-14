@@ -20,7 +20,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
   const [picnicError, setPicnicError] = useState("");
   const [picnicBusy, setPicnicBusy] = useState(false);
-  const [picnicOtp, setPicnicOtp] = useState({ open: false, authKey: "", code: "" });
+  const [picnicOtp, setPicnicOtp] = useState({ open: false, code: "" });
 
   const handlePicnicSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
     try {
       const result = await onPicnicLogin(picnicForm.username, picnicForm.password);
       if (result?.requiresTwoFactor) {
-        setPicnicOtp({ open: true, authKey: result.authKey, code: "" });
+        setPicnicOtp({ open: true, code: "" });
       } else {
         setPicnicForm({ username: "", password: "" });
         setPicnicFormOpen(false);
@@ -46,10 +46,10 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
     setPicnicError("");
     setPicnicBusy(true);
     try {
-      await onPicnicVerify2FA(picnicOtp.authKey, picnicOtp.code);
+      await onPicnicVerify2FA(picnicOtp.code);
       setPicnicForm({ username: "", password: "" });
       setPicnicFormOpen(false);
-      setPicnicOtp({ open: false, authKey: "", code: "" });
+      setPicnicOtp({ open: false, code: "" });
     } catch (err) {
       setPicnicError(err?.message || t("picnic2faFailed"));
     } finally {
@@ -59,7 +59,7 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
 
   const resetPicnicForm = () => {
     setPicnicFormOpen(false);
-    setPicnicOtp({ open: false, authKey: "", code: "" });
+    setPicnicOtp({ open: false, code: "" });
     setPicnicError("");
     setPicnicForm({ username: "", password: "" });
   };
@@ -195,7 +195,6 @@ function SideMenu({ open, onClose, darkMode, onToggleDark, onLogout, currentUser
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
-const AUTH_USER_KEY = "familie-eten:user";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -214,7 +213,8 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem(LS_DARK) === "1");
   const toggleDark = () => setDarkMode((d) => { const next = !d; localStorage.setItem(LS_DARK, next ? "1" : "0"); return next; });
   const [weekOffset, setWeekOffset] = useState(0);
-  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
+  const [authChecked, setAuthChecked] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
@@ -233,34 +233,35 @@ export default function App() {
       throw new Error(data?.message || t("picnicLoginFailed"));
     }
     if (data.requiresTwoFactor) {
-      return { requiresTwoFactor: true, authKey: data.authKey };
+      return { requiresTwoFactor: true };
     }
-    const user = { name: data.name, authKey: data.authKey };
+    const user = { name: data.name };
     setPicnicUser(user);
     return { requiresTwoFactor: false };
   };
 
-  const handlePicnicVerify2FA = async (authKey, code) => {
+  const handlePicnicVerify2FA = async (code) => {
     const response = await fetch("/api/picnic-2fa", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authKey, code }),
+      body: JSON.stringify({ code }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data?.message || t("picnic2faFailed"));
     }
-    const user = { name: data.name, authKey: data.authKey };
+    const user = { name: data.name };
     setPicnicUser(user);
   };
 
-  const handlePicnicLogout = () => {
+  const handlePicnicLogout = async () => {
+    await fetch("/api/picnic-logout", { method: "POST" }).catch(() => {});
     setPicnicUser(null);
   };
 
   // Week plan state
   const [selectedWeekPlan, setSelectedWeekPlan] = useState(() => emptyWeek());
-  const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [weekPlanLoaded, setWeekPlanLoaded] = useState(true);
   const [weekPlanSaveFailed, setWeekPlanSaveFailed] = useState(false);
   const selectedWeekPlanRef = useRef(selectedWeekPlan);
   const weekPlanMutationQueueRef = useRef(Promise.resolve());
@@ -272,7 +273,7 @@ export default function App() {
 
   // Recipe state
   const [recipeList, setRecipeList] = useState(defaultRecipes);
-  const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [recipesLoaded, setRecipesLoaded] = useState(true);
   const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
   const recipesEtagRef = useRef(null);
 
@@ -281,12 +282,30 @@ export default function App() {
 
   // Staples state
   const [staplesList, setStaplesList] = useState(defaultStaples);
-  const [staplesLoaded, setStaplesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [staplesLoaded, setStaplesLoaded] = useState(true);
   const staplesEtagRef = useRef(null);
 
   // ── Ref sync ──────────────────────────────────────────────────────────────
   useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
   useEffect(() => { activeWeekKeyRef.current = activeWeekKey; }, [activeWeekKey]);
+
+  // ── Session restore ───────────────────────────────────────────────────────
+  // Check the server-side HttpOnly cookie to restore the authenticated user on
+  // page load without ever exposing the session to localStorage or JS state.
+  useEffect(() => {
+    fetch("/api/me", { cache: "no-store" })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+          setWeekPlanLoaded(false);
+          setRecipesLoaded(false);
+          setStaplesLoaded(false);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAuthChecked(true));
+  }, []);
 
   // ── Week plan API ─────────────────────────────────────────────────────────
   const fetchWeekPlan = async (weekKey) => {
@@ -625,7 +644,6 @@ export default function App() {
       setRecipesLoaded(false);
       setStaplesLoaded(false);
       setCurrentUser(data.user);
-      localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
     } catch {
       setLoginError(t("serverUnreachable"));
@@ -634,7 +652,8 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" }).catch(() => {});
     setCurrentUser(null);
     setWeekPlanLoaded(true);
     setSelectedWeekPlan(emptyWeek());
@@ -647,11 +666,23 @@ export default function App() {
     setStaplesLoaded(true);
     setStaplesList(defaultStaples);
     staplesEtagRef.current = null;
-    localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // While the session cookie is being verified, show a neutral loading screen
+  // to avoid flickering between the login screen and the authenticated view.
+  if (!authChecked || !weekPlanLoaded || !recipesLoaded || !staplesLoaded) {
+    return (
+      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
+        <main className="login-card">
+          <h1>🍽️ Familie Eten</h1>
+          <p className="subtitle">{t("loading")}</p>
+        </main>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
@@ -683,17 +714,6 @@ export default function App() {
               {loginBusy ? t("loginBusy") : t("loginBtn")}
             </button>
           </form>
-        </main>
-      </div>
-    );
-  }
-
-  if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded) {
-    return (
-      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <main className="login-card">
-          <h1>🍽️ Familie Eten</h1>
-          <p className="subtitle">{t("loading")}</p>
         </main>
       </div>
     );

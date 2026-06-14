@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { serializeCookie } from "./_cookies.js";
 
 const USERS = {
   papa: "Papa",
@@ -6,6 +7,9 @@ const USERS = {
   inga: "Inga",
   kevin: "Kevin",
 };
+
+// 7 days in seconds
+const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
 
 const encoder = new TextEncoder();
 
@@ -34,5 +38,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  res.status(200).json({ ok: true, user: USERS[username] });
+  const user = USERS[username];
+  res.setHeader("Set-Cookie", serializeCookie("auth_user", user, { maxAge: AUTH_COOKIE_MAX_AGE }));
+  res.status(200).json({ ok: true, user });
 }
