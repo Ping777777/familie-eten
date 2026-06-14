@@ -49,7 +49,7 @@ function formatWeekRange(offset, months) {
   const y = sunday.getFullYear();
 
   if (monday.getMonth() === sunday.getMonth()) {
-    return `${d1} — ${d2} ${m1} ${y}`;
+    return `${d1} — ${d2} ${y}`;
   }
   return `${d1} ${m1} — ${d2} ${m2} ${y}`;
 }
