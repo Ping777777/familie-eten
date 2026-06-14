@@ -224,12 +224,11 @@ export default function ShoppingList({
         <>
           <div className="shopping-header">
             {tabBar}
-            <div className="shopping-meta">
-              <span>{t("mealMeta", { meals: totalPlanned, ingr: items.length })}</span>
-              {mealCheckedCount > 0 && (
+            {mealCheckedCount > 0 && (
+              <div className="shopping-meta">
                 <button className="clear-checks-btn" onClick={clearMealChecks}>{t("uncheckAll")}</button>
-              )}
-            </div>
+              </div>
+            )}
             <div className="shopping-actions">
               <button className="btn-copy" onClick={copyList}>
                 {copied ? t("copied") : t("copyList")}
@@ -252,7 +251,7 @@ export default function ShoppingList({
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${(mealCheckedCount / items.length) * 100}%` }} />
               </div>
-              <p className="progress-label">{t("checkedProgress", { done: mealCheckedCount, total: items.length })}</p>
+              <p className="progress-label">{t("checkedProgress", { meals: totalPlanned, done: mealCheckedCount, total: items.length })}</p>
             </>
           )}
 
