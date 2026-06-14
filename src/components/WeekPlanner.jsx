@@ -144,7 +144,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         {days.map((day, idx) => (
           <div key={day} className="grid-row">
             <div className="day-label">
-              <span className="day-name">{tDay(day)}</span>
+              <span className="day-name">{tDay(day).slice(0, 3).toUpperCase()}</span>
               <span className="day-date">{getDayDate(idx)}</span>
             </div>
             {family.map((member) => {
