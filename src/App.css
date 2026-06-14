@@ -939,7 +939,7 @@
 
 .check-box { font-size: 1.2rem; color: #025c51; line-height: 1; }
 .ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
-.ingredient-name { font-weight: 600; color: #222; font-size: 0.95rem; }
+.ingredient-name { font-weight: 700; color: #222; font-size: var(--font-label); text-transform: uppercase; letter-spacing: 0.07em; }
 .ingredient-amounts { color: #025c51; font-size: 0.82rem; font-weight: 500; }
 .ingredient-meals { color: #aaa; font-size: 0.75rem; }
 .picnic-association-block {
