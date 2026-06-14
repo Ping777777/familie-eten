@@ -2053,7 +2053,31 @@
   border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
 }
-.side-menu-logo { height: 52px; width: auto; }
+.side-menu-nav {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-light);
+}
+.side-menu-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  text-align: left;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+.side-menu-nav-btn:hover { background: var(--surface2); color: var(--text); }
+.side-menu-nav-btn.active { border-left-color: #fc7600; color: #025c51; background: #f0faf9; }
+.dark .side-menu-nav-btn.active { color: #4dbfb5; background: #163e3a; border-left-color: #fc7600; }
 .side-menu-close {
   background: var(--surface2);
   border: none;

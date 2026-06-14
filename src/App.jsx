@@ -19,7 +19,7 @@ const LANGUAGES = [
   { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
 ];
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, tab, onTabChange }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -74,47 +74,38 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
       {open && <div className="menu-overlay" onClick={onClose} />}
       <aside className={`side-menu${open ? " side-menu--open" : ""}`}>
         <div className="side-menu-top">
-          <img src="/logo.png" alt="Familie Eten" className="side-menu-logo" />
+          <div className="side-menu-flag-group">
+            {LANGUAGES.map(({ code, img, label }) => (
+              <button key={code} className={`side-menu-flag-btn${lang === code ? " active" : ""}`} onClick={() => setLang(code)} title={label}>
+                <img src={img} alt={label} className="side-menu-flag-img" />
+              </button>
+            ))}
+          </div>
           <button className="side-menu-close" onClick={onClose}>✕</button>
         </div>
 
-        {currentUser ? (
-          <div className="side-menu-user">
-            <span className="side-menu-user-label">{t("loggedInAs")}</span>
-            <div className="side-menu-user-row">
-              <strong className="side-menu-user-name">{currentUser}</strong>
-              <div className="side-menu-flag-group">
-                {[
-                  ...LANGUAGES
-                ].map(({ code, img, label }) => (
-                  <button
-                    key={code}
-                    className={`side-menu-flag-btn${lang === code ? " active" : ""}`}
-                    onClick={() => setLang(code)}
-                    title={label}
-                  >
-                    <img src={img} alt={label} className="side-menu-flag-img" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="side-menu-flag-group side-menu-flag-group--standalone">
+        {onTabChange && (
+          <nav className="side-menu-nav">
             {[
-              { code: "nl", flag: "🇳🇱" },
-              { code: "en", flag: "🇬🇧" },
-              { code: "ru", flag: "🇷🇺" },
-            ].map(({ code, flag }) => (
+              { key: "planner", label: t("tabPlanner") },
+              { key: "shopping", label: t("tabShopping") },
+              { key: "recipes", label: t("tabRecipes") },
+            ].map(({ key, label }) => (
               <button
-                key={code}
-                className={`side-menu-flag-btn${lang === code ? " active" : ""}`}
-                onClick={() => setLang(code)}
-                title={code}
+                key={key}
+                className={`side-menu-nav-btn${tab === key ? " active" : ""}`}
+                onClick={() => onTabChange(key)}
               >
-                {flag}
+                {label}
               </button>
             ))}
+          </nav>
+        )}
+
+        {currentUser && (
+          <div className="side-menu-user">
+            <span className="side-menu-user-label">{t("loggedInAs")}</span>
+            <strong className="side-menu-user-name">{currentUser}</strong>
           </div>
         )}
 
@@ -757,7 +748,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} tab={tab} onTabChange={(key) => { setTab(key); setMenuOpen(false); }} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
@@ -803,7 +794,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} tab={tab} onTabChange={(key) => { setTab(key); setMenuOpen(false); }} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
