@@ -208,6 +208,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
+const PICNIC_USER_KEY = "familie-eten:picnic-user";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -234,8 +235,11 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
 
-  // Picnic state — keep user/auth state in memory only
-  const [picnicUser, setPicnicUser] = useState(null);
+  // Picnic state — persisted in localStorage so it survives page refreshes
+  const [picnicUser, setPicnicUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(PICNIC_USER_KEY)) ?? null; }
+    catch { return null; }
+  });
 
   const handlePicnicLogin = async (username, password) => {
     const response = await fetch("/api/picnic-login", {
@@ -251,6 +255,7 @@ export default function App() {
       return { requiresTwoFactor: true, authKey: data.authKey };
     }
     const user = { name: data.name, authKey: data.authKey };
+    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
     setPicnicUser(user);
     return { requiresTwoFactor: false };
   };
@@ -266,10 +271,12 @@ export default function App() {
       throw new Error(data?.message || t("picnic2faFailed"));
     }
     const user = { name: data.name, authKey: data.authKey };
+    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
     setPicnicUser(user);
   };
 
   const handlePicnicLogout = () => {
+    localStorage.removeItem(PICNIC_USER_KEY);
     setPicnicUser(null);
   };
 
