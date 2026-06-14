@@ -409,7 +409,7 @@
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #ff6b6b;
+  background: #fc7600;
   border: none;
   color: white;
   width: 18px;
@@ -748,7 +748,7 @@
 }
 .btn-cancel:hover { background: #e0e0e0; }
 .btn-delete {
-  background: #e53935;
+  background: #fc7600;
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
@@ -757,7 +757,7 @@
   color: white;
   font-weight: 600;
 }
-.btn-delete:hover { background: #c62828; }
+.btn-delete:hover { background: #e06a00; }
 
 .recipe-expanded-body {
   margin-top: 14px;
@@ -1313,7 +1313,7 @@
   border: none;
   cursor: pointer;
   font-size: 1.1rem;
-  color: #dc2626;
+  color: #fc7600;
   line-height: 1;
   padding: 0 2px;
   flex-shrink: 0;
@@ -2291,18 +2291,18 @@
   width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1.5px solid #fca5a5;
-  background: #fee2e2;
-  color: #991b1b;
+  border: 1.5px solid #fc7600;
+  background: #fff3e6;
+  color: #fc7600;
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
   transition: background 0.13s;
 }
-.side-menu-picnic-logout:hover { background: #fecaca; }
-.dark .side-menu-picnic-logout { background: #3d1515; border-color: #7f1d1d; color: #fca5a5; }
-.dark .side-menu-picnic-logout:hover { background: #4f1c1c; }
+.side-menu-picnic-logout:hover { background: #ffe0c0; }
+.dark .side-menu-picnic-logout { background: #3a1f00; border-color: #fc7600; color: #fc7600; }
+.dark .side-menu-picnic-logout:hover { background: #4f2a00; }
 
 /* ── Dark mode overrides ── */
 .dark .app-main { background: var(--bg); }
