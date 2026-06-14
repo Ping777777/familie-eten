@@ -28,6 +28,7 @@ export default async function handler(req, res) {
         name: String(result.name || ""),
         unitQuantity: String(result.unit_quantity || ""),
         displayPrice: Number.isFinite(result.display_price) ? result.display_price : null,
+        imageId: String(result.image_id || ""),
       });
       if (matches.length >= 12) break;
     }

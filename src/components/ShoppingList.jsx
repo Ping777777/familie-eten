@@ -479,6 +479,8 @@ function IngredientList({
   );
 }
 
+const PICNIC_IMAGE_BASE = "https://storefront-prod.nl.picnicinternational.com/static/images";
+
 function PicnicAssociation({
   item,
   association,
@@ -496,6 +498,10 @@ function PicnicAssociation({
   const detailsTimeoutRef = useRef(null);
   const detailsLongPressRef = useRef(false);
   const detailsRef = useRef(null);
+  const [productDetail, setProductDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const productDetailFetchedForRef = useRef(null);
+
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
       style: "currency",
@@ -506,6 +512,9 @@ function PicnicAssociation({
   const formattedPrice = typeof association?.displayPrice === "number"
     ? priceFormatter.format(association.displayPrice / 100)
     : null;
+
+  const imageId = association?.imageId || null;
+  const imageUrl = imageId ? `${PICNIC_IMAGE_BASE}/${imageId}/small.png` : null;
 
   const summary = association
     ? [
@@ -529,6 +538,33 @@ function PicnicAssociation({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [detailsOpen]);
+
+  useEffect(() => {
+    if (!detailsOpen || !association?.id || !picnicUser?.authKey) return undefined;
+    if (productDetailFetchedForRef.current === association.id) return undefined;
+
+    let cancelled = false;
+    setDetailLoading(true);
+    fetch("/api/picnic-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authKey: picnicUser.authKey, productId: association.id }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        productDetailFetchedForRef.current = association.id;
+        setProductDetail({ description: data.description ?? null });
+        setDetailLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        productDetailFetchedForRef.current = association.id;
+        setProductDetail({ description: null });
+        setDetailLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [detailsOpen, association?.id, picnicUser?.authKey]);
 
   const clearDetailsTimeout = () => {
     if (detailsTimeoutRef.current) {
@@ -598,13 +634,32 @@ function PicnicAssociation({
           </button>
           {detailsOpen && (
             <div className="picnic-association-popover" role="tooltip">
-              <strong className="picnic-association-popover-name">{association.name}</strong>
-              {(association.unitQuantity || formattedPrice) && (
-                <span className="picnic-association-popover-meta">
-                  {[association.unitQuantity, formattedPrice].filter(Boolean).join(" · ")}
-                </span>
+              <div className="picnic-popover-header">
+                {imageUrl && (
+                  <img
+                    className="picnic-popover-image"
+                    src={imageUrl}
+                    alt={association.name}
+                    loading="lazy"
+                  />
+                )}
+                <div className="picnic-popover-header-text">
+                  <strong className="picnic-association-popover-name">{association.name}</strong>
+                  {(association.unitQuantity || formattedPrice) && (
+                    <span className="picnic-association-popover-meta">
+                      {[association.unitQuantity, formattedPrice].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                  <span className="picnic-association-popover-id">#{association.id}</span>
+                </div>
+              </div>
+              {picnicUser && (
+                detailLoading
+                  ? <span className="picnic-popover-description loading">{t("loading")}</span>
+                  : productDetail?.description
+                    ? <p className="picnic-popover-description">{productDetail.description}</p>
+                    : null
               )}
-              <span className="picnic-association-popover-id">#{association.id}</span>
             </div>
           )}
         </div>

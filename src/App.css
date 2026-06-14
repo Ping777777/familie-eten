@@ -880,15 +880,49 @@
   top: calc(100% + 6px);
   z-index: 20;
   min-width: 220px;
-  max-width: min(280px, calc(100vw - 64px));
+  max-width: min(300px, calc(100vw - 64px));
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   padding: 10px 12px;
   border-radius: 12px;
   background: #ffffff;
   border: 1px solid #bbf7d0;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+.picnic-popover-header {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.picnic-popover-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.picnic-popover-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.picnic-popover-description {
+  margin: 0;
+  color: #374151;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  max-height: 90px;
+  overflow-y: auto;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6px;
+}
+.picnic-popover-description.loading {
+  color: #94a3b8;
+  border-top: none;
+  padding-top: 0;
 }
 .picnic-association-popover-name {
   color: #166534;
@@ -2113,6 +2147,9 @@
 .dark .picnic-association-popover-name { color: #bbf7d0; }
 .dark .picnic-association-popover-meta,
 .dark .picnic-association-popover-id { color: var(--text-muted); }
+.dark .picnic-popover-image { background: var(--surface2); }
+.dark .picnic-popover-description { color: var(--text); border-top-color: var(--border); }
+.dark .picnic-popover-description.loading { color: var(--text-muted); }
 .dark .picnic-select-btn {
   background: #1f3b2d;
   border-color: #2f855a;
