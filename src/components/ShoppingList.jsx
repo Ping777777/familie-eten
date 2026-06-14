@@ -654,6 +654,12 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
             .join(" · ")}
         </span>
       </button>
+      <button
+        type="button"
+        className="picnic-info-btn"
+        onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
+        aria-label="Info"
+      >i</button>
       <PicnicProductPopover
         product={result}
         picnicUser={picnicUser}
@@ -781,6 +787,7 @@ function PicnicAssociation({
             <span className="picnic-association-label">
               {t("picnicAssociationLabel")}: {summary}
             </span>
+            <span className="picnic-info-icon" aria-hidden="true">i</span>
           </button>
           <PicnicProductPopover product={association} picnicUser={picnicUser} open={detailsOpen} />
         </div>

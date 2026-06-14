@@ -866,6 +866,9 @@
   background: transparent;
   text-align: left;
   cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 .picnic-association-label {
   display: block;
@@ -874,6 +877,44 @@
   font-weight: 600;
 }
 .picnic-association-label.empty { color: #94a3b8; }
+.picnic-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  font-size: 0.65rem;
+  font-style: italic;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  cursor: help;
+}
+.picnic-info-btn {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #86efac;
+  background: #ecfdf5;
+  color: #166534;
+  font-size: 0.65rem;
+  font-style: italic;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  z-index: 1;
+}
+.picnic-info-btn:hover { border-color: #16a34a; background: #dcfce7; }
 .picnic-association-popover {
   position: absolute;
   left: 0;
@@ -2142,6 +2183,9 @@
 .dark .staples-item-name { color: var(--text); }
 .dark .picnic-association-label { color: #86efac; }
 .dark .picnic-association-label.empty { color: var(--text-muted); }
+.dark .picnic-info-icon { color: #86efac; border-color: #86efac; }
+.dark .picnic-info-btn { background: #1f3b2d; border-color: #2f855a; color: #bbf7d0; }
+.dark .picnic-info-btn:hover { border-color: #86efac; background: #2d5a3d; }
 .dark .picnic-association-popover {
   background: var(--surface2);
   border-color: #2f855a;
