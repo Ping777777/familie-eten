@@ -257,7 +257,7 @@
   background: #fff;
 }
 .day-name {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
