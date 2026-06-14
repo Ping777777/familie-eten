@@ -51,6 +51,12 @@
   margin: 0 0 4px;
 }
 
+.app-logo-img {
+  height: 90px;
+  width: auto;
+  margin-bottom: 4px;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -89,7 +95,7 @@
 }
 
 .app-header {
-  background: linear-gradient(135deg, #2a9d8f 0%, #1d7a72 100%);
+  background: linear-gradient(135deg, #2ab5a3 0%, #0f5e53 100%);
   color: white;
   padding: 14px 20px 0;
   text-align: center;
@@ -259,7 +265,7 @@
   background: #fff;
 }
 .day-name {
-  background: linear-gradient(135deg, #2a9d8f 0%, #1d7a72 100%);
+  background: linear-gradient(135deg, #2ab5a3 0%, #0f5e53 100%);
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
@@ -325,7 +331,6 @@
   font-size: 0.9rem;
   color: #333;
 }
-.member-emoji { font-size: 1.2rem; }
 
 .grid-row {
   display: grid;
@@ -1955,7 +1960,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 16px 14px;
-  background: linear-gradient(135deg, #2a9d8f 0%, #1d7a72 100%);
+  background: linear-gradient(135deg, #2ab5a3 0%, #0f5e53 100%);
   color: white;
   flex-shrink: 0;
 }
