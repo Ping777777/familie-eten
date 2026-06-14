@@ -390,7 +390,7 @@
   position: relative;
   width: 100%;
 }
-.meal-name { font-size: 0.78rem; text-align: center; color: #333; line-height: 1.2; }
+.meal-name { font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; color: #333; line-height: 1.2; }
 
 /* Pencil hint — shown on hover over filled cells */
 .meal-edit-hint {
@@ -942,7 +942,7 @@
   gap: 12px;
   background: var(--surface);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 8px 14px;
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -952,8 +952,8 @@
 .check-box { font-size: 1.2rem; color: #025c51; line-height: 1; }
 .ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
 .ingredient-name { font-weight: 700; color: #222; font-size: var(--font-label); text-transform: uppercase; letter-spacing: 0.07em; }
-.ingredient-amounts { color: #025c51; font-size: 0.82rem; font-weight: 500; }
-.ingredient-meals { color: #aaa; font-size: 0.75rem; }
+.ingredient-amounts { color: #025c51; font-size: var(--font-label); font-weight: 600; }
+.ingredient-meals { color: #aaa; font-size: var(--font-xs); }
 .picnic-association-block {
   display: flex;
   flex-direction: column;
