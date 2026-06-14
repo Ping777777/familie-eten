@@ -130,7 +130,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
       )}
 
       <div className="library-header">
-        <h2>{t("recipeLibrary")}</h2>
         <div className="library-controls" ref={controlsRef}>
         <div className="search-wrapper">
           <input
