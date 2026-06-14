@@ -359,8 +359,8 @@
 
 .meal-cell {
   background: var(--surface);
-  border-radius: 8px;
-  padding: 10px 8px;
+  border-radius: 12px;
+  padding: 16px;
   min-height: 68px;
   cursor: pointer;
   border: 2px solid transparent;

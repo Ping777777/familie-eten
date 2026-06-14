@@ -812,8 +812,8 @@ export default function App() {
         <nav className="tabs">
           {[
             { key: "planner", label: t("tabPlanner") },
-            { key: "recipes", label: t("tabRecipes") },
             { key: "shopping", label: t("tabShopping") },
+            { key: "recipes", label: t("tabRecipes") },
           ].map(({ key, label }) => (
             <button
               key={key}

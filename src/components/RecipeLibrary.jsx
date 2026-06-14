@@ -291,7 +291,6 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
           <button className="card-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>
             🗑️
           </button>
-          <span className="expand-icon">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
