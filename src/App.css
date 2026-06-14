@@ -194,11 +194,16 @@
 }
 .week-relative {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #333;
 }
 .week-dates {
-  font-size: 0.82rem;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #888;
 }
 .week-today-btn {
@@ -337,8 +342,10 @@
   border-radius: 8px 8px 0 0;
   padding: 10px 6px 8px;
   text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #333;
 }
 
@@ -2002,14 +2009,14 @@
   flex-direction: column;
   gap: 4px;
 }
-.side-menu-user-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.side-menu-user-label { font-size: var(--font-label); font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
 .side-menu-user-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.side-menu-user-name { font-size: 0.95rem; color: var(--text); }
+.side-menu-user-name { font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text); }
 
 .side-menu-flag-group {
   display: flex;
