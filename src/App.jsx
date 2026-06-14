@@ -762,7 +762,10 @@ export default function App() {
         <main className="login-card">
           <h1 className="app-logo">
             <span className="app-logo-fork">🍴</span>
-            <span className="app-logo-plate">Familie Eten</span>
+            <span className="app-logo-plate">
+              <span className="app-logo-heart">♥</span>
+              <span className="app-logo-name">Familie<br />Eten</span>
+            </span>
             <span className="app-logo-knife">🔪</span>
           </h1>
           <p className="subtitle">{t("loginSubtitle")}</p>
@@ -800,7 +803,10 @@ export default function App() {
         <main className="login-card">
           <h1 className="app-logo">
             <span className="app-logo-fork">🍴</span>
-            <span className="app-logo-plate">Familie Eten</span>
+            <span className="app-logo-plate">
+              <span className="app-logo-heart">♥</span>
+              <span className="app-logo-name">Familie<br />Eten</span>
+            </span>
             <span className="app-logo-knife">🔪</span>
           </h1>
           <p className="subtitle">{t("loading")}</p>
@@ -817,7 +823,10 @@ export default function App() {
         <div className="header-left">
           <h1 className="app-logo">
             <span className="app-logo-fork">🍴</span>
-            <span className="app-logo-plate">Familie Eten</span>
+            <span className="app-logo-plate">
+              <span className="app-logo-heart">♥</span>
+              <span className="app-logo-name">Familie<br />Eten</span>
+            </span>
             <span className="app-logo-knife">🔪</span>
           </h1>
         </div>
