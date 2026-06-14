@@ -587,7 +587,10 @@
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
