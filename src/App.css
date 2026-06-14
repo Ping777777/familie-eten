@@ -1761,14 +1761,52 @@
 .side-menu-close:hover { background: rgba(255,255,255,0.28); }
 
 .side-menu-user {
-  padding: 14px 16px 10px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .side-menu-user-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.side-menu-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .side-menu-user-name { font-size: 0.95rem; color: var(--text); }
+
+.side-menu-flag-group {
+  display: flex;
+  gap: 4px;
+}
+.side-menu-flag-group--standalone {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+.side-menu-flag-btn {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 3px 4px;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.13s, background 0.13s;
+}
+.side-menu-flag-btn:hover { background: var(--surface2); }
+.side-menu-flag-btn.active {
+  border-color: #667eea;
+  background: #eef0ff;
+}
+.dark .side-menu-flag-btn.active { border-color: #818cf8; background: #26284a; }
+.side-menu-flag-img {
+  width: 28px;
+  height: auto;
+  border-radius: 3px;
+  display: block;
+}
 
 .side-menu-section {
   padding: 14px 16px 10px;
@@ -1786,33 +1824,6 @@
   color: var(--text-muted);
   margin: 0 0 4px;
 }
-
-.side-menu-lang {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 9px;
-  border: 1.5px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.93rem;
-  color: var(--text);
-  text-align: left;
-  transition: background 0.13s, border-color 0.13s;
-}
-.side-menu-lang:hover { background: var(--surface2); }
-.side-menu-lang.active {
-  background: #eef0ff;
-  border-color: #667eea;
-  color: #3949ab;
-  font-weight: 600;
-}
-.dark .side-menu-lang.active { background: #26284a; border-color: #818cf8; color: #818cf8; }
-.side-menu-lang-flag { font-size: 1.2rem; line-height: 1; }
-.side-menu-lang-name { flex: 1; }
-.side-menu-check { color: #667eea; font-size: 0.85rem; font-weight: 700; }
-.dark .side-menu-check { color: #818cf8; }
 
 .side-menu-dark-toggle {
   display: flex;

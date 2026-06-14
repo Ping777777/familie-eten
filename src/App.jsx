@@ -13,6 +13,12 @@ import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
 
+const LANGUAGES = [
+  { code: "nl", img: "https://flagcdn.com/w40/nl.png", label: "Nederlands" },
+  { code: "en", img: "https://flagcdn.com/w40/gb.png", label: "English" },
+  { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
+];
+
 function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
@@ -72,31 +78,45 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
           <button className="side-menu-close" onClick={onClose}>✕</button>
         </div>
 
-        {currentUser && (
+        {currentUser ? (
           <div className="side-menu-user">
             <span className="side-menu-user-label">{t("loggedInAs")}</span>
-            <strong className="side-menu-user-name">{currentUser}</strong>
+            <div className="side-menu-user-row">
+              <strong className="side-menu-user-name">{currentUser}</strong>
+              <div className="side-menu-flag-group">
+                {[
+                  ...LANGUAGES
+                ].map(({ code, img, label }) => (
+                  <button
+                    key={code}
+                    className={`side-menu-flag-btn${lang === code ? " active" : ""}`}
+                    onClick={() => setLang(code)}
+                    title={label}
+                  >
+                    <img src={img} alt={label} className="side-menu-flag-img" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="side-menu-flag-group side-menu-flag-group--standalone">
+            {[
+              { code: "nl", flag: "🇳🇱" },
+              { code: "en", flag: "🇬🇧" },
+              { code: "ru", flag: "🇷🇺" },
+            ].map(({ code, flag }) => (
+              <button
+                key={code}
+                className={`side-menu-flag-btn${lang === code ? " active" : ""}`}
+                onClick={() => setLang(code)}
+                title={code}
+              >
+                {flag}
+              </button>
+            ))}
           </div>
         )}
-
-        <div className="side-menu-section">
-          <p className="side-menu-label">{t("language")}</p>
-          {[
-            { code: "nl", flag: "🇳🇱", name: "Nederlands" },
-            { code: "en", flag: "🇬🇧", name: "English" },
-            { code: "ru", flag: "🇷🇺", name: "Русский" },
-          ].map(({ code, flag, name }) => (
-            <button
-              key={code}
-              className={`side-menu-lang${lang === code ? " active" : ""}`}
-              onClick={() => setLang(code)}
-            >
-              <span className="side-menu-lang-flag">{flag}</span>
-              <span className="side-menu-lang-name">{name}</span>
-              {lang === code && <span className="side-menu-check">✓</span>}
-            </button>
-          ))}
-        </div>
 
         <div className="side-menu-section">
           <p className="side-menu-label">{t("picnicSection")}</p>
