@@ -149,13 +149,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               {translateTag(activeTag, lang)} ×
             </button>
           )}
-          <button
-            className={`filter-icon-btn ${filterOpen ? "open" : ""}`}
-            onClick={() => setFilterOpen((v) => !v)}
-            title="Filters"
-          >
-            ⚙
-          </button>
         </div>
 
         {filterOpen && (
