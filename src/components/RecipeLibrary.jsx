@@ -119,13 +119,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
 
   return (
     <div className="recipe-library">
-      <div className="library-header">
-        <h2>{t("recipeLibrary")}</h2>
-        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
-          {t("newRecipe")}
-        </button>
-      </div>
-
       {saveFailed && (
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
@@ -136,7 +129,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="library-controls" ref={controlsRef}>
+      <div className="library-header">
+        <h2>{t("recipeLibrary")}</h2>
+        <div className="library-controls" ref={controlsRef}>
         <div className="search-wrapper">
           <input
             className="search-input"
@@ -191,6 +186,10 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
             )}
           </div>
         )}
+        </div>
+        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
+          {t("newRecipe")}
+        </button>
       </div>
 
       <div className="recipe-grid">
