@@ -47,8 +47,10 @@
   color: var(--text);
 }
 
-.login-card .app-logo-plate {
-  box-shadow: 0 0 0 4px rgba(42, 125, 121, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+.app-logo-img {
+  height: 90px;
+  width: auto;
+  margin-bottom: 4px;
 }
 
 .login-form {
@@ -103,43 +105,6 @@
   text-align: center;
 }
 
-.app-logo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 0 0 4px;
-}
-.app-logo-fork, .app-logo-knife {
-  font-size: 2rem;
-  line-height: 1;
-}
-.app-logo-plate {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: #2a7d79;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25), 0 4px 16px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-}
-.app-logo-heart {
-  color: #e8972d;
-  font-size: 0.6rem;
-  line-height: 1;
-}
-.app-logo-name {
-  font-family: 'Nunito', sans-serif;
-  font-weight: 900;
-  font-size: 0.72rem;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  text-align: center;
-  line-height: 1.2;
-}
 
 .subtitle {
   margin: 0 0 20px;
