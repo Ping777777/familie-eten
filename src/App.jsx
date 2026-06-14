@@ -172,7 +172,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
             </form>
           ) : (
             <button className="side-menu-picnic-login-btn" onClick={() => setPicnicFormOpen(true)}>
-              🛵 {t("picnicLogin")}
+              {t("picnicLogin")}
             </button>
           )}
         </div>
