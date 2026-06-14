@@ -633,8 +633,8 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
     <li
       ref={detailsRef}
       className="picnic-search-result-item"
-      onMouseEnter={openDetails}
-      onMouseLeave={closeDetails}
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
+      onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={closeDetails}
@@ -644,8 +644,6 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
         type="button"
         className={`picnic-search-result${selected ? " selected" : ""}`}
         onClick={() => onSelect(itemId, result)}
-        onFocus={openDetails}
-        onBlur={closeDetails}
       >
         <span className="picnic-search-result-name">{result.name}</span>
         <span className="picnic-search-result-meta">
@@ -658,6 +656,8 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
         type="button"
         className="picnic-info-btn"
         onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
+        onFocus={openDetails}
+        onBlur={closeDetails}
         aria-label="Info"
       >i</button>
       <PicnicProductPopover
@@ -769,8 +769,8 @@ function PicnicAssociation({
         <div
           ref={detailsRef}
           className={`picnic-association-summary${detailsOpen ? " open" : ""}`}
-          onMouseEnter={openDetails}
-          onMouseLeave={closeDetails}
+          onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={closeDetails}

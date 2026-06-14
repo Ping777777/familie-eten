@@ -894,16 +894,15 @@
   cursor: help;
 }
 .picnic-info-btn {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 18px;
-  height: 18px;
+  flex-shrink: 0;
+  align-self: center;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1.5px solid #86efac;
   background: #ecfdf5;
   color: #166534;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-style: italic;
   font-weight: 700;
   cursor: pointer;
@@ -912,7 +911,6 @@
   justify-content: center;
   line-height: 1;
   padding: 0;
-  z-index: 1;
 }
 .picnic-info-btn:hover { border-color: #16a34a; background: #dcfce7; }
 .picnic-association-popover {
@@ -1020,9 +1018,13 @@
 }
 .picnic-search-result-item {
   position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
 }
 .picnic-search-result {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
