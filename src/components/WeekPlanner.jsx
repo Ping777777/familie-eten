@@ -5,10 +5,10 @@ import { useLanguage } from "../LanguageContext";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
-  Papa: "#4a90d9",
-  Mama: "#e8739a",
-  Inga: "#7bc67e",
-  Kevin: "#f4a261",
+  Papa: "#025c51",
+  Mama: "#fc7600",
+  Inga: "#5cb85c",
+  Kevin: "#e8c247",
 };
 
 function computeWarnings(days, weekPlan, recipes) {
