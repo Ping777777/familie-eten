@@ -795,35 +795,36 @@
 
 .shopping-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #d0efed;
-  padding-bottom: 0;
+  gap: 6px;
 }
 .shopping-tab {
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
+  background: var(--surface2);
+  border: 2px solid var(--border-light);
+  border-radius: 20px;
+  margin-bottom: 0;
   padding: 8px 16px;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #888;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  padding: 5px 14px;
+  transition: all 0.15s;
   white-space: nowrap;
 }
-.shopping-tab:hover { color: #025c51; }
-.shopping-tab.active { color: #025c51; border-bottom-color: #025c51; }
+.shopping-tab:hover { border-color: #025c51; color: #025c51; }
+.shopping-tab.active { background: #025c51; border-color: #025c51; color: white; }
 
 .shopping-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
+.shopping-header h2 { margin: 0; flex-shrink: 0; }
 
 .shopping-meta {
   display: flex;
@@ -836,33 +837,36 @@
 
 .shopping-actions {
   display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .btn-copy, .btn-picnic {
   border: none;
   border-radius: 8px;
-  padding: 10px 18px;
-  font-size: 0.88rem;
-  font-weight: 600;
+  padding: 8px 16px;
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
 }
 .btn-copy:active, .btn-picnic:active { transform: scale(0.97); }
 
 .btn-copy {
-  background: #d0efed;
+  background: var(--surface2);
   color: #025c51;
+  border: 2px solid #025c51;
 }
-.btn-copy:hover { background: #99d9d5; }
+.btn-copy:hover { background: #d0efed; }
 
 .btn-picnic {
-  background: #00a950;
+  background: #fc7600;
   color: white;
 }
-.btn-picnic:hover { background: #008f43; }
+.btn-picnic:hover { background: #d46400; }
 
 .picnic-banner {
   display: flex;
@@ -2378,9 +2382,11 @@
 .dark .detail-steps-progress--done { background: #14291e; color: #4ade80; }
 
 /* Shopping tabs */
-.dark .shopping-tab { color: var(--text-muted); }
-.dark .shopping-tab.active { color: #4dbfb5; border-bottom-color: #4dbfb5; }
-.dark .shopping-tab:hover { color: #4dbfb5; }
+.dark .shopping-tab { background: var(--surface2); border-color: var(--border); color: var(--text-muted); }
+.dark .shopping-tab.active { background: #025c51; border-color: #025c51; color: white; }
+.dark .shopping-tab:hover { border-color: #4dbfb5; color: #4dbfb5; }
+.dark .btn-copy { background: var(--surface2); border-color: #4dbfb5; color: #4dbfb5; }
+.dark .btn-copy:hover { background: #1a3f3d; }
 
 /* Tag filters */
 .dark .tag-filter { background: var(--surface2); border-color: var(--border); color: var(--text); }

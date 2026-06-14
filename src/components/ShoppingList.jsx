@@ -212,40 +212,38 @@ export default function ShoppingList({
 
   return (
     <div className="shopping-list">
-      <div className="shopping-tabs">
-        <button
-          className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}
-          onClick={() => setActiveListTab("maaltijden")}
-        >
-          🛒 {t("shoppingList")}
-        </button>
-        <button
-          className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`}
-          onClick={() => setActiveListTab("staples")}
-        >
-          🏡 {t("staples")}
-        </button>
-      </div>
-
       {activeListTab === "maaltijden" && (
         <>
           <div className="shopping-header">
             <h2>{t("shoppingList")}</h2>
+            <div className="shopping-tabs">
+              <button
+                className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}
+                onClick={() => setActiveListTab("maaltijden")}
+              >
+                {t("shoppingList")}
+              </button>
+              <button
+                className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`}
+                onClick={() => setActiveListTab("staples")}
+              >
+                {t("staples")}
+              </button>
+            </div>
             <div className="shopping-meta">
               <span>{t("mealMeta", { meals: totalPlanned, ingr: items.length })}</span>
               {mealCheckedCount > 0 && (
                 <button className="clear-checks-btn" onClick={clearMealChecks}>{t("uncheckAll")}</button>
               )}
             </div>
-          </div>
-
-          <div className="shopping-actions">
-            <button className="btn-copy" onClick={copyList}>
-              {copied ? t("copied") : t("copyList")}
-            </button>
-            <button className="btn-picnic" onClick={() => setPicnicMsg(true)}>
-              {t("sendPicnic")}
-            </button>
+            <div className="shopping-actions">
+              <button className="btn-copy" onClick={copyList}>
+                {copied ? t("copied") : t("copyList")}
+              </button>
+              <button className="btn-picnic" onClick={() => setPicnicMsg(true)}>
+                {t("sendPicnic")}
+              </button>
+            </div>
           </div>
 
           {picnicMsg && (
@@ -343,6 +341,20 @@ export default function ShoppingList({
         <>
           <div className="shopping-header">
             <h2>{t("staples")}</h2>
+            <div className="shopping-tabs">
+              <button
+                className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}
+                onClick={() => setActiveListTab("maaltijden")}
+              >
+                {t("shoppingList")}
+              </button>
+              <button
+                className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`}
+                onClick={() => setActiveListTab("staples")}
+              >
+                {t("staples")}
+              </button>
+            </div>
             <div className="shopping-meta">
               <span>{t("staplesMeta", { n: staples.length })}</span>
               {stapleCheckedCount > 0 && (
