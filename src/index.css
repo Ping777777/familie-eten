@@ -1,15 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
   font-size: 16px;
   color: #1a1a2e;
   background: #f0f4f8;
   -webkit-font-smoothing: antialiased;
+
+  /* Typography scale */
+  --font-label: 0.72rem;   /* small caps section labels: INGELOGD ALS, PICNIC */
+  --font-xs:    0.78rem;   /* tiny helper text */
+  --font-sm:    0.85rem;   /* secondary text, tags */
+  --font-base:  0.95rem;   /* body text, buttons */
+  --font-lg:    1.05rem;   /* card titles, modal headers */
+  --font-xl:    1.3rem;    /* page headings */
+  --font-hero:  2rem;      /* app title in header */
+
+  /* Label style shorthand used throughout */
+  --label-weight:   700;
+  --label-spacing:  0.07em;
+  --label-transform: uppercase;
 }
 
 body { margin: 0; }
 
 #root {
   min-height: 100svh;
+}
+
+/* Reusable label style — apply to any section heading */
+.section-label {
+  font-size: var(--font-label);
+  font-weight: var(--label-weight);
+  text-transform: var(--label-transform);
+  letter-spacing: var(--label-spacing);
+  color: var(--text-muted, #888);
+  margin: 0 0 6px;
 }
