@@ -96,7 +96,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
                 className={`side-menu-nav-btn${tab === key ? " active" : ""}`}
                 onClick={() => onTabChange(key)}
               >
-                {label}
+                {label.replace(/^\S+\s/, "")}
               </button>
             ))}
           </nav>
