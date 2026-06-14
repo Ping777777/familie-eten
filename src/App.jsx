@@ -102,13 +102,6 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
           </nav>
         )}
 
-        {currentUser && (
-          <div className="side-menu-user">
-            <span className="side-menu-user-label">{t("loggedInAs")}</span>
-            <strong className="side-menu-user-name">{currentUser}</strong>
-          </div>
-        )}
-
         <div className="side-menu-section">
           <p className="side-menu-label">{t("picnicSection")}</p>
           {picnicUser ? (
@@ -186,6 +179,10 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
 
         {currentUser && (
           <div className="side-menu-footer">
+            <div className="side-menu-user">
+              <span className="side-menu-user-label">{t("loggedInAs")}</span>
+              <strong className="side-menu-user-name">{currentUser}</strong>
+            </div>
             <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
               {t("logout")}
             </button>
