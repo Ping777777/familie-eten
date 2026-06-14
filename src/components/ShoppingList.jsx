@@ -656,7 +656,7 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
         type="button"
         className="picnic-info-btn"
         onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
-        onFocus={openDetails}
+        onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
         onBlur={closeDetails}
         aria-label="Info"
       >i</button>
@@ -780,7 +780,7 @@ function PicnicAssociation({
             type="button"
             className="picnic-association-trigger"
             onClick={handleTriggerClick}
-            onFocus={openDetails}
+            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
             onBlur={closeDetails}
             title={summary}
           >
