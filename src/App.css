@@ -149,9 +149,10 @@
 .week-nav {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   margin-bottom: 14px;
-  flex-wrap: wrap;
+  position: relative;
 }
 .week-arrow {
   background: white;
@@ -173,8 +174,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  min-width: 180px;
+  min-width: 160px;
 }
 .week-relative {
   font-weight: 700;
@@ -186,6 +186,8 @@
   color: #888;
 }
 .week-today-btn {
+  position: absolute;
+  right: 0;
   background: #667eea;
   color: white;
   border: none;
