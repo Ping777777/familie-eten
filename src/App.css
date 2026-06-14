@@ -977,6 +977,9 @@
   flex-direction: column;
   gap: 6px;
 }
+.picnic-search-result-item {
+  position: relative;
+}
 .picnic-search-result {
   width: 100%;
   display: flex;

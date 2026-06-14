@@ -481,6 +481,189 @@ function IngredientList({
 
 const PICNIC_IMAGE_BASE = "https://storefront-prod.nl.picnicinternational.com/static/images";
 
+function usePicnicProductDetail(productId, open, authKey) {
+  const [productDetail, setProductDetail] = useState({ productId: null, description: null });
+  const [detailLoadingProductId, setDetailLoadingProductId] = useState(null);
+  const productDetailFetchedForRef = useRef(null);
+
+  useEffect(() => {
+    if (!open || !productId || !authKey) return undefined;
+    if (productDetailFetchedForRef.current === productId) return undefined;
+
+    let cancelled = false;
+    setDetailLoadingProductId(productId);
+    fetch("/api/picnic-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authKey, productId }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        productDetailFetchedForRef.current = productId;
+        setProductDetail({ productId, description: data.description ?? null });
+        setDetailLoadingProductId((current) => (current === productId ? null : current));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        productDetailFetchedForRef.current = productId;
+        setProductDetail({ productId, description: null });
+        setDetailLoadingProductId((current) => (current === productId ? null : current));
+      });
+    return () => { cancelled = true; };
+  }, [authKey, open, productId]);
+
+  return {
+    detailLoading: detailLoadingProductId === productId,
+    productDetail: productDetail.productId === productId ? productDetail : null,
+  };
+}
+
+function PicnicProductPopover({ product, picnicUser, open, className = "picnic-association-popover" }) {
+  const { t, lang } = useLanguage();
+  const { detailLoading, productDetail } = usePicnicProductDetail(product?.id, open, picnicUser?.authKey);
+  const priceFormatter = useMemo(
+    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: "EUR",
+    }),
+    [lang]
+  );
+  const formattedPrice = typeof product?.displayPrice === "number"
+    ? priceFormatter.format(product.displayPrice / 100)
+    : null;
+  const imageId = product?.imageId || null;
+  const imageUrl = imageId ? `${PICNIC_IMAGE_BASE}/${imageId}/small.png` : null;
+
+  if (!open || !product) return null;
+
+  return (
+    <div className={className} role="tooltip">
+      <div className="picnic-popover-header">
+        {imageUrl && (
+          <img
+            className="picnic-popover-image"
+            src={imageUrl}
+            alt={product.name}
+            loading="lazy"
+          />
+        )}
+        <div className="picnic-popover-header-text">
+          <strong className="picnic-association-popover-name">{product.name}</strong>
+          {(product.unitQuantity || formattedPrice) && (
+            <span className="picnic-association-popover-meta">
+              {[product.unitQuantity, formattedPrice].filter(Boolean).join(" · ")}
+            </span>
+          )}
+          <span className="picnic-association-popover-id">#{product.id}</span>
+        </div>
+      </div>
+      {picnicUser && (
+        detailLoading
+          ? <span className="picnic-popover-description loading">{t("loading")}</span>
+          : productDetail?.description
+            ? <p className="picnic-popover-description">{productDetail.description}</p>
+            : null
+      )}
+    </div>
+  );
+}
+
+function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) {
+  const { lang } = useLanguage();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsTimeoutRef = useRef(null);
+  const detailsLongPressRef = useRef(false);
+  const detailsRef = useRef(null);
+  const priceFormatter = useMemo(
+    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: "EUR",
+    }),
+    [lang]
+  );
+
+  useEffect(() => () => {
+    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!detailsOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!detailsRef.current?.contains(event.target)) {
+        setDetailsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [detailsOpen]);
+
+  const clearDetailsTimeout = () => {
+    if (detailsTimeoutRef.current) {
+      clearTimeout(detailsTimeoutRef.current);
+      detailsTimeoutRef.current = null;
+    }
+  };
+
+  const openDetails = () => {
+    setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    clearDetailsTimeout();
+    detailsLongPressRef.current = false;
+    setDetailsOpen(false);
+  };
+
+  const handleTouchStart = () => {
+    detailsLongPressRef.current = false;
+    clearDetailsTimeout();
+    detailsTimeoutRef.current = setTimeout(() => {
+      detailsLongPressRef.current = true;
+      setDetailsOpen(true);
+      detailsTimeoutRef.current = null;
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    clearDetailsTimeout();
+  };
+
+  return (
+    <li
+      ref={detailsRef}
+      className="picnic-search-result-item"
+      onMouseEnter={openDetails}
+      onMouseLeave={closeDetails}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={closeDetails}
+      onTouchMove={handleTouchEnd}
+    >
+      <button
+        type="button"
+        className={`picnic-search-result${selected ? " selected" : ""}`}
+        onClick={() => onSelect(itemId, result)}
+        onFocus={openDetails}
+        onBlur={closeDetails}
+      >
+        <span className="picnic-search-result-name">{result.name}</span>
+        <span className="picnic-search-result-meta">
+          {[result.unitQuantity, typeof result.displayPrice === "number" ? priceFormatter.format(result.displayPrice / 100) : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+      </button>
+      <PicnicProductPopover
+        product={result}
+        picnicUser={picnicUser}
+        open={detailsOpen}
+        className="picnic-association-popover picnic-search-result-popover"
+      />
+    </li>
+  );
+}
+
 function PicnicAssociation({
   item,
   association,
@@ -498,9 +681,6 @@ function PicnicAssociation({
   const detailsTimeoutRef = useRef(null);
   const detailsLongPressRef = useRef(false);
   const detailsRef = useRef(null);
-  const [productDetail, setProductDetail] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const productDetailFetchedForRef = useRef(null);
 
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
@@ -512,9 +692,6 @@ function PicnicAssociation({
   const formattedPrice = typeof association?.displayPrice === "number"
     ? priceFormatter.format(association.displayPrice / 100)
     : null;
-
-  const imageId = association?.imageId || null;
-  const imageUrl = imageId ? `${PICNIC_IMAGE_BASE}/${imageId}/small.png` : null;
 
   const summary = association
     ? [
@@ -538,33 +715,6 @@ function PicnicAssociation({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [detailsOpen]);
-
-  useEffect(() => {
-    if (!detailsOpen || !association?.id || !picnicUser?.authKey) return undefined;
-    if (productDetailFetchedForRef.current === association.id) return undefined;
-
-    let cancelled = false;
-    setDetailLoading(true);
-    fetch("/api/picnic-product", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authKey: picnicUser.authKey, productId: association.id }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        productDetailFetchedForRef.current = association.id;
-        setProductDetail({ description: data.description ?? null });
-        setDetailLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        productDetailFetchedForRef.current = association.id;
-        setProductDetail({ description: null });
-        setDetailLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [detailsOpen, association?.id, picnicUser?.authKey]);
 
   const clearDetailsTimeout = () => {
     if (detailsTimeoutRef.current) {
@@ -632,36 +782,7 @@ function PicnicAssociation({
               {t("picnicAssociationLabel")}: {summary}
             </span>
           </button>
-          {detailsOpen && (
-            <div className="picnic-association-popover" role="tooltip">
-              <div className="picnic-popover-header">
-                {imageUrl && (
-                  <img
-                    className="picnic-popover-image"
-                    src={imageUrl}
-                    alt={association.name}
-                    loading="lazy"
-                  />
-                )}
-                <div className="picnic-popover-header-text">
-                  <strong className="picnic-association-popover-name">{association.name}</strong>
-                  {(association.unitQuantity || formattedPrice) && (
-                    <span className="picnic-association-popover-meta">
-                      {[association.unitQuantity, formattedPrice].filter(Boolean).join(" · ")}
-                    </span>
-                  )}
-                  <span className="picnic-association-popover-id">#{association.id}</span>
-                </div>
-              </div>
-              {picnicUser && (
-                detailLoading
-                  ? <span className="picnic-popover-description loading">{t("loading")}</span>
-                  : productDetail?.description
-                    ? <p className="picnic-popover-description">{productDetail.description}</p>
-                    : null
-              )}
-            </div>
-          )}
+          <PicnicProductPopover product={association} picnicUser={picnicUser} open={detailsOpen} />
         </div>
       ) : (
         <span className="picnic-association-label empty">
@@ -705,20 +826,14 @@ function PicnicAssociation({
           {picnicSearch.results.length > 0 && (
             <ul className="picnic-search-results">
               {picnicSearch.results.map((result) => (
-                <li key={result.id}>
-                  <button
-                    type="button"
-                    className={`picnic-search-result${association?.id === result.id ? " selected" : ""}`}
-                    onClick={() => onSelect(item.id, result)}
-                  >
-                    <span className="picnic-search-result-name">{result.name}</span>
-                    <span className="picnic-search-result-meta">
-                      {[result.unitQuantity, typeof result.displayPrice === "number" ? priceFormatter.format(result.displayPrice / 100) : null]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  </button>
-                </li>
+                <PicnicSearchResult
+                  key={result.id}
+                  itemId={item.id}
+                  result={result}
+                  selected={association?.id === result.id}
+                  picnicUser={picnicUser}
+                  onSelect={onSelect}
+                />
               ))}
             </ul>
           )}
