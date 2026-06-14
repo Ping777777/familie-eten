@@ -1,4 +1,5 @@
 import PicnicClient from "picnic-api";
+import { serializeCookie } from "./_cookies.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -20,10 +21,12 @@ export default async function handler(req, res) {
 
     if (loginResult.second_factor_authentication_required) {
       await client.auth.generate2FACode("SMS");
+      // Store the temporary authKey in an HttpOnly cookie so it is never
+      // exposed to client-side JavaScript.
+      res.setHeader("Set-Cookie", serializeCookie("picnic_auth_key_temp", loginResult.authKey));
       res.status(200).json({
         ok: true,
         requiresTwoFactor: true,
-        authKey: loginResult.authKey,
       });
       return;
     }
@@ -31,9 +34,10 @@ export default async function handler(req, res) {
     const userDetails = await client.user.getUserDetails();
     const name = `${userDetails.firstname} ${userDetails.lastname}`.trim();
 
+    // Store the final authKey in an HttpOnly cookie.
+    res.setHeader("Set-Cookie", serializeCookie("picnic_auth_key", loginResult.authKey));
     res.status(200).json({
       ok: true,
-      authKey: loginResult.authKey,
       name,
     });
   } catch (err) {

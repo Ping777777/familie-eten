@@ -1,4 +1,5 @@
 import PicnicClient from "picnic-api";
+import { serializeCookie, expireCookie, readCookie } from "./_cookies.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,11 +7,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  const authKey = String(req.body?.authKey || "").trim();
+  // Read the temporary authKey from the HttpOnly cookie set during picnic-login.
+  const authKey = readCookie(req, "picnic_auth_key_temp");
   const code = String(req.body?.code || "").trim();
 
-  if (!authKey || !code) {
-    res.status(400).json({ message: "authKey en code zijn vereist" });
+  if (!authKey) {
+    res.status(400).json({ message: "Geen actieve Picnic-sessie gevonden. Log opnieuw in." });
+    return;
+  }
+
+  if (!code) {
+    res.status(400).json({ message: "Verificatiecode is vereist" });
     return;
   }
 
@@ -20,9 +27,13 @@ export default async function handler(req, res) {
     const userDetails = await client.user.getUserDetails();
     const name = `${userDetails.firstname} ${userDetails.lastname}`.trim();
 
+    // Promote the verified authKey to the permanent cookie and clear the temp one.
+    res.setHeader("Set-Cookie", [
+      serializeCookie("picnic_auth_key", verifyResult.authKey),
+      expireCookie("picnic_auth_key_temp"),
+    ]);
     res.status(200).json({
       ok: true,
-      authKey: verifyResult.authKey,
       name,
     });
   } catch (err) {
