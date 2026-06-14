@@ -492,6 +492,10 @@ function PicnicAssociation({
   onSelect,
 }) {
   const { t, lang } = useLanguage();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsTimeoutRef = useRef(null);
+  const detailsLongPressRef = useRef(false);
+  const detailsRef = useRef(null);
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
       style: "currency",
@@ -499,20 +503,116 @@ function PicnicAssociation({
     }),
     [lang]
   );
+  const formattedPrice = typeof association?.displayPrice === "number"
+    ? priceFormatter.format(association.displayPrice / 100)
+    : null;
 
   const summary = association
     ? [
       association.name,
       association.unitQuantity,
-      typeof association.displayPrice === "number" ? priceFormatter.format(association.displayPrice / 100) : null,
+      formattedPrice,
     ].filter(Boolean).join(" · ")
     : t("picnicAssociationNone");
 
+  useEffect(() => () => {
+    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!detailsOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!detailsRef.current?.contains(event.target)) {
+        setDetailsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [detailsOpen]);
+
+  const clearDetailsTimeout = () => {
+    if (detailsTimeoutRef.current) {
+      clearTimeout(detailsTimeoutRef.current);
+      detailsTimeoutRef.current = null;
+    }
+  };
+
+  const openDetails = () => {
+    if (association) setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    clearDetailsTimeout();
+    detailsLongPressRef.current = false;
+    setDetailsOpen(false);
+  };
+
+  const handleTouchStart = () => {
+    if (!association) return;
+    detailsLongPressRef.current = false;
+    clearDetailsTimeout();
+    detailsTimeoutRef.current = setTimeout(() => {
+      detailsLongPressRef.current = true;
+      setDetailsOpen(true);
+      detailsTimeoutRef.current = null;
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    clearDetailsTimeout();
+  };
+
+  const handleTriggerClick = () => {
+    if (!association) return;
+    if (detailsLongPressRef.current) {
+      detailsLongPressRef.current = false;
+      return;
+    }
+    setDetailsOpen((open) => !open);
+  };
+
   return (
     <div className="picnic-association-block" onClick={(e) => e.stopPropagation()}>
-      <span className={`picnic-association-label${association ? "" : " empty"}`}>
-        {t("picnicAssociationLabel")}: {summary}
-      </span>
+      {association ? (
+        <div
+          ref={detailsRef}
+          className={`picnic-association-summary${detailsOpen ? " open" : ""}`}
+          onMouseEnter={openDetails}
+          onMouseLeave={closeDetails}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={closeDetails}
+          onTouchMove={handleTouchEnd}
+        >
+          <button
+            type="button"
+            className="picnic-association-trigger"
+            onClick={handleTriggerClick}
+            onFocus={openDetails}
+            onBlur={closeDetails}
+            title={summary}
+          >
+            <span className="picnic-association-label">
+              {t("picnicAssociationLabel")}: {summary}
+            </span>
+          </button>
+          {detailsOpen && (
+            <div className="picnic-association-popover" role="tooltip">
+              <strong className="picnic-association-popover-name">{association.name}</strong>
+              {(association.unitQuantity || formattedPrice) && (
+                <span className="picnic-association-popover-meta">
+                  {[association.unitQuantity, formattedPrice].filter(Boolean).join(" · ")}
+                </span>
+              )}
+              <span className="picnic-association-popover-id">#{association.id}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <span className="picnic-association-label empty">
+          {t("picnicAssociationLabel")}: {summary}
+        </span>
+      )}
       {picnicUser && (
         <div className="picnic-association-actions">
           <button
