@@ -95,7 +95,7 @@
 }
 
 .app-header {
-  background: linear-gradient(135deg, #e76f51 0%, #2a9d8f 100%);
+  background: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 50%, rgba(252, 130, 15, 1) 100%);
   color: white;
   padding: 14px 20px 0;
   text-align: center;
@@ -265,7 +265,7 @@
   background: #fff;
 }
 .day-name {
-  background: linear-gradient(135deg, #e76f51 0%, #2a9d8f 100%);
+  background: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 50%, rgba(252, 130, 15, 1) 100%);
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
@@ -1960,7 +1960,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 16px 14px;
-  background: linear-gradient(135deg, #e76f51 0%, #2a9d8f 100%);
+  background: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 50%, rgba(252, 130, 15, 1) 100%);
   color: white;
   flex-shrink: 0;
 }
