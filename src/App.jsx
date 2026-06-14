@@ -305,10 +305,15 @@ export default function App() {
   const [staplesList, setStaplesList] = useState(defaultStaples);
   const [staplesLoaded, setStaplesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const staplesEtagRef = useRef(null);
+  const [picnicAssociations, setPicnicAssociations] = useState({});
+  const [picnicAssociationsLoaded, setPicnicAssociationsLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const picnicAssociationsRef = useRef({});
+  const picnicAssociationsEtagRef = useRef(null);
 
   // ── Ref sync ──────────────────────────────────────────────────────────────
   useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
   useEffect(() => { activeWeekKeyRef.current = activeWeekKey; }, [activeWeekKey]);
+  useEffect(() => { picnicAssociationsRef.current = picnicAssociations; }, [picnicAssociations]);
 
   // ── Week plan API ─────────────────────────────────────────────────────────
   const fetchWeekPlan = async (weekKey) => {
@@ -612,6 +617,76 @@ export default function App() {
     saveStaplesToBlob(nextStaples);
   };
 
+  const persistPicnicAssociations = async (nextAssociations, etag) => {
+    const response = await fetch("/api/picnic-associations", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ associations: nextAssociations, etag }),
+    });
+    if (response.status === 412) {
+      const data = await response.json().catch(() => ({}));
+      return { conflict: true, associations: data.associations ?? {}, etag: data.etag ?? null };
+    }
+    if (!response.ok) throw new Error("Failed to save Picnic associations");
+    const data = await response.json().catch(() => ({}));
+    return { conflict: false, etag: data.etag ?? null };
+  };
+
+  const updatePicnicAssociation = async (itemKey, association) => {
+    const applyUpdater = (base) => {
+      const next = { ...(base ?? {}) };
+      if (association) next[itemKey] = association;
+      else delete next[itemKey];
+      return next;
+    };
+
+    let next = applyUpdater(picnicAssociationsRef.current);
+    let etag = picnicAssociationsEtagRef.current;
+    picnicAssociationsRef.current = next;
+    setPicnicAssociations(next);
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const result = await persistPicnicAssociations(next, etag);
+        if (!result.conflict) {
+          picnicAssociationsRef.current = next;
+          picnicAssociationsEtagRef.current = result.etag;
+          setPicnicAssociations(next);
+          return;
+        }
+        if (!result.etag) return;
+        etag = result.etag;
+        next = applyUpdater(result.associations);
+      } catch {
+        return;
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/picnic-associations", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          picnicAssociationsEtagRef.current = null;
+          picnicAssociationsRef.current = {};
+          setPicnicAssociations({});
+          return;
+        }
+        if (!response.ok) throw new Error("Failed to load Picnic associations");
+        const data = await response.json();
+        const associations = data.associations ?? {};
+        picnicAssociationsEtagRef.current = data.etag ?? null;
+        picnicAssociationsRef.current = associations;
+        setPicnicAssociations(associations);
+      })
+      .catch(() => {
+        picnicAssociationsRef.current = {};
+        setPicnicAssociations({});
+      })
+      .finally(() => { setPicnicAssociationsLoaded(true); });
+  }, [currentUser]);
+
   // ── Week plan helpers ─────────────────────────────────────────────────────
   const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
 
@@ -646,6 +721,7 @@ export default function App() {
       setWeekPlanLoaded(false);
       setRecipesLoaded(false);
       setStaplesLoaded(false);
+      setPicnicAssociationsLoaded(false);
       setCurrentUser(data.user);
       localStorage.setItem(AUTH_USER_KEY, data.user);
       setLoginForm({ username: "", password: "" });
@@ -669,6 +745,10 @@ export default function App() {
     setStaplesLoaded(true);
     setStaplesList(defaultStaples);
     staplesEtagRef.current = null;
+    setPicnicAssociationsLoaded(true);
+    setPicnicAssociations({});
+    picnicAssociationsRef.current = {};
+    picnicAssociationsEtagRef.current = null;
     localStorage.removeItem(AUTH_USER_KEY);
     setLoginError("");
   };
@@ -710,7 +790,7 @@ export default function App() {
     );
   }
 
-  if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded) {
+  if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded || !picnicAssociationsLoaded) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
         <main className="login-card">
@@ -781,6 +861,9 @@ export default function App() {
             days={DAYS}
             staples={staplesList}
             onUpdateStaples={updateStaples}
+            picnicUser={picnicUser}
+            picnicAssociations={picnicAssociations}
+            onUpdatePicnicAssociation={updatePicnicAssociation}
           />
         )}
       </main>

@@ -844,10 +844,210 @@
 .ingredient-item.done { opacity: 0.5; }
 
 .check-box { font-size: 1.2rem; color: #667eea; line-height: 1; }
-.ingredient-details { display: flex; flex-direction: column; gap: 2px; }
+.ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
 .ingredient-name { font-weight: 600; color: #222; font-size: 0.95rem; }
 .ingredient-amounts { color: #667eea; font-size: 0.82rem; font-weight: 500; }
 .ingredient-meals { color: #aaa; font-size: 0.75rem; }
+.picnic-association-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.picnic-association-summary {
+  position: relative;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.picnic-association-trigger {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.picnic-association-label {
+  display: block;
+  color: #16a34a;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.picnic-association-label.empty { color: #94a3b8; }
+.picnic-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  font-size: 0.65rem;
+  font-style: italic;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  cursor: help;
+}
+.picnic-info-btn {
+  flex-shrink: 0;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #86efac;
+  background: #ecfdf5;
+  color: #166534;
+  font-size: 0.7rem;
+  font-style: italic;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+.picnic-info-btn:hover { border-color: #16a34a; background: #dcfce7; }
+.picnic-association-popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 220px;
+  max-width: min(300px, calc(100vw - 64px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+.picnic-popover-header {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.picnic-popover-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.picnic-popover-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.picnic-popover-description {
+  margin: 0;
+  color: #374151;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  max-height: 90px;
+  overflow-y: auto;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6px;
+}
+.picnic-popover-description.loading {
+  color: #94a3b8;
+  border-top: none;
+  padding-top: 0;
+}
+.picnic-association-popover-name {
+  color: #166534;
+  font-size: 0.8rem;
+}
+.picnic-association-popover-meta,
+.picnic-association-popover-id {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+.picnic-association-actions { display: flex; align-items: center; gap: 8px; }
+.picnic-select-btn {
+  align-self: flex-start;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  color: #166534;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.picnic-select-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.picnic-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.picnic-search-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.picnic-search-input {
+  flex: 1;
+  min-width: 180px;
+  max-width: none;
+}
+.picnic-search-feedback {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+.picnic-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.picnic-search-result-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.picnic-search-result {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.picnic-search-result.selected {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.picnic-search-result-name {
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.picnic-search-result-meta {
+  color: #64748b;
+  font-size: 0.76rem;
+}
 
 .checked-section { margin-top: 20px; }
 .checked-section h4 { color: #888; font-size: 0.9rem; margin-bottom: 10px; }
@@ -1983,6 +2183,38 @@
 .dark .ing-name { color: var(--text); }
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .staples-item-name { color: var(--text); }
+.dark .picnic-association-label { color: #86efac; }
+.dark .picnic-association-label.empty { color: var(--text-muted); }
+.dark .picnic-info-icon { color: #86efac; border-color: #86efac; }
+.dark .picnic-info-btn { background: #1f3b2d; border-color: #2f855a; color: #bbf7d0; }
+.dark .picnic-info-btn:hover { border-color: #86efac; background: #2d5a3d; }
+.dark .picnic-association-popover {
+  background: var(--surface2);
+  border-color: #2f855a;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+}
+.dark .picnic-association-popover-name { color: #bbf7d0; }
+.dark .picnic-association-popover-meta,
+.dark .picnic-association-popover-id { color: var(--text-muted); }
+.dark .picnic-popover-image { background: var(--surface2); }
+.dark .picnic-popover-description { color: var(--text); border-top-color: var(--border); }
+.dark .picnic-popover-description.loading { color: var(--text-muted); }
+.dark .picnic-select-btn {
+  background: #1f3b2d;
+  border-color: #2f855a;
+  color: #bbf7d0;
+}
+.dark .picnic-search-result {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+.dark .picnic-search-result.selected {
+  background: #1f3b2d;
+  border-color: #22c55e;
+}
+.dark .picnic-search-result-name { color: var(--text); }
+.dark .picnic-search-result-meta,
+.dark .picnic-search-feedback { color: var(--text-muted); }
 
 /* Borders / lines */
 .dark .recipe-expanded-body { border-top-color: var(--border-light); }
