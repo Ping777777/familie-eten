@@ -142,14 +142,16 @@
   border: none;
   color: white;
   padding: 10px 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 700;
   transition: background 0.2s;
 }
 .tab-btn:hover { background: rgba(255,255,255,0.25); }
-.tab-btn.active { background: #f0f4f8; color: #025c51; font-weight: 600; }
+.tab-btn.active { background: #f0f4f8; color: #025c51; font-weight: 700; }
 
 .app-main {
   flex: 1;
@@ -445,7 +447,7 @@
   padding: 16px 20px;
   border-bottom: 1px solid #eee;
 }
-.picker-header h3 { margin: 0; font-size: 1rem; color: #333; }
+.picker-header h3 { margin: 0; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #333; }
 .close-btn {
   background: none;
   border: none;
@@ -636,7 +638,7 @@
 }
 .recipe-big-emoji { font-size: 2.2rem; }
 .recipe-info { flex: 1; text-align: left; }
-.recipe-info h3 { margin: 0 0 6px; font-size: 1rem; color: #222; }
+.recipe-info h3 { margin: 0 0 6px; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #222; }
 .recipe-meta { font-size: 0.78rem; color: #888; margin-bottom: 5px; }
 .recipe-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -664,7 +666,7 @@
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .confirm-emoji { font-size: 2.8rem; display: block; margin-bottom: 10px; }
-.confirm-dialog h3 { margin: 0 0 10px; color: #222; font-size: 1.1rem; }
+.confirm-dialog h3 { margin: 0 0 10px; color: #222; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
 .confirm-dialog p { color: #666; font-size: 0.9rem; line-height: 1.5; margin: 0 0 24px; }
 
 .confirm-actions { display: flex; gap: 10px; justify-content: center; }
@@ -1384,7 +1386,7 @@
   border-bottom: 1px solid #eee;
   flex-shrink: 0;
 }
-.edit-modal-header h3 { margin: 0; font-size: 1.05rem; color: #222; }
+.edit-modal-header h3 { margin: 0; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #222; }
 
 .edit-form {
   overflow-y: auto;
@@ -1729,6 +1731,8 @@
 .detail-title {
   font-size: 1.6rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #0f4a44;
   margin: 0 0 10px;
   line-height: 1.2;
@@ -1759,6 +1763,8 @@
 .detail-section-title {
   font-size: 1.05rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #0f4a44;
   margin: 0 0 14px;
   padding-bottom: 8px;
