@@ -1960,16 +1960,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 16px 14px;
-  background: radial-gradient(circle, rgba(252, 118, 0, 1) 0%, rgba(2, 92, 81, 1) 100%);
-  color: white;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
 }
-.side-menu-title { font-size: 1rem; font-weight: 700; }
+.side-menu-logo { height: 52px; width: auto; }
 .side-menu-close {
-  background: rgba(255,255,255,0.15);
+  background: var(--surface2);
   border: none;
-  color: white;
+  color: var(--text);
   font-size: 1.1rem;
   width: 30px;
   height: 30px;
@@ -1980,7 +1980,7 @@
   justify-content: center;
   line-height: 1;
 }
-.side-menu-close:hover { background: rgba(255,255,255,0.28); }
+.side-menu-close:hover { background: var(--border); }
 
 .side-menu-user {
   padding: 14px 16px 12px;
