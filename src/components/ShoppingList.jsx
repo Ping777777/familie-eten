@@ -215,7 +215,6 @@ export default function ShoppingList({
       {activeListTab === "maaltijden" && (
         <>
           <div className="shopping-header">
-            <h2>{t("shoppingList")}</h2>
             <div className="shopping-tabs">
               <button
                 className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}
@@ -340,7 +339,6 @@ export default function ShoppingList({
       {activeListTab === "staples" && (
         <>
           <div className="shopping-header">
-            <h2>{t("staples")}</h2>
             <div className="shopping-tabs">
               <button
                 className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}

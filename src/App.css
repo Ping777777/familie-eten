@@ -824,7 +824,6 @@
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
-.shopping-header h2 { margin: 0; flex-shrink: 0; }
 
 .shopping-meta {
   display: flex;
