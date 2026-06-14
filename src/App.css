@@ -595,15 +595,18 @@
 .btn-add-recipe:hover { background: #d46400; }
 
 .library-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  position: relative;
   margin-bottom: 20px;
 }
 
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .search-input {
-  width: 100%;
-  max-width: 400px;
+  flex: 1;
   padding: 10px 14px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -613,18 +616,67 @@
 }
 .search-input:focus { border-color: #025c51; }
 
-.tag-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.active-tag-chip {
+  background: #025c51;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.active-tag-chip:hover { background: #014a41; }
+
+.filter-icon-btn {
+  background: var(--surface2);
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  color: var(--text-muted);
+}
+.filter-icon-btn:hover, .filter-icon-btn.open { border-color: #025c51; color: #025c51; }
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
 .tag-filter {
-  background: white;
+  background: var(--surface2);
   border: 2px solid #e0e0e0;
   border-radius: 16px;
   padding: 4px 12px;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.15s;
+  color: var(--text);
 }
 .tag-filter:hover { border-color: #025c51; color: #025c51; }
 .tag-filter.active { background: #025c51; border-color: #025c51; color: white; }
+.tag-filter-more { border-style: dashed; color: var(--text-muted); }
 
 .recipe-grid { display: flex; flex-direction: column; gap: 10px; }
 
@@ -2332,6 +2384,9 @@
 /* Tag filters */
 .dark .tag-filter { background: var(--surface2); border-color: var(--border); color: var(--text); }
 .dark .tag-filter.active { background: #025c51; border-color: #025c51; color: white; }
+.dark .filter-dropdown { background: var(--surface); border-color: var(--border); }
+.dark .filter-icon-btn { background: var(--surface2); border-color: var(--border); color: var(--text-muted); }
+.dark .filter-icon-btn:hover, .dark .filter-icon-btn.open { border-color: #4dbfb5; color: #4dbfb5; }
 
 /* Misc */
 .dark .no-results { color: var(--text-muted); }

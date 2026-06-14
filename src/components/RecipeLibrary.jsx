@@ -60,6 +60,20 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterExpanded, setFilterExpanded] = useState(false);
+  const controlsRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
+        setFilterOpen(false);
+        setFilterExpanded(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const activeRecipes = recipes.filter((r) => !r.archived);
   const archivedRecipes = recipes.filter((r) => r.archived);
@@ -122,31 +136,61 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="library-controls">
-        <input
-          className="search-input"
-          type="text"
-          placeholder={t("searchPlaceholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="tag-filters">
-          <button
-            className={`tag-filter ${!activeTag ? "active" : ""}`}
-            onClick={() => setActiveTag(null)}
-          >
-            {t("filterAll")}
-          </button>
-          {allTags.map((tag) => (
+      <div className="library-controls" ref={controlsRef}>
+        <div className="search-wrapper">
+          <input
+            className="search-input"
+            type="text"
+            placeholder={t("searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setFilterOpen(true)}
+          />
+          {activeTag && (
             <button
-              key={tag}
-              className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className="active-tag-chip"
+              onClick={() => setActiveTag(null)}
+              title={t("filterAll")}
             >
-              {translateTag(tag, lang)}
+              {translateTag(activeTag, lang)} ×
             </button>
-          ))}
+          )}
+          <button
+            className={`filter-icon-btn ${filterOpen ? "open" : ""}`}
+            onClick={() => setFilterOpen((v) => !v)}
+            title="Filters"
+          >
+            ⚙
+          </button>
         </div>
+
+        {filterOpen && (
+          <div className="filter-dropdown">
+            <button
+              className={`tag-filter ${!activeTag ? "active" : ""}`}
+              onClick={() => { setActiveTag(null); }}
+            >
+              {t("filterAll")}
+            </button>
+            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
+              <button
+                key={tag}
+                className={`tag-filter ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
+                {translateTag(tag, lang)}
+              </button>
+            ))}
+            {!filterExpanded && allTags.length > 9 && (
+              <button
+                className="tag-filter tag-filter-more"
+                onClick={() => setFilterExpanded(true)}
+              >
+                +{allTags.length - 9} meer
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="recipe-grid">
