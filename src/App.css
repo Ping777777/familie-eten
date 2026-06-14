@@ -253,8 +253,7 @@
   margin: auto;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #dde0f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   background: #fff;
 }
 .day-name {
@@ -2187,7 +2186,7 @@
 .dark .recipe-library h2,
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .hint { color: var(--text-muted); }
-.dark .day-label { background: var(--surface2); border-color: var(--border); }
+.dark .day-label { background: var(--surface2); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); }
 .dark .day-name { background: #5a68e0; color: #fff; }
 .dark .day-date { color: var(--text); }
 .dark .meal-name { color: var(--text); }
