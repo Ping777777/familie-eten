@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { isPantryByDefault } from "../data/pantryStaples";
 import { useLanguage } from "../LanguageContext";
 import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
@@ -13,7 +13,17 @@ const loadOverrides = () => {
   catch { return new Set(); }
 };
 
-export default function ShoppingList({ weekPlan, recipes, family, days, staples = [], onUpdateStaples }) {
+export default function ShoppingList({
+  weekPlan,
+  recipes,
+  family,
+  days,
+  staples = [],
+  onUpdateStaples,
+  picnicUser,
+  picnicAssociations = {},
+  onUpdatePicnicAssociation,
+}) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
   const [picnicMsg, setPicnicMsg] = useState(false);
@@ -23,10 +33,18 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
   const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
   const [activeListTab, setActiveListTab] = useState("maaltijden");
+  const [picnicPicker, setPicnicPicker] = useState(null);
+  const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
+  const picnicPickerRef = useRef(null);
+  const picnicSearchSeqRef = useRef(0);
 
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
+
+  useEffect(() => {
+    picnicPickerRef.current = picnicPicker;
+  }, [picnicPicker]);
 
   const ingredientMap = useMemo(() => {
     const map = {};
@@ -40,7 +58,7 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
           const id = name.toLowerCase();
           const displayName = getIngredientName(recipe, ingIdx, lang) ?? name;
           const mealName = getRecipeName(recipe, lang);
-          if (!map[id]) map[id] = { id, name: displayName, amounts: [], meals: new Set() };
+          if (!map[id]) map[id] = { id, name: displayName, searchName: name, amounts: [], meals: new Set() };
           map[id].amounts.push(unit ? `${amount} ${translateUnit(unit, lang)}` : amount);
           map[id].meals.add(mealName);
         });
@@ -119,8 +137,13 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
     });
   };
 
-  const addStaple = (category, name) =>
-    onUpdateStaples([...staples, { id: Date.now(), category, name }]);
+  const addStaple = (category, name) => {
+    const nextId = staples.reduce((maxId, staple) => {
+      const numericId = Number(staple.id);
+      return Number.isFinite(numericId) ? Math.max(maxId, numericId) : maxId;
+    }, 0) + 1;
+    onUpdateStaples([...staples, { id: nextId, category, name }]);
+  };
 
   const removeStaple = (id) =>
     onUpdateStaples(staples.filter((s) => s.id !== id));
@@ -133,6 +156,58 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
         onUpdateStaples(staples.map((s) => s.id === item.id ? { ...s, name: trimmed } : s));
       setNameEdits((prev) => { const n = { ...prev }; delete n[item.id]; return n; });
     }
+  };
+
+  const searchPicnic = async (itemId, query) => {
+    const trimmed = query.trim();
+    if (!picnicUser?.authKey || !trimmed) {
+      setPicnicSearch({ loading: false, error: "", results: [] });
+      return;
+    }
+
+    const seq = picnicSearchSeqRef.current + 1;
+    picnicSearchSeqRef.current = seq;
+    setPicnicSearch({ loading: true, error: "", results: [] });
+
+    try {
+      const response = await fetch("/api/picnic-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authKey: picnicUser.authKey, query: trimmed }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
+      if (!response.ok) {
+        setPicnicSearch({ loading: false, error: data?.message || t("picnicSearchFailed"), results: [] });
+        return;
+      }
+      setPicnicSearch({ loading: false, error: "", results: data.results ?? [] });
+    } catch {
+      if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
+      setPicnicSearch({ loading: false, error: t("picnicSearchFailed"), results: [] });
+    }
+  };
+
+  const togglePicnicPicker = (item) => {
+    if (!picnicUser?.authKey) return;
+    if (picnicPicker?.itemId === item.id) {
+      picnicPickerRef.current = null;
+      setPicnicPicker(null);
+      setPicnicSearch({ loading: false, error: "", results: [] });
+      return;
+    }
+    const query = item.searchName ?? item.name;
+    const nextPicker = { itemId: item.id, query };
+    picnicPickerRef.current = nextPicker;
+    setPicnicPicker(nextPicker);
+    searchPicnic(item.id, query);
+  };
+
+  const handleSelectPicnicAssociation = (itemId, result) => {
+    picnicPickerRef.current = null;
+    setPicnicPicker(null);
+    setPicnicSearch({ loading: false, error: "", results: [] });
+    onUpdatePicnicAssociation(itemId, result);
   };
 
   return (
@@ -198,6 +273,14 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
                 onTogglePantry={toggleOverride}
                 isPantry={false}
                 done
+                picnicUser={picnicUser}
+                picnicAssociations={picnicAssociations}
+                picnicPicker={picnicPicker}
+                picnicSearch={picnicSearch}
+                onTogglePicnicPicker={togglePicnicPicker}
+                onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                onPicnicSearch={searchPicnic}
+                onSelectPicnicAssociation={handleSelectPicnicAssociation}
               />
             </div>
           )}
@@ -214,6 +297,14 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
                 onCheck={toggleCheck}
                 onTogglePantry={toggleOverride}
                 isPantry={false}
+                picnicUser={picnicUser}
+                picnicAssociations={picnicAssociations}
+                picnicPicker={picnicPicker}
+                picnicSearch={picnicSearch}
+                onTogglePicnicPicker={togglePicnicPicker}
+                onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                onPicnicSearch={searchPicnic}
+                onSelectPicnicAssociation={handleSelectPicnicAssociation}
               />
               {pantryItems.length > 0 && (
                 <div className="pantry-section">
@@ -230,6 +321,14 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
                         onCheck={toggleCheck}
                         onTogglePantry={toggleOverride}
                         isPantry={true}
+                        picnicUser={picnicUser}
+                        picnicAssociations={picnicAssociations}
+                        picnicPicker={picnicPicker}
+                        picnicSearch={picnicSearch}
+                        onTogglePicnicPicker={togglePicnicPicker}
+                        onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                        onPicnicSearch={searchPicnic}
+                        onSelectPicnicAssociation={handleSelectPicnicAssociation}
                       />
                     </div>
                   )}
@@ -328,7 +427,21 @@ export default function ShoppingList({ weekPlan, recipes, family, days, staples 
   );
 }
 
-function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false }) {
+function IngredientList({
+  items,
+  onCheck,
+  onTogglePantry,
+  isPantry,
+  done = false,
+  picnicUser,
+  picnicAssociations,
+  picnicPicker,
+  picnicSearch,
+  onTogglePicnicPicker,
+  onPicnicQueryChange,
+  onPicnicSearch,
+  onSelectPicnicAssociation,
+}) {
   const { t } = useLanguage();
   if (items.length === 0) return null;
   return (
@@ -342,6 +455,18 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
             {!done && item.meals && (
               <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
             )}
+            <PicnicAssociation
+              item={item}
+              association={picnicAssociations?.[item.id]}
+              picnicUser={picnicUser}
+              pickerOpen={picnicPicker?.itemId === item.id}
+              pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
+              picnicSearch={picnicSearch}
+              onTogglePicker={onTogglePicnicPicker}
+              onQueryChange={onPicnicQueryChange}
+              onSearch={onPicnicSearch}
+              onSelect={onSelectPicnicAssociation}
+            />
           </div>
           {!done && !isPantry && (
             <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
@@ -351,6 +476,100 @@ function IngredientList({ items, onCheck, onTogglePantry, isPantry, done = false
         </li>
       ))}
     </ul>
+  );
+}
+
+function PicnicAssociation({
+  item,
+  association,
+  picnicUser,
+  pickerOpen,
+  pickerQuery,
+  picnicSearch,
+  onTogglePicker,
+  onQueryChange,
+  onSearch,
+  onSelect,
+}) {
+  const { t, lang } = useLanguage();
+  const priceFormatter = useMemo(
+    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: "EUR",
+    }),
+    [lang]
+  );
+
+  const summary = association
+    ? [
+      association.name,
+      association.unitQuantity,
+      typeof association.displayPrice === "number" ? priceFormatter.format(association.displayPrice / 100) : null,
+    ].filter(Boolean).join(" · ")
+    : t("picnicAssociationNone");
+
+  return (
+    <div className="picnic-association-block" onClick={(e) => e.stopPropagation()}>
+      <span className={`picnic-association-label${association ? "" : " empty"}`}>
+        {t("picnicAssociationLabel")}: {summary}
+      </span>
+      {picnicUser && (
+        <div className="picnic-association-actions">
+          <button
+            type="button"
+            className="picnic-select-btn"
+            onClick={() => onTogglePicker(item)}
+          >
+            {association ? t("picnicAssociationChange") : t("picnicAssociationChoose")}
+          </button>
+        </div>
+      )}
+      {pickerOpen && (
+        <div className="picnic-search-panel">
+          <form
+            className="picnic-search-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSearch(item.id, pickerQuery);
+            }}
+          >
+            <input
+              className="search-input picnic-search-input"
+              value={pickerQuery}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder={t("picnicSearchPlaceholder")}
+            />
+            <button type="submit" className="picnic-select-btn" disabled={picnicSearch.loading}>
+              {picnicSearch.loading ? t("picnicSearchBusy") : t("picnicSearchBtn")}
+            </button>
+          </form>
+          {picnicSearch.error && <p className="picnic-search-feedback">{picnicSearch.error}</p>}
+          {!picnicSearch.loading && !picnicSearch.error && picnicSearch.results.length === 0 && (
+            <p className="picnic-search-feedback">{t("picnicSearchEmpty")}</p>
+          )}
+          {picnicSearch.results.length > 0 && (
+            <ul className="picnic-search-results">
+              {picnicSearch.results.map((result) => (
+                <li key={result.id}>
+                  <button
+                    type="button"
+                    className={`picnic-search-result${association?.id === result.id ? " selected" : ""}`}
+                    onClick={() => onSelect(item.id, result)}
+                  >
+                    <span className="picnic-search-result-name">{result.name}</span>
+                    <span className="picnic-search-result-meta">
+                      {[result.unitQuantity, typeof result.displayPrice === "number" ? priceFormatter.format(result.displayPrice / 100) : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

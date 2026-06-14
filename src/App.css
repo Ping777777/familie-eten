@@ -844,10 +844,91 @@
 .ingredient-item.done { opacity: 0.5; }
 
 .check-box { font-size: 1.2rem; color: #667eea; line-height: 1; }
-.ingredient-details { display: flex; flex-direction: column; gap: 2px; }
+.ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
 .ingredient-name { font-weight: 600; color: #222; font-size: 0.95rem; }
 .ingredient-amounts { color: #667eea; font-size: 0.82rem; font-weight: 500; }
 .ingredient-meals { color: #aaa; font-size: 0.75rem; }
+.picnic-association-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.picnic-association-label {
+  color: #16a34a;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.picnic-association-label.empty { color: #94a3b8; }
+.picnic-association-actions { display: flex; align-items: center; gap: 8px; }
+.picnic-select-btn {
+  align-self: flex-start;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  color: #166534;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.picnic-select-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.picnic-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.picnic-search-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.picnic-search-input {
+  flex: 1;
+  min-width: 180px;
+  max-width: none;
+}
+.picnic-search-feedback {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+.picnic-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.picnic-search-result {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.picnic-search-result.selected {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.picnic-search-result-name {
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.picnic-search-result-meta {
+  color: #64748b;
+  font-size: 0.76rem;
+}
 
 .checked-section { margin-top: 20px; }
 .checked-section h4 { color: #888; font-size: 0.9rem; margin-bottom: 10px; }
@@ -1983,6 +2064,24 @@
 .dark .ing-name { color: var(--text); }
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .staples-item-name { color: var(--text); }
+.dark .picnic-association-label { color: #86efac; }
+.dark .picnic-association-label.empty { color: var(--text-muted); }
+.dark .picnic-select-btn {
+  background: #1f3b2d;
+  border-color: #2f855a;
+  color: #bbf7d0;
+}
+.dark .picnic-search-result {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+.dark .picnic-search-result.selected {
+  background: #1f3b2d;
+  border-color: #22c55e;
+}
+.dark .picnic-search-result-name { color: var(--text); }
+.dark .picnic-search-result-meta,
+.dark .picnic-search-feedback { color: var(--text-muted); }
 
 /* Borders / lines */
 .dark .recipe-expanded-body { border-top-color: var(--border-light); }
