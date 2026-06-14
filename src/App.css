@@ -581,7 +581,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 18px;
+  height: 36px;
+  padding: 0 18px;
   background: #fc7600;
   color: #fff;
   border: none;
@@ -640,7 +641,9 @@
   background: var(--surface2);
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  padding: 8px 12px;
+  height: 36px;
+  width: 36px;
+  padding: 0;
   font-size: 1rem;
   cursor: pointer;
   flex-shrink: 0;
@@ -801,9 +804,12 @@
   gap: 6px;
 }
 .shopping-tab {
+  display: inline-flex;
+  align-items: center;
   background: var(--surface2);
   border: 2px solid var(--border-light);
   border-radius: 20px;
+  height: 36px;
   margin-bottom: 0;
   padding: 8px 16px;
   font-size: 0.9rem;
@@ -813,7 +819,7 @@
   letter-spacing: 0.07em;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 5px 14px;
+  padding: 0 14px;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -845,9 +851,12 @@
 }
 
 .btn-copy, .btn-picnic {
+  display: inline-flex;
+  align-items: center;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  height: 36px;
+  padding: 0 16px;
   font-size: var(--font-label);
   font-weight: 700;
   text-transform: uppercase;
