@@ -807,7 +807,7 @@ export default function App() {
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
-          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
+          <img src="/logo.png" alt="Familie Eten" className="app-header-logo" />
         </div>
         <nav className="tabs">
           {[

@@ -58,6 +58,13 @@
   margin: 0 auto 8px;
 }
 
+.app-header-logo {
+  height: 110px;
+  width: auto;
+  display: block;
+  margin: 0 auto 4px;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
