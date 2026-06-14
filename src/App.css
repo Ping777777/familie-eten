@@ -52,9 +52,10 @@
 }
 
 .app-logo-img {
-  height: 130px;
+  height: 160px;
   width: auto;
-  margin-bottom: 4px;
+  display: block;
+  margin: 0 auto 8px;
 }
 
 .login-form {
