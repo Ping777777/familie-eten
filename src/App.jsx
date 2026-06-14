@@ -9,7 +9,6 @@ import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
 import RecipeDetail from "./components/RecipeDetail";
-import RoadmapModal from "./components/RoadmapModal";
 import { getIsoWeekKey } from "./week";
 import { useLanguage } from "./LanguageContext";
 import "./App.css";
@@ -200,7 +199,6 @@ const emptyWeek = () =>
 export default function App() {
   const { t } = useLanguage();
   const [tab, setTab] = useState("planner");
-  const [showRoadmap, setShowRoadmap] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
 
@@ -721,8 +719,6 @@ export default function App() {
         </nav>
       </header>
 
-      <button className="dev-btn" onClick={() => setShowRoadmap(true)} title="Developer roadmap">Dev</button>
-      {showRoadmap && <RoadmapModal onClose={() => setShowRoadmap(false)} />}
 
       <main className="app-main">
         {tab === "planner" && (

@@ -343,17 +343,6 @@
 }
 .meal-cell.locked:hover { box-shadow: none; }
 
-.locked-tag {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  opacity: 0.5;
-}
-.locked-emoji { font-size: 1.5rem; }
-.locked-name { font-size: 0.7rem; color: #888; text-align: center; line-height: 1.2; }
-.locked-icon { font-size: 0.62rem; margin-top: 1px; }
 
 .meal-tag {
   display: flex;
@@ -623,19 +612,6 @@
 .recipe-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .expand-icon { color: #aaa; font-size: 0.8rem; }
-
-.delete-recipe-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  opacity: 0.3;
-  transition: opacity 0.15s, transform 0.15s;
-  padding: 2px;
-  line-height: 1;
-}
-.recipe-card:hover .delete-recipe-btn { opacity: 0.7; }
-.delete-recipe-btn:hover { opacity: 1 !important; transform: scale(1.2); }
 
 /* Confirmation dialog */
 .confirm-overlay {
@@ -1074,153 +1050,6 @@
 .staples-add-btn:disabled { background: #c4b5fd; cursor: default; }
 .staples-add-btn:not(:disabled):hover { background: #6d28d9; }
 
-/* Dev button */
-.dev-btn {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  background: rgba(0, 0, 0, 0.55);
-  color: rgba(255, 255, 255, 0.7);
-  border: none;
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  z-index: 50;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s, color 0.15s;
-}
-.dev-btn:hover { background: rgba(0,0,0,0.75); color: white; }
-
-/* Roadmap modal */
-.roadmap-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 300;
-  padding: 16px;
-}
-
-.roadmap-modal {
-  background: #fafafa;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 680px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-}
-
-.roadmap-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #e8e8e8;
-  background: white;
-  gap: 12px;
-}
-.roadmap-header h2 { margin: 0 0 2px; font-size: 1.15rem; color: #1a1a2e; }
-.roadmap-subtitle { margin: 0; font-size: 0.82rem; color: #888; }
-.roadmap-close {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #aaa;
-  flex-shrink: 0;
-  padding: 0;
-}
-.roadmap-close:hover { color: #555; }
-
-.roadmap-list {
-  overflow-y: auto;
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.roadmap-item {
-  display: flex;
-  gap: 14px;
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #ebebeb;
-}
-
-.roadmap-item-left {
-  flex-shrink: 0;
-  padding-top: 2px;
-}
-.roadmap-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #667eea;
-  color: white;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.roadmap-item-body { flex: 1; min-width: 0; }
-
-.roadmap-item-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
-}
-.roadmap-icon { font-size: 1.1rem; }
-.roadmap-title { margin: 0; font-size: 0.95rem; color: #1a1a2e; font-weight: 600; flex: 1; }
-.roadmap-status {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
-}
-
-.roadmap-desc {
-  margin: 0 0 5px;
-  font-size: 0.85rem;
-  color: #444;
-  line-height: 1.45;
-}
-.roadmap-detail {
-  margin: 0 0 6px;
-  font-size: 0.78rem;
-  color: #888;
-  line-height: 1.45;
-}
-.roadmap-link {
-  font-size: 0.78rem;
-  color: #667eea;
-  text-decoration: none;
-}
-.roadmap-link:hover { text-decoration: underline; }
-
-.roadmap-footer {
-  padding: 12px 24px;
-  border-top: 1px solid #e8e8e8;
-  background: white;
-  font-size: 0.75rem;
-  color: #bbb;
-  text-align: center;
-}
 
 @media (max-width: 640px) {
   .grid-header, .grid-row {
@@ -1246,19 +1075,6 @@
 .recipe-card:hover .card-action-btn { opacity: 0.55; }
 .card-action-btn:hover { opacity: 1 !important; transform: scale(1.2); }
 
-/* Keep old .delete-recipe-btn working (the delete confirmation still references it) */
-.delete-recipe-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  opacity: 0.3;
-  transition: opacity 0.15s, transform 0.15s;
-  padding: 2px;
-  line-height: 1;
-}
-.recipe-card:hover .delete-recipe-btn { opacity: 0.7; }
-.delete-recipe-btn:hover { opacity: 1 !important; transform: scale(1.2); }
 
 /* ── Archive section ── */
 .archive-section {
@@ -2147,7 +1963,6 @@
 .dark .hint { color: var(--text-muted); }
 .dark .day-name { color: var(--text-muted); }
 .dark .meal-name { color: var(--text); }
-.dark .locked-name { color: var(--text-muted); }
 .dark .detail-title { color: #c4b5fd; }
 .dark .detail-ing-name { color: var(--text); }
 .dark .detail-step-text { color: var(--text); }
@@ -2185,14 +2000,6 @@
 .dark .picker-special-name { color: var(--text); }
 .dark .picker-filter-btn { background: var(--surface2); border-color: var(--border); color: var(--text); }
 
-/* Roadmap */
-.dark .roadmap-modal { background: var(--surface); }
-.dark .roadmap-header { background: var(--surface); border-bottom-color: var(--border); }
-.dark .roadmap-header h2 { color: var(--text); }
-.dark .roadmap-footer { background: var(--surface); border-top-color: var(--border); }
-.dark .roadmap-item { background: var(--surface2); border-color: var(--border); }
-.dark .roadmap-title { color: var(--text); }
-.dark .roadmap-desc { color: var(--text-muted); }
 
 /* Edit modal */
 .dark .edit-modal { background: var(--surface); }
