@@ -171,8 +171,8 @@
   position: relative;
 }
 .week-arrow {
-  background: white;
-  border: 2px solid #e0e0e0;
+  background: transparent;
+  border: 2px solid transparent;
   border-radius: 8px;
   width: 36px;
   height: 36px;
@@ -2335,7 +2335,7 @@
 
 /* Planner grid */
 .dark .meal-cell.locked { background: var(--surface2); }
-.dark .week-arrow { background: var(--surface); border-color: var(--border); color: var(--text-muted); }
+.dark .week-arrow { background: transparent; border-color: transparent; color: var(--text-muted); }
 
 /* Recipe picker */
 .dark .picker-card { background: var(--surface2); border-color: var(--border); }
