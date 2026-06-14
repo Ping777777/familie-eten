@@ -705,7 +705,7 @@
 .recipe-big-emoji { font-size: 2.2rem; }
 .recipe-info { flex: 1; text-align: left; }
 .recipe-info h3 { margin: 0 0 6px; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #222; }
-.recipe-meta { font-size: 0.78rem; color: #888; margin-bottom: 5px; }
+.recipe-meta { font-size: var(--font-label); color: #888; margin-bottom: 5px; }
 .recipe-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .expand-icon { color: #aaa; font-size: 0.8rem; }
@@ -933,24 +933,24 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .ingredient-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
   background: var(--surface);
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: 12px;
+  padding: 14px 16px;
   cursor: pointer;
   transition: opacity 0.15s;
 }
 .ingredient-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .ingredient-item.done { opacity: 0.5; }
 
-.check-box { font-size: 1.2rem; color: #025c51; line-height: 1; }
-.ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.check-box { font-size: 1.4rem; color: #025c51; line-height: 1; }
+.ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
 .ingredient-name { font-weight: 700; color: #222; font-size: var(--font-label); text-transform: uppercase; letter-spacing: 0.07em; }
 .ingredient-amounts { color: #025c51; font-size: var(--font-label); font-weight: 600; }
 .ingredient-meals { color: #aaa; font-size: var(--font-xs); }
