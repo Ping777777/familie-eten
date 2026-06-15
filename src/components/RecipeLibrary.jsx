@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { tagClass } from "../utils/tagColors";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const UNIT_OPTIONS = [
@@ -409,7 +409,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={nameRef}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onKeyDown={advance(cookTimeRef)}
+                onKeyDown={(e) => advance(cookTimeRef)(e)}
                 placeholder={t("recipeNamePlaceholder")}
               />
             </div>
@@ -422,7 +422,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={cookTimeRef}
                 value={cookTime}
                 onChange={(e) => setCookTime(e.target.value)}
-                onKeyDown={advance(servingsRef)}
+                onKeyDown={(e) => advance(servingsRef)(e)}
                 placeholder="25 min"
               />
             </div>
@@ -434,7 +434,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 inputMode="numeric"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
-                onKeyDown={advance(addedByRef)}
+                onKeyDown={(e) => advance(addedByRef)(e)}
               />
             </div>
             <div className="edit-field">
@@ -443,7 +443,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={addedByRef}
                 value={addedBy}
                 onChange={(e) => setAddedBy(e.target.value)}
-                onKeyDown={advance(tagsRef)}
+                onKeyDown={(e) => advance(tagsRef)(e)}
               />
             </div>
           </div>
