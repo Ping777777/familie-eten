@@ -2118,6 +2118,34 @@
   transition: background 0.13s, border-color 0.13s;
 }
 .side-menu-picnic-login-btn:hover { border-color: #667eea; }
+
+/* ── Family member visibility toggles ── */
+.member-toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.member-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+  opacity: 0.45;
+}
+.member-toggle-btn--on { opacity: 1; background: var(--surface); }
+.member-toggle-btn:disabled { cursor: default; }
+.member-toggle-check { margin-left: auto; font-size: 0.65rem; }
 .side-menu-picnic-form {
   display: flex;
   flex-direction: column;
