@@ -178,11 +178,6 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       >
                         ×
                       </button>
-                      <button
-                        className="meal-edit-btn"
-                        title={t("changeMeal")}
-                        onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
-                      >✎</button>
                     </div>
                   ) : isDayLocked ? null : (
                     <span className="add-hint">{t("addMeal")}</span>
