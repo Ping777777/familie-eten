@@ -7,9 +7,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
       includeAssets: ['icon.svg', 'favicon.svg'],
       manifest: {
         name: 'Familie Eten',
@@ -36,9 +33,21 @@ export default defineConfig({
           },
         ],
       },
-      injectManifest: {
+      workbox: {
+        // Cache the app shell and all static assets
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         globIgnores: ['**/logo.png'],
+        runtimeCaching: [
+          {
+            // Cache all navigation requests so the app loads offline
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
       },
     }),
   ],
