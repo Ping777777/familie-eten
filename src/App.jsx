@@ -229,6 +229,30 @@ export default function App() {
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (Notification.permission === "denied") return;
+    navigator.serviceWorker.ready.then(async (reg) => {
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) return;
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: "BMSCgrysfEzKy1Ft0XJDhQBeBFXVWe2E0tiX7yAM9ppXxmDv9r5W__425-SR21h-RS7A5aUUIhrvLeZyMmrwx34",
+        });
+        await fetch("/api/push-subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub.toJSON() }),
+        });
+      } catch (e) {
+        console.warn("Push subscription failed:", e);
+      }
+    });
+  }, []);
   const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
