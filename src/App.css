@@ -2143,7 +2143,7 @@
 }
 
 .side-menu-section {
-  padding: 14px 20px 10px;
+  padding: 0 20px 14px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -2151,12 +2151,14 @@
 }
 
 .side-menu-label {
-  font-size: 0.72rem;
+  font-size: var(--font-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-muted);
-  margin: 0 0 4px;
+  padding: 14px 0 6px;
+  margin: 0;
+  border-left: 3px solid transparent;
 }
 
 .side-menu-dark-toggle {
