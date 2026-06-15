@@ -228,6 +228,9 @@ export default function ShoppingList({
     const productIds = itemsWithAssociation.map((item) => picnicAssociations[item.id].id);
     setPicnicSend({ busy: true, result: null, error: "" });
 
+    // Read current cart before adding
+    await openPicnicCart();
+
     try {
       const response = await fetch("/api/picnic-cart", {
         method: "POST",
@@ -237,10 +240,12 @@ export default function ShoppingList({
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
+        openPicnicCart();
         return;
       }
       setPicnicSend({ busy: false, result: { added: data.added, skipped: data.skipped }, error: "" });
-      if (picnicCart.open) openPicnicCart();
+      // Read cart again after adding to show updated contents
+      openPicnicCart();
     } catch {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendFailed") });
     }
