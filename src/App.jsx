@@ -236,6 +236,7 @@ const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
 const PICNIC_USER_KEY = "familie-eten:picnic-user";
+const PICNIC_ASSOC_KEY = "familie-eten:picnic-associations";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -352,6 +353,7 @@ export default function App() {
   const staplesEtagRef = useRef(null);
   const [picnicAssociations, setPicnicAssociations] = useState({});
   const [picnicAssociationsLoaded, setPicnicAssociationsLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [picnicAssocSaveFailed, setPicnicAssocSaveFailed] = useState(false);
   const picnicAssociationsRef = useRef({});
   const picnicAssociationsEtagRef = useRef(null);
 
@@ -678,38 +680,35 @@ export default function App() {
   };
 
   const updatePicnicAssociation = async (itemKey, association) => {
-    const applyUpdater = (base) => {
-      const next = { ...(base ?? {}) };
-      if (association) next[itemKey] = association;
-      else delete next[itemKey];
-      return next;
-    };
+    const next = { ...(picnicAssociationsRef.current ?? {}) };
+    if (association) next[itemKey] = association;
+    else delete next[itemKey];
 
-    let next = applyUpdater(picnicAssociationsRef.current);
-    let etag = picnicAssociationsEtagRef.current;
+    const etag = picnicAssociationsEtagRef.current;
     picnicAssociationsRef.current = next;
     setPicnicAssociations(next);
+    try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const result = await persistPicnicAssociations(next, etag);
-        if (!result.conflict) {
-          picnicAssociationsRef.current = next;
-          picnicAssociationsEtagRef.current = result.etag;
-          setPicnicAssociations(next);
-          return;
-        }
-        if (!result.etag) return;
-        etag = result.etag;
-        next = applyUpdater(result.associations);
-      } catch {
+    try {
+      const result = await persistPicnicAssociations(next, etag);
+      if (result.conflict) {
+        setPicnicAssocSaveFailed(true);
         return;
       }
+      picnicAssociationsEtagRef.current = result.etag;
+    } catch {
+      // Network error: local state is already updated; silent failure
     }
   };
 
-  useEffect(() => {
-    if (!currentUser) return;
+  const reloadPicnicAssociations = () => {
+    setPicnicAssocSaveFailed(false);
+    const loadLocalAssociations = () => {
+      try {
+        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch { return {}; }
+    };
     fetch("/api/picnic-associations", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 404) {
@@ -718,16 +717,50 @@ export default function App() {
           setPicnicAssociations({});
           return;
         }
+        if (!response.ok) throw new Error("Failed to reload");
+        const data = await response.json();
+        const associations = data.associations ?? {};
+        picnicAssociationsEtagRef.current = data.etag ?? null;
+        picnicAssociationsRef.current = associations;
+        setPicnicAssociations(associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
+      })
+      .catch(() => {
+        const local = loadLocalAssociations();
+        picnicAssociationsRef.current = local;
+        setPicnicAssociations(local);
+      });
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const loadLocalAssociations = () => {
+      try {
+        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch { return {}; }
+    };
+    fetch("/api/picnic-associations", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          picnicAssociationsEtagRef.current = null;
+          const local = loadLocalAssociations();
+          picnicAssociationsRef.current = local;
+          setPicnicAssociations(local);
+          return;
+        }
         if (!response.ok) throw new Error("Failed to load Picnic associations");
         const data = await response.json();
         const associations = data.associations ?? {};
         picnicAssociationsEtagRef.current = data.etag ?? null;
         picnicAssociationsRef.current = associations;
         setPicnicAssociations(associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
       })
       .catch(() => {
-        picnicAssociationsRef.current = {};
-        setPicnicAssociations({});
+        const local = loadLocalAssociations();
+        picnicAssociationsRef.current = local;
+        setPicnicAssociations(local);
       })
       .finally(() => { setPicnicAssociationsLoaded(true); });
   }, [currentUser]);
@@ -792,9 +825,11 @@ export default function App() {
     staplesEtagRef.current = null;
     setPicnicAssociationsLoaded(true);
     setPicnicAssociations({});
+    setPicnicAssocSaveFailed(false);
     picnicAssociationsRef.current = {};
     picnicAssociationsEtagRef.current = null;
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(PICNIC_ASSOC_KEY);
     setLoginError("");
   };
 
@@ -909,6 +944,8 @@ export default function App() {
             picnicUser={picnicUser}
             picnicAssociations={picnicAssociations}
             onUpdatePicnicAssociation={updatePicnicAssociation}
+            picnicAssocSaveFailed={picnicAssocSaveFailed}
+            onReloadPicnicAssociations={reloadPicnicAssociations}
           />
         )}
       </main>

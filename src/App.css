@@ -790,6 +790,22 @@
   color: white;
 }
 .btn-picnic:hover { background: #008f43; }
+.btn-picnic:disabled { background: #7fbf9f; cursor: not-allowed; }
+
+.btn-picnic-view {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+.btn-picnic-view:hover { background: #c8e6c9; }
+.btn-picnic-view:active { transform: scale(0.97); }
 
 .picnic-banner {
   display: flex;
@@ -803,6 +819,59 @@
   font-size: 0.88rem;
   color: #2e7d32;
   font-weight: 500;
+}
+.picnic-banner--error {
+  background: #fdecea;
+  border-color: #ef9a9a;
+  color: #c62828;
+}
+.picnic-banner--error .picnic-close { color: #c62828; }
+
+.picnic-cart-panel {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.picnic-cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+.picnic-cart-feedback {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 6px 0;
+}
+.picnic-cart-feedback--error { color: #c62828; }
+.picnic-cart-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.picnic-cart-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.88rem;
+  padding: 4px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.picnic-cart-item:last-child { border-bottom: none; }
+.picnic-cart-item-name { font-weight: 500; color: #1e293b; }
+.picnic-cart-item-meta { color: #64748b; font-size: 0.82rem; }
+.picnic-cart-total {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 8px 0 0 0;
+  text-align: right;
 }
 .picnic-warning {
   display: flex;
@@ -2276,6 +2345,32 @@
 .dark .picnic-search-result-name { color: var(--text); }
 .dark .picnic-search-result-meta,
 .dark .picnic-search-feedback { color: var(--text-muted); }
+.dark .btn-picnic-view {
+  background: #1f3b2d;
+  border-color: #2f855a;
+  color: #86efac;
+}
+.dark .btn-picnic-view:hover { background: #2d5a3d; }
+.dark .picnic-banner {
+  background: #1a2e22;
+  border-color: #2f855a;
+  color: #86efac;
+}
+.dark .picnic-banner--error {
+  background: #2d1515;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+.dark .picnic-cart-panel {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+.dark .picnic-cart-header { color: var(--text); }
+.dark .picnic-cart-feedback { color: var(--text-muted); }
+.dark .picnic-cart-item { border-bottom-color: var(--border); }
+.dark .picnic-cart-item-name { color: var(--text); }
+.dark .picnic-cart-item-meta { color: var(--text-muted); }
+.dark .picnic-cart-total { color: var(--text); }
 
 /* Borders / lines */
 .dark .recipe-expanded-body { border-top-color: var(--border-light); }
