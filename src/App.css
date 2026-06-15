@@ -2095,7 +2095,7 @@
 .side-menu-close:hover { background: var(--border); }
 
 .side-menu-user {
-  padding: 14px 16px 12px;
+  padding: 14px 20px 12px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -2143,7 +2143,7 @@
 }
 
 .side-menu-section {
-  padding: 14px 16px 10px;
+  padding: 14px 20px 10px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -2178,7 +2178,7 @@
 .side-menu-dark-toggle:hover { border-color: #025c51; }
 
 .side-menu-footer {
-  padding: 14px 16px;
+  padding: 14px 20px;
   margin-top: auto;
   border-top: 1px solid var(--border-light);
 }
