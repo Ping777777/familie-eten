@@ -280,8 +280,8 @@
   background: #fff;
 }
 .day-name {
-  background: #fc7600;
-  color: #fff;
+  background: #2c5e62;
+  color: #fc7600;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -584,7 +584,7 @@
   height: 36px;
   padding: 0 18px;
   background: #fc7600;
-  color: #fff;
+  color: white;
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
