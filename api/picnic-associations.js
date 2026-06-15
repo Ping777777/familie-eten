@@ -1,4 +1,4 @@
-import { put, get } from "@vercel/blob";
+import { put, get, BlobPreconditionFailedError } from "@vercel/blob";
 
 const PICNIC_ASSOCIATIONS_PATH =
   globalThis.process?.env?.PICNIC_ASSOCIATIONS_BLOB_PATH || "picnic/associations.json";
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       }
       const text = await new Response(result.stream).text();
       const associations = JSON.parse(text);
-      res.status(200).json({ associations, etag: result.etag ?? result.blob?.etag ?? null });
+      res.status(200).json({ associations, etag: result.blob?.etag ?? null });
     } catch (error) {
       console.error("[picnic-associations] GET failed", error?.message);
       if (error?.status === 404) {
@@ -24,19 +24,31 @@ export default async function handler(req, res) {
       }
     }
   } else if (req.method === "PUT") {
-    const { associations } = req.body ?? {};
+    const { associations, etag } = req.body ?? {};
     if (!associations || typeof associations !== "object" || Array.isArray(associations)) {
       return res.status(400).json({ message: "associations object is required" });
     }
     try {
-      const result = await put(PICNIC_ASSOCIATIONS_PATH, JSON.stringify(associations), {
+      const options = {
         access: "private",
         contentType: "application/json",
         addRandomSuffix: false,
         allowOverwrite: true,
-      });
+      };
+      if (etag) options.ifMatch = etag;
+      const result = await put(PICNIC_ASSOCIATIONS_PATH, JSON.stringify(associations), options);
       res.status(200).json({ ok: true, etag: result.etag });
     } catch (error) {
+      if (error instanceof BlobPreconditionFailedError) {
+        let latestEtag = null;
+        try {
+          const latest = await get(PICNIC_ASSOCIATIONS_PATH, { access: "private" });
+          if (latest?.statusCode === 200) latestEtag = latest.blob?.etag ?? null;
+        } catch (readError) {
+          console.error("[picnic-associations] conflict reread failed", readError?.message);
+        }
+        return res.status(412).json({ conflict: true, etag: latestEtag });
+      }
       console.error("[picnic-associations] PUT failed", error?.message);
       res.status(500).json({ message: "Failed to save Picnic associations" });
     }

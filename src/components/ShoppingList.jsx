@@ -13,6 +13,17 @@ const loadOverrides = () => {
   catch { return new Set(); }
 };
 
+// Case-insensitive lookup: ingredient names are used as keys so "Boter" and "boter" both match.
+const getAssociation = (associations, itemId) => {
+  if (!associations || !itemId) return undefined;
+  if (associations[itemId] !== undefined) return associations[itemId];
+  const lower = itemId.toLowerCase();
+  for (const [k, v] of Object.entries(associations)) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  return undefined;
+};
+
 export default function ShoppingList({
   weekPlan,
   recipes,
@@ -23,6 +34,8 @@ export default function ShoppingList({
   picnicUser,
   picnicAssociations = {},
   onUpdatePicnicAssociation,
+  picnicAssocSaveFailed = false,
+  onReloadPicnicAssociations,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
@@ -107,7 +120,7 @@ export default function ShoppingList({
   const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
-  const missingPicnicChoiceItems = checkedMealItems.filter((item) => !picnicAssociations?.[item.id]);
+  const missingPicnicChoiceItems = checkedMealItems.filter((item) => !getAssociation(picnicAssociations, item.id));
 
   const mealCheckedCount   = checkedMealItems.length;
   const stapleCheckedCount = checkedStaples.length;
@@ -219,13 +232,13 @@ export default function ShoppingList({
       return;
     }
 
-    const itemsWithAssociation = checkedMealItems.filter((item) => picnicAssociations?.[item.id]);
+    const itemsWithAssociation = checkedMealItems.filter((item) => getAssociation(picnicAssociations, item.id));
     if (itemsWithAssociation.length === 0) {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendNoAssociations") });
       return;
     }
 
-    const productIds = itemsWithAssociation.map((item) => picnicAssociations[item.id].id);
+    const productIds = itemsWithAssociation.map((item) => getAssociation(picnicAssociations, item.id).id);
     setPicnicSend({ busy: true, result: null, error: "" });
 
     // Read current cart before adding
@@ -362,6 +375,20 @@ export default function ShoppingList({
                     </p>
                   )}
                 </>
+              )}
+            </div>
+          )}
+
+          {picnicAssocSaveFailed && (
+            <div className="save-failed-banner" role="alert">
+              <span className="warning-icon">⚠️</span>
+              <span>
+                <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
+              </span>
+              {onReloadPicnicAssociations && (
+                <button className="save-failed-reload" onClick={onReloadPicnicAssociations}>
+                  {t("loadLatest")}
+                </button>
               )}
             </div>
           )}
@@ -575,7 +602,7 @@ function IngredientList({
             )}
             <PicnicAssociation
               item={item}
-              association={picnicAssociations?.[item.id]}
+              association={getAssociation(picnicAssociations, item.id)}
               picnicUser={picnicUser}
               pickerOpen={picnicPicker?.itemId === item.id}
               pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
