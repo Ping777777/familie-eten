@@ -16,8 +16,12 @@ const loadOverrides = () => {
 // Case-insensitive lookup: ingredient names are used as keys so "Boter" and "boter" both match.
 const getAssociation = (associations, itemId) => {
   if (!associations || !itemId) return undefined;
-  if (associations[itemId] !== undefined) return associations[itemId];
   const lower = itemId.toLowerCase();
+  // Prefer matching by the stored ingredient field (new format)
+  for (const [, v] of Object.entries(associations)) {
+    if (v?.ingredient?.toLowerCase() === lower) return v;
+  }
+  // Fall back to key-based match for backward compatibility
   for (const [k, v] of Object.entries(associations)) {
     if (k.toLowerCase() === lower) return v;
   }
@@ -223,7 +227,7 @@ export default function ShoppingList({
     picnicPickerRef.current = null;
     setPicnicPicker(null);
     setPicnicSearch({ loading: false, error: "", results: [] });
-    onUpdatePicnicAssociation(itemId, result);
+    onUpdatePicnicAssociation(itemId, result ? { ...result, ingredient: itemId } : result);
   };
 
   const sendToPicnic = async () => {
