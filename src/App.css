@@ -408,13 +408,13 @@
 
 .clear-btn {
   position: absolute;
-  top: 2px;
-  right: 4px;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
   color: #aaa;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1;
   padding: 0;
 }
