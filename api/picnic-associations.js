@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       }
       const text = await new Response(result.stream).text();
       const associations = JSON.parse(text);
-      res.status(200).json({ associations, etag: result.blob?.etag ?? null });
+      res.status(200).json({ associations, etag: result.etag ?? result.blob?.etag ?? null });
     } catch (error) {
       console.error("[picnic-associations] GET failed", error?.message);
       if (error?.status === 404) {
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         let latestEtag = null;
         try {
           const latest = await get(PICNIC_ASSOCIATIONS_PATH, { access: "private" });
-          if (latest?.statusCode === 200) latestEtag = latest.blob?.etag ?? null;
+          if (latest?.statusCode === 200) latestEtag = latest.etag ?? latest.blob?.etag ?? null;
         } catch (readError) {
           console.error("[picnic-associations] conflict reread failed", readError?.message);
         }
