@@ -240,6 +240,7 @@ export default function ShoppingList({
         return;
       }
       setPicnicSend({ busy: false, result: { added: data.added, skipped: data.skipped }, error: "" });
+      if (picnicCart.open) openPicnicCart();
     } catch {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendFailed") });
     }
