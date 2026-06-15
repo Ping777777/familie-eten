@@ -236,6 +236,7 @@ const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
 const PICNIC_USER_KEY = "familie-eten:picnic-user";
+const PICNIC_ASSOC_KEY = "familie-eten:picnic-associations";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -689,6 +690,7 @@ export default function App() {
     let etag = picnicAssociationsEtagRef.current;
     picnicAssociationsRef.current = next;
     setPicnicAssociations(next);
+    try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
@@ -702,6 +704,7 @@ export default function App() {
         if (!result.etag) return;
         etag = result.etag;
         next = applyUpdater(result.associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(next)); } catch { /* ignore */ }
       } catch {
         return;
       }
@@ -710,12 +713,19 @@ export default function App() {
 
   useEffect(() => {
     if (!currentUser) return;
+    const loadLocalAssociations = () => {
+      try {
+        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch { return {}; }
+    };
     fetch("/api/picnic-associations", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 404) {
           picnicAssociationsEtagRef.current = null;
-          picnicAssociationsRef.current = {};
-          setPicnicAssociations({});
+          const local = loadLocalAssociations();
+          picnicAssociationsRef.current = local;
+          setPicnicAssociations(local);
           return;
         }
         if (!response.ok) throw new Error("Failed to load Picnic associations");
@@ -724,10 +734,12 @@ export default function App() {
         picnicAssociationsEtagRef.current = data.etag ?? null;
         picnicAssociationsRef.current = associations;
         setPicnicAssociations(associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
       })
       .catch(() => {
-        picnicAssociationsRef.current = {};
-        setPicnicAssociations({});
+        const local = loadLocalAssociations();
+        picnicAssociationsRef.current = local;
+        setPicnicAssociations(local);
       })
       .finally(() => { setPicnicAssociationsLoaded(true); });
   }, [currentUser]);
@@ -795,6 +807,7 @@ export default function App() {
     picnicAssociationsRef.current = {};
     picnicAssociationsEtagRef.current = null;
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(PICNIC_ASSOC_KEY);
     setLoginError("");
   };
 
