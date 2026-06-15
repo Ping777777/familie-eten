@@ -26,7 +26,8 @@ export default function ShoppingList({
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
-  const [picnicMsg, setPicnicMsg] = useState(false);
+  const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
+  const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [copied, setCopied] = useState(false);
   const [pantryOpen, setPantryOpen] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
@@ -210,6 +211,57 @@ export default function ShoppingList({
     onUpdatePicnicAssociation(itemId, result);
   };
 
+  const sendToPicnic = async () => {
+    if (!picnicUser?.authKey) {
+      setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") });
+      return;
+    }
+
+    const itemsWithAssociation = items.filter((item) => picnicAssociations?.[item.id]);
+    if (itemsWithAssociation.length === 0) {
+      setPicnicSend({ busy: false, result: null, error: t("picnicSendNoAssociations") });
+      return;
+    }
+
+    const productIds = itemsWithAssociation.map((item) => picnicAssociations[item.id].id);
+    setPicnicSend({ busy: true, result: null, error: "" });
+
+    try {
+      const response = await fetch("/api/picnic-cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authKey: picnicUser.authKey, productIds }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
+        return;
+      }
+      setPicnicSend({ busy: false, result: { added: data.added, skipped: data.skipped }, error: "" });
+    } catch {
+      setPicnicSend({ busy: false, result: null, error: t("picnicSendFailed") });
+    }
+  };
+
+  const openPicnicCart = async () => {
+    if (!picnicUser?.authKey) return;
+    setPicnicCart({ open: true, loading: true, items: [], totalPrice: null, error: "" });
+
+    try {
+      const response = await fetch(
+        `/api/picnic-cart?authKey=${encodeURIComponent(picnicUser.authKey)}`
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: data?.message || t("picnicCartFailed") });
+        return;
+      }
+      setPicnicCart({ open: true, loading: false, items: data.items ?? [], totalPrice: data.totalPrice ?? null, error: "" });
+    } catch {
+      setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: t("picnicCartFailed") });
+    }
+  };
+
   return (
     <div className="shopping-list">
       <div className="shopping-tabs">
@@ -243,15 +295,66 @@ export default function ShoppingList({
             <button className="btn-copy" onClick={copyList}>
               {copied ? t("copied") : t("copyList")}
             </button>
-            <button className="btn-picnic" onClick={() => setPicnicMsg(true)}>
-              {t("sendPicnic")}
+            <button className="btn-picnic" onClick={sendToPicnic} disabled={picnicSend.busy}>
+              {picnicSend.busy ? t("picnicSending") : t("sendPicnic")}
             </button>
+            {picnicUser && (
+              <button className="btn-picnic-view" onClick={openPicnicCart}>
+                {t("picnicViewCart")}
+              </button>
+            )}
           </div>
 
-          {picnicMsg && (
-            <div className="picnic-banner">
-              <span>{t("picnicSoon")}</span>
-              <button className="picnic-close" onClick={() => setPicnicMsg(false)}>×</button>
+          {(picnicSend.result || picnicSend.error) && (
+            <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
+              <span>
+                {picnicSend.error
+                  ? picnicSend.error
+                  : picnicSend.result.added === 0
+                    ? t("picnicSendNoneAdded")
+                    : picnicSend.result.skipped > 0
+                      ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
+                      : t("picnicSendSuccess", { added: picnicSend.result.added })}
+              </span>
+              <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}>×</button>
+            </div>
+          )}
+
+          {picnicCart.open && (
+            <div className="picnic-cart-panel">
+              <div className="picnic-cart-header">
+                <strong>{t("picnicCartTitle")}</strong>
+                <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}>×</button>
+              </div>
+              {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
+              {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
+              {!picnicCart.loading && !picnicCart.error && picnicCart.items.length === 0 && (
+                <p className="picnic-cart-feedback">{t("picnicCartEmpty")}</p>
+              )}
+              {picnicCart.items.length > 0 && (
+                <>
+                  <ul className="picnic-cart-list">
+                    {picnicCart.items.map((item) => (
+                      <li key={item.id} className="picnic-cart-item">
+                        <span className="picnic-cart-item-name">{item.name}</span>
+                        {item.unitQuantity && (
+                          <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {typeof picnicCart.totalPrice === "number" && (
+                    <p className="picnic-cart-total">
+                      {t("picnicCartTotal", {
+                        price: new Intl.NumberFormat(
+                          lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
+                          { style: "currency", currency: "EUR" }
+                        ).format(picnicCart.totalPrice / 100),
+                      })}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
 
