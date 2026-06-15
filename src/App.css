@@ -407,8 +407,8 @@
 
 .clear-btn {
   position: absolute;
-  top: 1px;
-  right: 3px;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
   color: #aaa;
