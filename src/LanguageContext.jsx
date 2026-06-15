@@ -1,10 +1,9 @@
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
+import { LanguageContext } from "./languageContext";
 import { translations } from "./i18n";
 
 const DUTCH_DAYS = translations.nl.days;
 const LS_LANG = "familie-eten:lang";
-
-const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(
@@ -38,8 +37,4 @@ export function LanguageProvider({ children }) {
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  return useContext(LanguageContext);
 }

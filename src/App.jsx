@@ -10,7 +10,7 @@ import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
 import RecipeDetail from "./components/RecipeDetail";
 import { getIsoWeekKey } from "./week";
-import { useLanguage } from "./LanguageContext";
+import { useLanguage } from "./useLanguage";
 import "./App.css";
 
 const LANGUAGES = [

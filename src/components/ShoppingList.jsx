@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { isPantryByDefault } from "../data/pantryStaples";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
 import { translateStapleName } from "../data/stapleTranslations";
 
@@ -104,9 +104,11 @@ export default function ShoppingList({
   const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
   const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
   const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
+  const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
+  const missingPicnicChoiceItems = checkedMealItems.filter((item) => !picnicAssociations?.[item.id]);
 
-  const mealCheckedCount   = checkedFresh.length + checkedPantry.length;
+  const mealCheckedCount   = checkedMealItems.length;
   const stapleCheckedCount = checkedStaples.length;
 
   const clearMealChecks   = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) =>  k.startsWith("s:"))));
@@ -246,6 +248,13 @@ export default function ShoppingList({
             </div>
           )}
 
+          {missingPicnicChoiceItems.length > 0 && (
+            <div className="picnic-warning" role="alert">
+              <span className="warning-icon">⚠️</span>
+              <span>{t("picnicMissingChoiceWarning", { n: missingPicnicChoiceItems.length })}</span>
+            </div>
+          )}
+
           {items.length > 0 && (
             <>
               <div className="progress-bar">
@@ -259,7 +268,7 @@ export default function ShoppingList({
             <div className="checked-section">
               <h4>{t("inCart", { n: mealCheckedCount })}</h4>
               <IngredientList
-                items={[...checkedFresh, ...checkedPantry]}
+                items={checkedMealItems}
                 onCheck={toggleCheck}
                 onTogglePantry={toggleOverride}
                 isPantry={false}
