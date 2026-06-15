@@ -687,7 +687,7 @@ function PicnicProductPopover({ product, picnicUser, open, className = "picnic-a
   );
 }
 
-function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) {
+function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
   const { lang } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const detailsTimeoutRef = useRef(null);
@@ -761,7 +761,7 @@ function PicnicSearchResult({ itemId, result, selected, picnicUser, onSelect }) 
       <button
         type="button"
         className={`picnic-search-result${selected ? " selected" : ""}`}
-        onClick={() => onSelect(itemId, result)}
+        onClick={() => onSelect(result)}
       >
         <span className="picnic-search-result-name">{result.name}</span>
         <span className="picnic-search-result-meta">
@@ -953,11 +953,10 @@ function PicnicAssociation({
               {picnicSearch.results.map((result) => (
                 <PicnicSearchResult
                   key={result.id}
-                  itemId={item.id}
                   result={result}
                   selected={association?.id === result.id}
                   picnicUser={picnicUser}
-                  onSelect={onSelect}
+                  onSelect={(r) => onSelect(item.id, r)}
                 />
               ))}
             </ul>
