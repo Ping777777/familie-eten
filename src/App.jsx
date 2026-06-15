@@ -19,7 +19,10 @@ const LANGUAGES = [
   { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
 ];
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
+const MEMBER_COLORS = { Papa: "#2a9d8f", Mama: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
+const MEMBER_EMOJI  = { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
+
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -119,6 +122,29 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
         )}
 
         <div className="side-menu-section">
+          <p className="side-menu-label">{t("familySection")}</p>
+          <div className="member-toggle-grid">
+            {FAMILY.map((name) => {
+              const on = visibleMembers.includes(name);
+              return (
+                <button
+                  key={name}
+                  className={`member-toggle-btn${on ? " member-toggle-btn--on" : ""}`}
+                  style={on ? { borderColor: MEMBER_COLORS[name], color: MEMBER_COLORS[name] } : {}}
+                  onClick={() => onToggleMember(name)}
+                  disabled={on && visibleMembers.length === 1}
+                  title={on ? `${name} verbergen` : `${name} tonen`}
+                >
+                  <span>{MEMBER_EMOJI[name]}</span>
+                  <span>{name}</span>
+                  {on && <span className="member-toggle-check">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="side-menu-section">
           <p className="side-menu-label">{t("picnicSection")}</p>
           {picnicUser ? (
             <>
@@ -206,6 +232,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
 }
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
+const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
 const PICNIC_USER_KEY = "familie-eten:picnic-user";
@@ -229,6 +256,24 @@ export default function App() {
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+  const [visibleMembers, setVisibleMembers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
+    catch { return FAMILY; }
+  });
+  const toggleMember = (name) => {
+    setVisibleMembers(prev => {
+      if (prev.includes(name)) {
+        if (prev.length === 1) return prev;
+        const next = prev.filter(m => m !== name);
+        localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
+        return next;
+      }
+      const next = FAMILY.filter(m => prev.includes(m) || m === name);
+      localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -757,7 +802,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
@@ -803,7 +848,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
@@ -831,7 +876,7 @@ export default function App() {
         {tab === "planner" && (
           <WeekPlanner
             days={DAYS}
-            family={FAMILY}
+            family={visibleMembers}
             weekPlan={selectedWeekPlanData}
             weekOffset={weekOffset}
             onWeekChange={handleWeekChange}
@@ -857,7 +902,7 @@ export default function App() {
           <ShoppingList
             weekPlan={selectedWeekPlanData}
             recipes={recipeList}
-            family={FAMILY}
+            family={visibleMembers}
             days={DAYS}
             staples={staplesList}
             onUpdateStaples={updateStaples}
