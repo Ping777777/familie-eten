@@ -13,17 +13,12 @@ const loadOverrides = () => {
   catch { return new Set(); }
 };
 
-// Case-insensitive lookup: ingredient names are used as keys so "Boter" and "boter" both match.
+// Case-insensitive lookup by the ingredient field stored in each association value.
 const getAssociation = (associations, itemId) => {
   if (!associations || !itemId) return undefined;
   const lower = itemId.toLowerCase();
-  // Prefer matching by the stored ingredient field (new format)
   for (const [, v] of Object.entries(associations)) {
     if (v?.ingredient?.toLowerCase() === lower) return v;
-  }
-  // Fall back to key-based match for backward compatibility
-  for (const [k, v] of Object.entries(associations)) {
-    if (k.toLowerCase() === lower) return v;
   }
   return undefined;
 };
