@@ -19,7 +19,7 @@ const LANGUAGES = [
   { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
 ];
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, pushSupported, pushEnabled, onPushEnable, onPushDisable }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -115,6 +115,24 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
                 {flag}
               </button>
             ))}
+          </div>
+        )}
+
+        {pushSupported && (
+          <div className="side-menu-section">
+            <p className="side-menu-label">{t("remindersSection")}</p>
+            <div className="push-toggle-row">
+              <span className="push-toggle-label">{t("weeklyReminder")}</span>
+              <button
+                className={`push-toggle${pushEnabled ? " push-toggle--on" : ""}`}
+                onClick={pushEnabled ? onPushDisable : onPushEnable}
+                disabled={Notification.permission === "denied"}
+                aria-pressed={pushEnabled}
+              />
+            </div>
+            {Notification.permission === "denied" && (
+              <p className="push-toggle-hint">{t("pushDeniedHint")}</p>
+            )}
           </div>
         )}
 
@@ -230,29 +248,54 @@ export default function App() {
     return () => mq.removeEventListener("change", handleChange);
   }, []);
 
+  const PUSH_KEY = "BMSCgrysfEzKy1Ft0XJDhQBeBFXVWe2E0tiX7yAM9ppXxmDv9r5W__425-SR21h-RS7A5aUUIhrvLeZyMmrwx34";
+  const pushSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
+  const [pushEnabled, setPushEnabled] = useState(false);
+
   useEffect(() => {
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    if (Notification.permission === "denied") return;
+    if (!pushSupported) return;
     navigator.serviceWorker.ready.then(async (reg) => {
-      try {
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) return;
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") return;
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: "BMSCgrysfEzKy1Ft0XJDhQBeBFXVWe2E0tiX7yAM9ppXxmDv9r5W__425-SR21h-RS7A5aUUIhrvLeZyMmrwx34",
-        });
-        await fetch("/api/push-subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscription: sub.toJSON() }),
-        });
-      } catch (e) {
-        console.warn("Push subscription failed:", e);
-      }
+      const existing = await reg.pushManager.getSubscription();
+      setPushEnabled(Boolean(existing));
     });
   }, []);
+
+  const enablePush = async () => {
+    if (!pushSupported) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: PUSH_KEY });
+      await fetch("/api/push-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub.toJSON() }),
+      });
+      setPushEnabled(true);
+    } catch (e) {
+      console.warn("Push subscribe failed:", e);
+    }
+  };
+
+  const disablePush = async () => {
+    if (!pushSupported) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push-unsubscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setPushEnabled(false);
+    } catch (e) {
+      console.warn("Push unsubscribe failed:", e);
+    }
+  };
   const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -781,7 +824,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} pushSupported={pushSupported} pushEnabled={pushEnabled} onPushEnable={enablePush} onPushDisable={disablePush} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <h1>🍽️ Familie Eten</h1>
@@ -827,7 +870,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} pushSupported={pushSupported} pushEnabled={pushEnabled} onPushEnable={enablePush} onPushDisable={disablePush} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
