@@ -219,7 +219,7 @@ export default function ShoppingList({
       return;
     }
 
-    const itemsWithAssociation = items.filter((item) => picnicAssociations?.[item.id]);
+    const itemsWithAssociation = checkedMealItems.filter((item) => picnicAssociations?.[item.id]);
     if (itemsWithAssociation.length === 0) {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendNoAssociations") });
       return;
