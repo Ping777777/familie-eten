@@ -1,5 +1,12 @@
 import { put, get, BlobPreconditionFailedError } from "@vercel/blob";
 
+// Strip weak ETag prefix (W/) and surrounding quotes from HTTP ETag header format
+// so the value can be used directly as an ifMatch token.
+function normalizeEtag(etag) {
+  if (!etag) return null;
+  return etag.replace(/^W\//, "").replace(/^"|"$/g, "");
+}
+
 const WEEK_PLAN_PREFIX =
   globalThis.process?.env?.WEEK_PLAN_BLOB_PREFIX
   || globalThis.process?.env?.WEEK_PLAN_BLOB_PATH?.replace(/\.json$/i, "")
@@ -34,7 +41,7 @@ export default async function handler(req, res) {
       const text = await new Response(result.stream).text();
       const weekPlan = JSON.parse(text);
       // Return the ETag so the client can make conditional writes against this exact version.
-      res.status(200).json({ weekPlan, etag: result.blob?.etag ?? null });
+      res.status(200).json({ weekPlan, etag: normalizeEtag(result.blob?.etag) });
     } catch (error) {
       console.error("[week-plan] GET failed", error?.message);
       if (error?.status === 404) {
@@ -71,7 +78,7 @@ export default async function handler(req, res) {
           const latest = await get(weekPlanPath, { access: "private" });
           if (latest?.statusCode === 200 && latest.stream) {
             latestPlan = JSON.parse(await new Response(latest.stream).text());
-            latestEtag = latest.blob?.etag ?? null;
+            latestEtag = normalizeEtag(latest.blob?.etag);
           }
         } catch (readError) {
           console.error("[week-plan] conflict reread failed", readError?.message);
