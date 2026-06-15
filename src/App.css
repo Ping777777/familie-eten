@@ -2095,8 +2095,7 @@
 .side-menu-close:hover { background: var(--border); }
 
 .side-menu-user {
-  padding: 14px 20px 12px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 0 0 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2191,7 +2190,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 16px;
+  padding: 0;
   background: var(--surface2);
   border: 2px solid #025c51;
   border-radius: 20px;
