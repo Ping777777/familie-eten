@@ -168,17 +168,17 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   }}
                 >
                   {recipe ? (
-                    <div className="meal-tag">
-                      <span>{recipe.emoji}</span>
-                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                    <>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
-                      >
-                        ×
-                      </button>
-                    </div>
+                      >×</button>
+                      <div className="meal-tag">
+                        <span>{recipe.emoji}</span>
+                        <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                      </div>
+                    </>
                   ) : isDayLocked ? null : (
                     <span className="add-hint">{t("addMeal")}</span>
                   )}
