@@ -417,7 +417,7 @@
   line-height: 1;
   padding: 0;
 }
-.clear-btn:hover { color: var(--text); }
+.clear-btn:hover { color: #fc7600; }
 
 /* Picker overlay */
 .recipe-picker-overlay {
