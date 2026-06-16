@@ -132,7 +132,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       )}
 
       <div className="planner-grid">
-        <div className="grid-header">
+        <div className="grid-header" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
@@ -142,7 +142,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         </div>
 
         {days.map((day, idx) => (
-          <div key={day} className="grid-row">
+          <div key={day} className="grid-row" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
             <div className="day-label">
               <span className="day-name">{tDay(day).slice(0, 3).toUpperCase()}</span>
               <span className="day-date">{getDayDate(idx)}</span>
