@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { tagClass } from "../utils/tagColors";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {

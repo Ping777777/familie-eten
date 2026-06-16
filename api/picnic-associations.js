@@ -1,5 +1,12 @@
 import { put, get, BlobPreconditionFailedError } from "@vercel/blob";
 
+// Strip weak ETag prefix (W/) and surrounding quotes from HTTP ETag header format
+// so the value can be used directly as an ifMatch token.
+function normalizeEtag(etag) {
+  if (!etag) return null;
+  return etag.replace(/^W\//, "").replace(/^"|"$/g, "");
+}
+
 const PICNIC_ASSOCIATIONS_PATH =
   globalThis.process?.env?.PICNIC_ASSOCIATIONS_BLOB_PATH || "picnic/associations.json";
 
@@ -14,7 +21,7 @@ export default async function handler(req, res) {
       }
       const text = await new Response(result.stream).text();
       const associations = JSON.parse(text);
-      res.status(200).json({ associations, etag: result.blob?.etag ?? null });
+      res.status(200).json({ associations, etag: normalizeEtag(result.etag ?? result.blob?.etag) });
     } catch (error) {
       console.error("[picnic-associations] GET failed", error?.message);
       if (error?.status === 404) {
@@ -40,23 +47,14 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true, etag: result.etag });
     } catch (error) {
       if (error instanceof BlobPreconditionFailedError) {
-        let latestAssociations = null;
         let latestEtag = null;
         try {
           const latest = await get(PICNIC_ASSOCIATIONS_PATH, { access: "private" });
-          if (latest?.statusCode === 200 && latest.stream) {
-            latestAssociations = JSON.parse(await new Response(latest.stream).text());
-            latestEtag = latest.blob?.etag ?? null;
-          }
-        } catch (readErr) {
-          console.error("[picnic-associations] conflict reread failed", readErr?.message);
+          if (latest?.statusCode === 200) latestEtag = normalizeEtag(latest.etag ?? latest.blob?.etag);
+        } catch (readError) {
+          console.error("[picnic-associations] conflict reread failed", readError?.message);
         }
-        if (!latestEtag) {
-          return res
-            .status(503)
-            .json({ message: "Conflict detected but latest Picnic associations could not be read" });
-        }
-        return res.status(412).json({ conflict: true, associations: latestAssociations, etag: latestEtag });
+        return res.status(412).json({ conflict: true, etag: latestEtag });
       }
       console.error("[picnic-associations] PUT failed", error?.message);
       res.status(500).json({ message: "Failed to save Picnic associations" });
