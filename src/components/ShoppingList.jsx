@@ -282,33 +282,25 @@ export default function ShoppingList({
     }
   };
 
+  const tabBar = (
+    <div className="shopping-tabs">
+      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>{t("shoppingList")}</button>
+      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => setActiveListTab("kast")}>{t("pantrySection").replace("🗄 ", "")}</button>
+      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => setActiveListTab("staples")}>{t("staples")}</button>
+    </div>
+  );
+
   return (
     <div className="shopping-list">
-      <div className="shopping-tabs">
-        <button
-          className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`}
-          onClick={() => setActiveListTab("maaltijden")}
-        >
-          🛒 {t("shoppingList")}
-        </button>
-        <button
-          className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`}
-          onClick={() => setActiveListTab("staples")}
-        >
-          🏡 {t("staples")}
-        </button>
-      </div>
-
       {activeListTab === "maaltijden" && (
         <>
           <div className="shopping-header">
-            <h2>{t("shoppingList")}</h2>
-            <div className="shopping-meta">
-              <span>{t("mealMeta", { meals: totalPlanned, ingr: items.length })}</span>
-              {mealCheckedCount > 0 && (
+            {tabBar}
+            {mealCheckedCount > 0 && (
+              <div className="shopping-meta">
                 <button className="clear-checks-btn" onClick={clearMealChecks}>{t("uncheckAll")}</button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="shopping-actions">
@@ -404,7 +396,7 @@ export default function ShoppingList({
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${(mealCheckedCount / items.length) * 100}%` }} />
               </div>
-              <p className="progress-label">{t("checkedProgress", { done: mealCheckedCount, total: items.length })}</p>
+              <p className="progress-label">{t("checkedProgress", { meals: totalPlanned, done: mealCheckedCount, total: items.length })}</p>
             </>
           )}
 
@@ -450,34 +442,6 @@ export default function ShoppingList({
                 onPicnicSearch={searchPicnic}
                 onSelectPicnicAssociation={handleSelectPicnicAssociation}
               />
-              {pantryItems.length > 0 && (
-                <div className="pantry-section">
-                  <button className="pantry-toggle" onClick={() => setPantryOpen((o) => !o)}>
-                    <span>{t("pantrySection")}</span>
-                    <span className="pantry-count">{t("pantryCount", { n: uncheckedPantry.length })}</span>
-                    <span className="pantry-chevron">{pantryOpen ? "▲" : "▼"}</span>
-                  </button>
-                  {pantryOpen && (
-                    <div className="pantry-body">
-                      <p className="pantry-hint">{t("pantryHint")}</p>
-                      <IngredientList
-                        items={uncheckedPantry}
-                        onCheck={toggleCheck}
-                        onTogglePantry={toggleOverride}
-                        isPantry={true}
-                        picnicUser={picnicUser}
-                        picnicAssociations={picnicAssociations}
-                        picnicPicker={picnicPicker}
-                        picnicSearch={picnicSearch}
-                        onTogglePicnicPicker={togglePicnicPicker}
-                        onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
-                        onPicnicSearch={searchPicnic}
-                        onSelectPicnicAssociation={handleSelectPicnicAssociation}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </>
@@ -486,7 +450,7 @@ export default function ShoppingList({
       {activeListTab === "staples" && (
         <>
           <div className="shopping-header">
-            <h2>{t("staples")}</h2>
+            {tabBar}
             <div className="shopping-meta">
               <span>{t("staplesMeta", { n: staples.length })}</span>
               {stapleCheckedCount > 0 && (
@@ -565,6 +529,36 @@ export default function ShoppingList({
               </div>
             );
           })}
+        </>
+      )}
+
+      {activeListTab === "kast" && (
+        <>
+          <div className="shopping-header">
+            {tabBar}
+            <div className="shopping-meta">
+              <span>{t("pantryCount", { n: uncheckedPantry.length })}</span>
+            </div>
+          </div>
+          <p className="pantry-hint">{t("pantryHint")}</p>
+          {pantryItems.length === 0 ? (
+            <div className="meal-empty-notice"><p>{t("noMealsPlanned")}</p></div>
+          ) : (
+            <IngredientList
+              items={uncheckedPantry}
+              onCheck={toggleCheck}
+              onTogglePantry={toggleOverride}
+              isPantry={true}
+              picnicUser={picnicUser}
+              picnicAssociations={picnicAssociations}
+              picnicPicker={picnicPicker}
+              picnicSearch={picnicSearch}
+              onTogglePicnicPicker={togglePicnicPicker}
+              onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+              onPicnicSearch={searchPicnic}
+              onSelectPicnicAssociation={handleSelectPicnicAssociation}
+            />
+          )}
         </>
       )}
     </div>

@@ -5,10 +5,10 @@ import { useLanguage } from "../useLanguage";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
-  Papa: "#4a90d9",
-  Mama: "#e8739a",
-  Inga: "#7bc67e",
-  Kevin: "#f4a261",
+  Papa: "#2a9d8f",
+  Mama: "#fc7600",
+  Inga: "#5cb85c",
+  Kevin: "#e8c247",
 };
 
 function computeWarnings(days, weekPlan, recipes) {
@@ -49,9 +49,9 @@ function formatWeekRange(offset, months) {
   const y = sunday.getFullYear();
 
   if (monday.getMonth() === sunday.getMonth()) {
-    return `${d1} — ${d2} ${m1} ${y}`;
+    return `${d1} — ${d2} ${m1}`;
   }
-  return `${d1} ${m1} — ${d2} ${m2} ${y}`;
+  return `${d1} ${m1} — ${d2} ${m2}`;
 }
 
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
@@ -168,22 +168,17 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   }}
                 >
                   {recipe ? (
-                    <div className="meal-tag">
-                      <span>{recipe.emoji}</span>
-                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                    <>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
-                      >
-                        ×
-                      </button>
-                      <button
-                        className="meal-edit-btn"
-                        title={t("changeMeal")}
-                        onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
-                      >✎</button>
-                    </div>
+                      >×</button>
+                      <div className="meal-tag">
+                        <span>{recipe.emoji}</span>
+                        <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                      </div>
+                    </>
                   ) : isDayLocked ? null : (
                     <span className="add-hint">{t("addMeal")}</span>
                   )}
