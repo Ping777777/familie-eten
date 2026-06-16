@@ -10,7 +10,7 @@ import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
 import RecipeDetail from "./components/RecipeDetail";
 import { getIsoWeekKey } from "./week";
-import { useLanguage } from "./LanguageContext";
+import { useLanguage } from "./useLanguage";
 import "./App.css";
 
 const LANGUAGES = [
@@ -19,7 +19,10 @@ const LANGUAGES = [
   { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
 ];
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout }) {
+const MEMBER_COLORS = { Papa: "#2a9d8f", Mama: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
+const MEMBER_EMOJI  = { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
+
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember }) {
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -119,6 +122,29 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
         )}
 
         <div className="side-menu-section">
+          <p className="side-menu-label">{t("familySection")}</p>
+          <div className="member-toggle-grid">
+            {FAMILY.map((name) => {
+              const on = visibleMembers.includes(name);
+              return (
+                <button
+                  key={name}
+                  className={`member-toggle-btn${on ? " member-toggle-btn--on" : ""}`}
+                  style={on ? { borderColor: MEMBER_COLORS[name], color: MEMBER_COLORS[name] } : {}}
+                  onClick={() => onToggleMember(name)}
+                  disabled={on && visibleMembers.length === 1}
+                  title={on ? `${name} verbergen` : `${name} tonen`}
+                >
+                  <span>{MEMBER_EMOJI[name]}</span>
+                  <span>{name}</span>
+                  {on && <span className="member-toggle-check">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="side-menu-section">
           <p className="side-menu-label">{t("picnicSection")}</p>
           {picnicUser ? (
             <>
@@ -206,9 +232,11 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
 }
 
 const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
+const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";
 const PICNIC_USER_KEY = "familie-eten:picnic-user";
+const PICNIC_ASSOC_KEY = "familie-eten:picnic-associations";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
 
 const emptyWeek = () =>
@@ -229,6 +257,24 @@ export default function App() {
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+  const [visibleMembers, setVisibleMembers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
+    catch { return FAMILY; }
+  });
+  const toggleMember = (name) => {
+    setVisibleMembers(prev => {
+      if (prev.includes(name)) {
+        if (prev.length === 1) return prev;
+        const next = prev.filter(m => m !== name);
+        localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
+        return next;
+      }
+      const next = FAMILY.filter(m => prev.includes(m) || m === name);
+      localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const [weekOffset, setWeekOffset] = useState(0);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -307,6 +353,7 @@ export default function App() {
   const staplesEtagRef = useRef(null);
   const [picnicAssociations, setPicnicAssociations] = useState({});
   const [picnicAssociationsLoaded, setPicnicAssociationsLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
+  const [picnicAssocSaveFailed, setPicnicAssocSaveFailed] = useState(false);
   const picnicAssociationsRef = useRef({});
   const picnicAssociationsEtagRef = useRef(null);
 
@@ -633,38 +680,35 @@ export default function App() {
   };
 
   const updatePicnicAssociation = async (itemKey, association) => {
-    const applyUpdater = (base) => {
-      const next = { ...(base ?? {}) };
-      if (association) next[itemKey] = association;
-      else delete next[itemKey];
-      return next;
-    };
+    const next = { ...(picnicAssociationsRef.current ?? {}) };
+    if (association) next[itemKey] = association;
+    else delete next[itemKey];
 
-    let next = applyUpdater(picnicAssociationsRef.current);
-    let etag = picnicAssociationsEtagRef.current;
+    const etag = picnicAssociationsEtagRef.current;
     picnicAssociationsRef.current = next;
     setPicnicAssociations(next);
+    try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const result = await persistPicnicAssociations(next, etag);
-        if (!result.conflict) {
-          picnicAssociationsRef.current = next;
-          picnicAssociationsEtagRef.current = result.etag;
-          setPicnicAssociations(next);
-          return;
-        }
-        if (!result.etag) return;
-        etag = result.etag;
-        next = applyUpdater(result.associations);
-      } catch {
+    try {
+      const result = await persistPicnicAssociations(next, etag);
+      if (result.conflict) {
+        setPicnicAssocSaveFailed(true);
         return;
       }
+      picnicAssociationsEtagRef.current = result.etag;
+    } catch {
+      // Network error: local state is already updated; silent failure
     }
   };
 
-  useEffect(() => {
-    if (!currentUser) return;
+  const reloadPicnicAssociations = () => {
+    setPicnicAssocSaveFailed(false);
+    const loadLocalAssociations = () => {
+      try {
+        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch { return {}; }
+    };
     fetch("/api/picnic-associations", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 404) {
@@ -673,16 +717,50 @@ export default function App() {
           setPicnicAssociations({});
           return;
         }
+        if (!response.ok) throw new Error("Failed to reload");
+        const data = await response.json();
+        const associations = data.associations ?? {};
+        picnicAssociationsEtagRef.current = data.etag ?? null;
+        picnicAssociationsRef.current = associations;
+        setPicnicAssociations(associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
+      })
+      .catch(() => {
+        const local = loadLocalAssociations();
+        picnicAssociationsRef.current = local;
+        setPicnicAssociations(local);
+      });
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const loadLocalAssociations = () => {
+      try {
+        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
+        return stored ? JSON.parse(stored) : {};
+      } catch { return {}; }
+    };
+    fetch("/api/picnic-associations", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          picnicAssociationsEtagRef.current = null;
+          const local = loadLocalAssociations();
+          picnicAssociationsRef.current = local;
+          setPicnicAssociations(local);
+          return;
+        }
         if (!response.ok) throw new Error("Failed to load Picnic associations");
         const data = await response.json();
         const associations = data.associations ?? {};
         picnicAssociationsEtagRef.current = data.etag ?? null;
         picnicAssociationsRef.current = associations;
         setPicnicAssociations(associations);
+        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
       })
       .catch(() => {
-        picnicAssociationsRef.current = {};
-        setPicnicAssociations({});
+        const local = loadLocalAssociations();
+        picnicAssociationsRef.current = local;
+        setPicnicAssociations(local);
       })
       .finally(() => { setPicnicAssociationsLoaded(true); });
   }, [currentUser]);
@@ -747,9 +825,11 @@ export default function App() {
     staplesEtagRef.current = null;
     setPicnicAssociationsLoaded(true);
     setPicnicAssociations({});
+    setPicnicAssocSaveFailed(false);
     picnicAssociationsRef.current = {};
     picnicAssociationsEtagRef.current = null;
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(PICNIC_ASSOC_KEY);
     setLoginError("");
   };
 
@@ -757,7 +837,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
           <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
@@ -803,7 +883,7 @@ export default function App() {
 
   return (
     <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} />
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
@@ -831,7 +911,7 @@ export default function App() {
         {tab === "planner" && (
           <WeekPlanner
             days={DAYS}
-            family={FAMILY}
+            family={visibleMembers}
             weekPlan={selectedWeekPlanData}
             weekOffset={weekOffset}
             onWeekChange={handleWeekChange}
@@ -857,13 +937,15 @@ export default function App() {
           <ShoppingList
             weekPlan={selectedWeekPlanData}
             recipes={recipeList}
-            family={FAMILY}
+            family={visibleMembers}
             days={DAYS}
             staples={staplesList}
             onUpdateStaples={updateStaples}
             picnicUser={picnicUser}
             picnicAssociations={picnicAssociations}
             onUpdatePicnicAssociation={updatePicnicAssociation}
+            picnicAssocSaveFailed={picnicAssocSaveFailed}
+            onReloadPicnicAssociations={reloadPicnicAssociations}
           />
         )}
       </main>

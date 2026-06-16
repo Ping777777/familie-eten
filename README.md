@@ -2,7 +2,7 @@
 
 ## Login
 
-The app now requires login via `/api/login`.
+The app requires login via `/api/login`.
 
 - Users: `Papa`, `Mama`, `Inga`, `Kevin`
 - Password: same as the username
