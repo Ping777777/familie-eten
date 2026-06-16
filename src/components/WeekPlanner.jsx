@@ -136,7 +136,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
-              <span className="member-emoji">{memberEmoji(m)}</span> {m}
+              {m}
             </div>
           ))}
         </div>
@@ -278,6 +278,3 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   );
 }
 
-function memberEmoji(name) {
-  return { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" }[name] ?? "👤";
-}

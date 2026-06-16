@@ -77,7 +77,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
       {open && <div className="menu-overlay" onClick={onClose} />}
       <aside className={`side-menu${open ? " side-menu--open" : ""}`}>
         <div className="side-menu-top">
-          <span className="side-menu-title">🍽️ Familie Eten</span>
+          <img src="/logo.png" alt="Familie Eten" className="side-menu-logo" />
           <button className="side-menu-close" onClick={onClose}>✕</button>
         </div>
 
@@ -887,7 +887,7 @@ export default function App() {
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
-          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
+          <img src="/logo.png" alt="Familie Eten" className="app-header-logo" />
         </div>
         <nav className="tabs">
           {[
