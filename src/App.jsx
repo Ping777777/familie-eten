@@ -840,7 +840,7 @@ export default function App() {
         <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} />
         <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
         <main className="login-card">
-          <h1>🍽️ Familie Eten</h1>
+          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
           <p className="subtitle">{t("loginSubtitle")}</p>
           <form className="login-form" onSubmit={handleLogin}>
             <label htmlFor="username">{t("username")}</label>
@@ -874,7 +874,7 @@ export default function App() {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
         <main className="login-card">
-          <h1>🍽️ Familie Eten</h1>
+          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
           <p className="subtitle">{t("loading")}</p>
         </main>
       </div>
@@ -887,7 +887,7 @@ export default function App() {
       <header className="app-header">
         <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="header-left">
-          <h1>🍽️ Familie Eten</h1>
+          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
         </div>
         <nav className="tabs">
           {[
