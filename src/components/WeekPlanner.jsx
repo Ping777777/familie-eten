@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import { getIsoWeekInfo, getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
-  Papa: "#4a90d9",
-  Mama: "#e8739a",
-  Inga: "#7bc67e",
-  Kevin: "#f4a261",
+  Papa: "#2a9d8f",
+  Mama: "#fc7600",
+  Inga: "#5cb85c",
+  Kevin: "#e8c247",
 };
 
 function computeWarnings(days, weekPlan, recipes) {
@@ -49,9 +49,9 @@ function formatWeekRange(offset, months) {
   const y = sunday.getFullYear();
 
   if (monday.getMonth() === sunday.getMonth()) {
-    return `${d1} — ${d2} ${m1} ${y}`;
+    return `${d1} — ${d2} ${m1}`;
   }
-  return `${d1} ${m1} — ${d2} ${m2} ${y}`;
+  return `${d1} ${m1} — ${d2} ${m2}`;
 }
 
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
@@ -132,17 +132,17 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       )}
 
       <div className="planner-grid">
-        <div className="grid-header">
+        <div className="grid-header" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
-              <span className="member-emoji">{memberEmoji(m)}</span> {m}
+              {m}
             </div>
           ))}
         </div>
 
         {days.map((day, idx) => (
-          <div key={day} className="grid-row">
+          <div key={day} className="grid-row" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
             <div className="day-label">
               <span className="day-name">{tDay(day).slice(0, 3).toUpperCase()}</span>
               <span className="day-date">{getDayDate(idx)}</span>
@@ -168,22 +168,17 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   }}
                 >
                   {recipe ? (
-                    <div className="meal-tag">
-                      <span>{recipe.emoji}</span>
-                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                    <>
                       <button
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
-                      >
-                        ×
-                      </button>
-                      <button
-                        className="meal-edit-btn"
-                        title={t("changeMeal")}
-                        onClick={(e) => { e.stopPropagation(); setSelecting({ day, member }); }}
-                      >✎</button>
-                    </div>
+                      >×</button>
+                      <div className="meal-tag">
+                        <span>{recipe.emoji}</span>
+                        <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                      </div>
+                    </>
                   ) : isDayLocked ? null : (
                     <span className="add-hint">{t("addMeal")}</span>
                   )}
@@ -278,6 +273,3 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   );
 }
 
-function memberEmoji(name) {
-  return { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" }[name] ?? "👤";
-}

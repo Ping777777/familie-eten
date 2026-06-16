@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { tagClass } from "../utils/tagColors";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
 
 const UNIT_OPTIONS = [
@@ -60,6 +60,20 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterExpanded, setFilterExpanded] = useState(false);
+  const controlsRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
+        setFilterOpen(false);
+        setFilterExpanded(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const activeRecipes = recipes.filter((r) => !r.archived);
   const archivedRecipes = recipes.filter((r) => r.archived);
@@ -105,13 +119,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
 
   return (
     <div className="recipe-library">
-      <div className="library-header">
-        <h2>{t("recipeLibrary")}</h2>
-        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
-          {t("newRecipe")}
-        </button>
-      </div>
-
       {saveFailed && (
         <div className="save-failed-banner" role="alert">
           <span className="warning-icon">⚠️</span>
@@ -122,31 +129,59 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="library-controls">
-        <input
-          className="search-input"
-          type="text"
-          placeholder={t("searchPlaceholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="tag-filters">
-          <button
-            className={`tag-filter ${!activeTag ? "active" : ""}`}
-            onClick={() => setActiveTag(null)}
-          >
-            {t("filterAll")}
-          </button>
-          {allTags.map((tag) => (
+      <div className="library-header">
+        <div className="library-controls" ref={controlsRef}>
+        <div className="search-wrapper">
+          <input
+            className="search-input"
+            type="text"
+            placeholder={t("searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setFilterOpen(true)}
+          />
+          {activeTag && (
             <button
-              key={tag}
-              className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className="active-tag-chip"
+              onClick={() => setActiveTag(null)}
+              title={t("filterAll")}
             >
-              {translateTag(tag, lang)}
+              {translateTag(activeTag, lang)} ×
             </button>
-          ))}
+          )}
         </div>
+
+        {filterOpen && (
+          <div className="filter-dropdown">
+            <button
+              className={`tag-filter ${!activeTag ? "active" : ""}`}
+              onClick={() => { setActiveTag(null); }}
+            >
+              {t("filterAll")}
+            </button>
+            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
+              <button
+                key={tag}
+                className={`tag-filter ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
+                {translateTag(tag, lang)}
+              </button>
+            ))}
+            {!filterExpanded && allTags.length > 9 && (
+              <button
+                className="tag-filter tag-filter-more"
+                onClick={() => setFilterExpanded(true)}
+              >
+                +{allTags.length - 9} meer
+              </button>
+            )}
+          </div>
+        )}
+        </div>
+        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
+          {t("newRecipe")}
+        </button>
       </div>
 
       <div className="recipe-grid">
@@ -249,7 +284,6 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
           <button className="card-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>
             🗑️
           </button>
-          <span className="expand-icon">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -409,7 +443,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={nameRef}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onKeyDown={advance(cookTimeRef)}
+                onKeyDown={(e) => advance(cookTimeRef)(e)}
                 placeholder={t("recipeNamePlaceholder")}
               />
             </div>
@@ -422,7 +456,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={cookTimeRef}
                 value={cookTime}
                 onChange={(e) => setCookTime(e.target.value)}
-                onKeyDown={advance(servingsRef)}
+                onKeyDown={(e) => advance(servingsRef)(e)}
                 placeholder="25 min"
               />
             </div>
@@ -434,7 +468,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 inputMode="numeric"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
-                onKeyDown={advance(addedByRef)}
+                onKeyDown={(e) => advance(addedByRef)(e)}
               />
             </div>
             <div className="edit-field">
@@ -443,7 +477,7 @@ function EditRecipeModal({ recipe, onSave, onClose, isNew }) {
                 ref={addedByRef}
                 value={addedBy}
                 onChange={(e) => setAddedBy(e.target.value)}
-                onKeyDown={advance(tagsRef)}
+                onKeyDown={(e) => advance(tagsRef)(e)}
               />
             </div>
           </div>
