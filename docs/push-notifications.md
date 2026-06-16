@@ -5,19 +5,23 @@ Every Saturday at 19:00 NL time, the app sends a push notification to everyone w
 
 ## Before this works, Dad needs to add 3 environment variables in Vercel
 
-1. Go to the **Vercel dashboard** → select the `familie-eten` project → **Settings** → **Environment Variables**
-
-2. Add these three variables:
+1. Go to the **Vercel dashboard** → select the `familie-eten` project → **Settings** → **Environment Variables**.
+2. Add these three variables for the **Production** environment:
 
 | Name | Value |
 |------|-------|
-| `VAPID_PUBLIC_KEY` | `BMSCgrysfEzKy1Ft0XJDhQBeBFXVWe2E0tiX7yAM9ppXxmDv9r5W__425-SR21h-RS7A5aUUIhrvLeZyMmrwx34` |
-| `VAPID_PRIVATE_KEY` | `j2BrL3Ghl1O67hEJIh1x3aEgsRyN-LN2DqkkL6D7zFo` |
-| `VAPID_EMAIL` | `ingaboyd@gmail.com` |
+| `VAPID_PUBLIC_KEY` | Your generated VAPID public key |
+| `VAPID_PRIVATE_KEY` | Your generated VAPID private key |
+| `VAPID_EMAIL` | A contact email in `mailto:you@example.com` format |
 
-3. Make sure all three are set for **Production** environment.
+3. If you still need a key pair, generate one locally with:
 
-4. After merging this PR, Vercel will automatically redeploy — no manual deploy needed.
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+4. Keep the private key out of Git and only store it in Vercel environment variables.
+5. After merging this PR, Vercel will automatically redeploy — no manual deploy needed.
 
 ## How it works
 - When a family member opens the app, the browser asks for notification permission

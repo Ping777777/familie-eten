@@ -26,6 +26,10 @@ Vercel Blob overwrites can take up to ~60 seconds to propagate through its CDN c
 - If another device changed the week in the meantime, the write fails the precondition and the API responds `412` with the latest `{ weekPlan, etag }`. The client rebases its change onto that latest version and retries (up to 3 attempts).
 - If all retries still conflict, the write is **cancelled rather than forced** — the other device's data is never overwritten. The user's unsaved change stays on screen and a "Niet opgeslagen" notice appears with a button to load the latest version.
 
+## Push Notifications
+
+Push notification setup instructions are in [`docs/push-notifications.md`](docs/push-notifications.md).
+
 
 ## Run Locally
 
