@@ -26,6 +26,7 @@ export default async function handler(req, res) {
             name: String(article.name || ""),
             unitQuantity: String(article.unit_quantity || ""),
             price: typeof article.price === "number" ? article.price : null,
+            count: typeof article.count === "number" ? article.count : 1,
             imageId: String(article.image_ids?.[0] || ""),
           });
         }
