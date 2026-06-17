@@ -346,14 +346,33 @@ export default function ShoppingList({
               {picnicCart.items.length > 0 && (
                 <>
                   <ul className="picnic-cart-list">
-                    {picnicCart.items.map((item) => (
-                      <li key={item.id} className="picnic-cart-item">
-                        <span className="picnic-cart-item-name">{item.name}</span>
-                        {item.unitQuantity && (
-                          <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
-                        )}
-                      </li>
-                    ))}
+                    {picnicCart.items.map((item) => {
+                      const priceFormatter = new Intl.NumberFormat(
+                        lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
+                        { style: "currency", currency: "EUR" }
+                      );
+                      const qty = item.count ?? 1;
+                      const hasPrice = typeof item.price === "number";
+                      return (
+                        <li key={item.id} className="picnic-cart-item">
+                          <div className="picnic-cart-item-info">
+                            <span className="picnic-cart-item-name">{item.name}</span>
+                            {item.unitQuantity && (
+                              <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
+                            )}
+                          </div>
+                          <div className="picnic-cart-item-pricing">
+                            <span className="picnic-cart-item-qty">×{qty}</span>
+                            {hasPrice && (
+                              <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
+                            )}
+                            {hasPrice && (
+                              <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                   {typeof picnicCart.totalPrice === "number" && (
                     <p className="picnic-cart-total">
