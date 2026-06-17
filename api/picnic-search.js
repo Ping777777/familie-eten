@@ -29,6 +29,7 @@ export default async function handler(req, res) {
         unitQuantity: String(result.unit_quantity || ""),
         displayPrice: Number.isFinite(result.display_price) ? result.display_price : null,
         imageId: String(result.image_id || ""),
+        maxCount: typeof result.max_count === "number" ? result.max_count : null,
       });
       if (matches.length >= 12) break;
     }

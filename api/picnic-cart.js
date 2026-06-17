@@ -21,6 +21,8 @@ export default async function handler(req, res) {
           const id = String(article.id);
           if (productIds.has(id)) continue;
           productIds.add(id);
+          const unavailable = Array.isArray(article.decorators)
+            && article.decorators.some((d) => d?.type === "UNAVAILABLE");
           items.push({
             id,
             name: String(article.name || ""),
@@ -28,6 +30,7 @@ export default async function handler(req, res) {
             price: typeof article.price === "number" ? article.price : null,
             count: typeof article.count === "number" ? article.count : 1,
             imageId: String(article.image_ids?.[0] || ""),
+            available: !unavailable,
           });
         }
       }

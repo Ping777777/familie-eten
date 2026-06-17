@@ -352,9 +352,10 @@ export default function ShoppingList({
                         { style: "currency", currency: "EUR" }
                       );
                       const qty = item.count ?? 1;
-                      const hasPrice = typeof item.price === "number";
+                      const isUnavailable = item.available === false;
+                      const hasPrice = typeof item.price === "number" && !isUnavailable;
                       return (
-                        <li key={item.id} className="picnic-cart-item">
+                        <li key={item.id} className={`picnic-cart-item${isUnavailable ? " picnic-cart-item--unavailable" : ""}`}>
                           <div className="picnic-cart-item-info">
                             <span className="picnic-cart-item-name">{item.name}</span>
                             {item.unitQuantity && (
@@ -363,11 +364,17 @@ export default function ShoppingList({
                           </div>
                           <div className="picnic-cart-item-pricing">
                             <span className="picnic-cart-item-qty">×{qty}</span>
-                            {hasPrice && (
-                              <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
-                            )}
-                            {hasPrice && (
-                              <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
+                            {isUnavailable ? (
+                              <span className="picnic-cart-item-out-of-stock">{t("picnicOutOfStock")}</span>
+                            ) : (
+                              <>
+                                {hasPrice && (
+                                  <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
+                                )}
+                                {hasPrice && (
+                                  <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </li>
@@ -727,7 +734,7 @@ function PicnicProductPopover({ product, picnicUser, open, className = "picnic-a
 }
 
 function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const detailsTimeoutRef = useRef(null);
   const detailsLongPressRef = useRef(false);
@@ -799,7 +806,7 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
     >
       <button
         type="button"
-        className={`picnic-search-result${selected ? " selected" : ""}`}
+        className={`picnic-search-result${selected ? " selected" : ""}${result.maxCount === 0 ? " picnic-search-result--unavailable" : ""}`}
         onClick={() => onSelect(result)}
       >
         <span className="picnic-search-result-name">{result.name}</span>
@@ -808,6 +815,9 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
             .filter(Boolean)
             .join(" · ")}
         </span>
+        {result.maxCount === 0 && (
+          <span className="picnic-search-result-out-of-stock">{t("picnicOutOfStock")}</span>
+        )}
       </button>
       <button
         type="button"
