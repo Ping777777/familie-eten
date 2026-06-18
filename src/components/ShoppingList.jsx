@@ -40,6 +40,7 @@ export default function ShoppingList({
   const [checked, setChecked] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
+  const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [copied, setCopied] = useState(false);
   const [pantryOpen, setPantryOpen] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
@@ -301,6 +302,40 @@ export default function ShoppingList({
     }
   };
 
+  const refreshPicnicCart = async () => {
+    if (!picnicUser?.authKey) return;
+    try {
+      const response = await fetch(
+        `/api/picnic-cart?authKey=${encodeURIComponent(picnicUser.authKey)}`
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return;
+      setPicnicCart((prev) => ({ ...prev, items: data.items ?? [], totalPrice: data.totalPrice ?? null, error: "" }));
+    } catch { /* silent refresh */ }
+  };
+
+  const updateCartItemQuantity = async (productId, newCount) => {
+    if (!picnicUser?.authKey) return;
+    setPicnicCartUpdating((prev) => ({ ...prev, [productId]: true }));
+    try {
+      const response = await fetch("/api/picnic-cart", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authKey: picnicUser.authKey, productId, count: newCount }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setPicnicCart((prev) => ({ ...prev, error: data?.message || t("picnicCartUpdateFailed") }));
+      } else {
+        await refreshPicnicCart();
+      }
+    } catch {
+      setPicnicCart((prev) => ({ ...prev, error: t("picnicCartUpdateFailed") }));
+    } finally {
+      setPicnicCartUpdating((prev) => { const n = { ...prev }; delete n[productId]; return n; });
+    }
+  };
+
   const tabBar = (
     <div className="shopping-tabs">
       <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>{t("shoppingList")}</button>
@@ -395,7 +430,21 @@ export default function ShoppingList({
                             )}
                           </div>
                           <div className="picnic-cart-item-pricing">
-                            <span className="picnic-cart-item-qty">×{qty}</span>
+                            <div className="picnic-cart-item-qty-controls">
+                              <button
+                                className="picnic-cart-qty-btn"
+                                aria-label={t("picnicCartDecreaseQty")}
+                                disabled={!!picnicCartUpdating[item.id]}
+                                onClick={() => updateCartItemQuantity(item.id, qty - 1)}
+                              >−</button>
+                              <span className="picnic-cart-item-qty">{qty}</span>
+                              <button
+                                className="picnic-cart-qty-btn"
+                                aria-label={t("picnicCartIncreaseQty")}
+                                disabled={!!picnicCartUpdating[item.id]}
+                                onClick={() => updateCartItemQuantity(item.id, qty + 1)}
+                              >+</button>
+                            </div>
                             {isUnavailable ? (
                               <span className="picnic-cart-item-out-of-stock">{t("picnicOutOfStock")}</span>
                             ) : (
