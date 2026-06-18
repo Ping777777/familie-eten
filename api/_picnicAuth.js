@@ -18,15 +18,24 @@ export function getPicnicAuthKey(req) {
 
 export function setPicnicAuthCookie(res, authKey) {
   const secure = globalThis.process?.env?.VERCEL || globalThis.process?.env?.NODE_ENV === "production" ? "; Secure" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE_NAME}=${encodeURIComponent(authKey)}; HttpOnly; Path=/api; SameSite=Strict${secure}`
-  );
+  const cookie = `${COOKIE_NAME}=${encodeURIComponent(authKey)}; HttpOnly; Path=/api; SameSite=Strict${secure}`;
+
+  const existing = res.getHeader?.("Set-Cookie");
+  const next = existing
+    ? (Array.isArray(existing) ? [...existing, cookie] : [String(existing), cookie])
+    : cookie;
+
+  res.setHeader("Set-Cookie", next);
 }
 
 export function clearPicnicAuthCookie(res) {
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE_NAME}=; HttpOnly; Path=/api; SameSite=Strict; Max-Age=0`
-  );
+  const secure = globalThis.process?.env?.VERCEL || globalThis.process?.env?.NODE_ENV === "production" ? "; Secure" : "";
+  const cookie = `${COOKIE_NAME}=; HttpOnly; Path=/api; SameSite=Strict; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure}`;
+
+  const existing = res.getHeader?.("Set-Cookie");
+  const next = existing
+    ? (Array.isArray(existing) ? [...existing, cookie] : [String(existing), cookie])
+    : cookie;
+
+  res.setHeader("Set-Cookie", next);
 }
