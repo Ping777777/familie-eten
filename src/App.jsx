@@ -310,9 +310,10 @@ export default function App() {
   };
 
   const handlePicnicLogout = async () => {
+    const response = await fetch("/api/picnic-login", { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) return;
     localStorage.removeItem(PICNIC_USER_KEY);
     setPicnicUser(null);
-    await fetch("/api/picnic-login", { method: "DELETE" }).catch(() => {});
   };
 
   // Week plan state
