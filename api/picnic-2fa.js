@@ -1,4 +1,5 @@
 import PicnicClient from "picnic-api";
+import { getPicnicAuthKey, setPicnicAuthCookie } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,11 +7,15 @@ export default async function handler(req, res) {
     return;
   }
 
-  const authKey = String(req.body?.authKey || "").trim();
+  const authKey = getPicnicAuthKey(req);
   const code = String(req.body?.code || "").trim();
 
-  if (!authKey || !code) {
-    res.status(400).json({ message: "authKey en code zijn vereist" });
+  if (!authKey) {
+    res.status(401).json({ message: "Not authenticated" });
+    return;
+  }
+  if (!code) {
+    res.status(400).json({ message: "code is vereist" });
     return;
   }
 
@@ -20,11 +25,8 @@ export default async function handler(req, res) {
     const userDetails = await client.user.getUserDetails();
     const name = `${userDetails.firstname} ${userDetails.lastname}`.trim();
 
-    res.status(200).json({
-      ok: true,
-      authKey: verifyResult.authKey,
-      name,
-    });
+    setPicnicAuthCookie(res, verifyResult.authKey);
+    res.status(200).json({ ok: true, name });
   } catch (err) {
     const message = err?.message || "2FA verificatie mislukt";
     res.status(401).json({ message });

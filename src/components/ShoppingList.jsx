@@ -35,11 +35,13 @@ export default function ShoppingList({
   onUpdatePicnicAssociation,
   picnicAssocSaveFailed = false,
   onReloadPicnicAssociations,
+  onPicnicSessionExpired,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
+  const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [copied, setCopied] = useState(false);
   const [pantryOpen, setPantryOpen] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
@@ -71,9 +73,18 @@ export default function ShoppingList({
           const id = name.toLowerCase();
           const displayName = getIngredientName(recipe, ingIdx, lang) ?? name;
           const mealName = getRecipeName(recipe, lang);
-          if (!map[id]) map[id] = { id, name: displayName, searchName: name, amounts: [], meals: new Set() };
-          map[id].amounts.push(unit ? `${amount} ${translateUnit(unit, lang)}` : amount);
+          const quantity = unit ? `${amount} ${translateUnit(unit, lang)}` : String(amount);
+          if (!map[id]) map[id] = {
+            id,
+            name: displayName,
+            searchName: name,
+            amounts: [],
+            meals: new Set(),
+            usages: [],
+          };
+          map[id].amounts.push(quantity);
           map[id].meals.add(mealName);
+          map[id].usages.push({ mealName, ingredientName: displayName, quantity });
         });
       });
     });
@@ -81,6 +92,16 @@ export default function ShoppingList({
   }, [weekPlan, recipes, family, days, lang]);
 
   const items = Object.values(ingredientMap).sort((a, b) => a.name.localeCompare(b.name));
+  const picnicCartAssociations = useMemo(() => {
+    const grouped = {};
+    items.forEach((ingredient) => {
+      const productId = getAssociation(picnicAssociations, ingredient.id)?.id;
+      if (!productId || !ingredient.usages?.length) return;
+      if (!grouped[productId]) grouped[productId] = [];
+      grouped[productId].push(...ingredient.usages);
+    });
+    return grouped;
+  }, [items, picnicAssociations]);
 
   const isPantry = (name) => {
     const key = name.toLowerCase();
@@ -175,7 +196,7 @@ export default function ShoppingList({
 
   const searchPicnic = async (itemId, query) => {
     const trimmed = query.trim();
-    if (!picnicUser?.authKey || !trimmed) {
+    if (!picnicUser || !trimmed) {
       setPicnicSearch({ loading: false, error: "", results: [] });
       return;
     }
@@ -188,10 +209,11 @@ export default function ShoppingList({
       const response = await fetch("/api/picnic-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authKey: picnicUser.authKey, query: trimmed }),
+        body: JSON.stringify({ query: trimmed }),
       });
       const data = await response.json().catch(() => ({}));
       if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
+if (response.status === 401) { setPicnicSearch({ loading: false, error: "", results: [] }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSearch({ loading: false, error: data?.message || t("picnicSearchFailed"), results: [] });
         return;
@@ -204,7 +226,7 @@ export default function ShoppingList({
   };
 
   const togglePicnicPicker = (item) => {
-    if (!picnicUser?.authKey) return;
+    if (!picnicUser) return;
     if (picnicPicker?.itemId === item.id) {
       picnicPickerRef.current = null;
       setPicnicPicker(null);
@@ -226,7 +248,7 @@ export default function ShoppingList({
   };
 
   const sendToPicnic = async () => {
-    if (!picnicUser?.authKey) {
+    if (!picnicUser) {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") });
       return;
     }
@@ -247,9 +269,10 @@ export default function ShoppingList({
       const response = await fetch("/api/picnic-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authKey: picnicUser.authKey, productIds }),
+        body: JSON.stringify({ productIds }),
       });
       const data = await response.json().catch(() => ({}));
+if (response.status === 401) { setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
         openPicnicCart();
@@ -264,14 +287,13 @@ export default function ShoppingList({
   };
 
   const openPicnicCart = async () => {
-    if (!picnicUser?.authKey) return;
+    if (!picnicUser) return;
     setPicnicCart({ open: true, loading: true, items: [], totalPrice: null, error: "" });
 
     try {
-      const response = await fetch(
-        `/api/picnic-cart?authKey=${encodeURIComponent(picnicUser.authKey)}`
-      );
+      const response = await fetch("/api/picnic-cart");
       const data = await response.json().catch(() => ({}));
+if (response.status === 401) { setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: data?.message || t("picnicCartFailed") });
         return;
@@ -279,6 +301,40 @@ export default function ShoppingList({
       setPicnicCart({ open: true, loading: false, items: data.items ?? [], totalPrice: data.totalPrice ?? null, error: "" });
     } catch {
       setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: t("picnicCartFailed") });
+    }
+  };
+
+  const refreshPicnicCart = async () => {
+    if (!picnicUser) return;
+    try {
+      const response = await fetch("/api/picnic-cart");
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
+      if (!response.ok) return;
+      setPicnicCart((prev) => ({ ...prev, items: data.items ?? [], totalPrice: data.totalPrice ?? null, error: "" }));
+    } catch { /* silent refresh */ }
+  };
+
+  const updateCartItemQuantity = async (productId, newCount) => {
+    if (!picnicUser) return;
+    setPicnicCartUpdating((prev) => ({ ...prev, [productId]: true }));
+    try {
+      const response = await fetch("/api/picnic-cart", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, count: newCount }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
+      if (!response.ok) {
+        setPicnicCart((prev) => ({ ...prev, error: data?.message || t("picnicCartUpdateFailed") }));
+      } else {
+        await refreshPicnicCart();
+      }
+    } catch {
+      setPicnicCart((prev) => ({ ...prev, error: t("picnicCartUpdateFailed") }));
+    } finally {
+      setPicnicCartUpdating((prev) => { const n = { ...prev }; delete n[productId]; return n; });
     }
   };
 
@@ -347,12 +403,15 @@ export default function ShoppingList({
                 <>
                   <ul className="picnic-cart-list">
                     {picnicCart.items.map((item) => (
-                      <li key={item.id} className="picnic-cart-item">
-                        <span className="picnic-cart-item-name">{item.name}</span>
-                        {item.unitQuantity && (
-                          <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
-                        )}
-                      </li>
+                      <PicnicCartItem
+                        key={item.id}
+                        item={item}
+                        picnicUser={picnicUser}
+                        linkedRecipes={picnicCartAssociations[item.id] ?? []}
+                        picnicCartUpdating={picnicCartUpdating}
+                        updateCartItemQuantity={updateCartItemQuantity}
+                        lang={lang}
+                      />
                     ))}
                   </ul>
                   {typeof picnicCart.totalPrice === "number" && (
@@ -619,13 +678,13 @@ function IngredientList({
 
 const PICNIC_IMAGE_BASE = "https://storefront-prod.nl.picnicinternational.com/static/images";
 
-function usePicnicProductDetail(productId, open, authKey) {
+function usePicnicProductDetail(productId, open, loggedIn) {
   const [productDetail, setProductDetail] = useState({ productId: null, description: null });
   const [detailLoadingProductId, setDetailLoadingProductId] = useState(null);
   const productDetailFetchedForRef = useRef(null);
 
   useEffect(() => {
-    if (!open || !productId || !authKey) return undefined;
+    if (!open || !productId || !loggedIn) return undefined;
     if (productDetailFetchedForRef.current === productId) return undefined;
 
     let cancelled = false;
@@ -633,7 +692,7 @@ function usePicnicProductDetail(productId, open, authKey) {
     fetch("/api/picnic-product", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authKey, productId }),
+      body: JSON.stringify({ productId }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -649,7 +708,7 @@ function usePicnicProductDetail(productId, open, authKey) {
         setDetailLoadingProductId((current) => (current === productId ? null : current));
       });
     return () => { cancelled = true; };
-  }, [authKey, open, productId]);
+  }, [loggedIn, open, productId]);
 
   return {
     detailLoading: detailLoadingProductId === productId,
@@ -659,7 +718,7 @@ function usePicnicProductDetail(productId, open, authKey) {
 
 function PicnicProductPopover({ product, picnicUser, open, className = "picnic-association-popover" }) {
   const { t, lang } = useLanguage();
-  const { detailLoading, productDetail } = usePicnicProductDetail(product?.id, open, picnicUser?.authKey);
+  const { detailLoading, productDetail } = usePicnicProductDetail(product?.id, open, !!picnicUser);
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
       style: "currency",
@@ -707,8 +766,149 @@ function PicnicProductPopover({ product, picnicUser, open, className = "picnic-a
   );
 }
 
+function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, updateCartItemQuantity, lang }) {
+  const { t } = useLanguage();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsTimeoutRef = useRef(null);
+  const detailsLongPressRef = useRef(false);
+  const detailsRef = useRef(null);
+  const priceFormatter = useMemo(
+    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: "EUR",
+    }),
+    [lang]
+  );
+  const product = useMemo(() => ({ ...item, displayPrice: item.price }), [item]);
+
+  useEffect(() => () => {
+    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!detailsOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!detailsRef.current?.contains(event.target)) {
+        setDetailsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [detailsOpen]);
+
+  const clearDetailsTimeout = () => {
+    if (detailsTimeoutRef.current) {
+      clearTimeout(detailsTimeoutRef.current);
+      detailsTimeoutRef.current = null;
+    }
+  };
+
+  const openDetails = () => setDetailsOpen(true);
+
+  const closeDetails = () => {
+    clearDetailsTimeout();
+    detailsLongPressRef.current = false;
+    setDetailsOpen(false);
+  };
+
+  const handleTouchStart = () => {
+    detailsLongPressRef.current = false;
+    clearDetailsTimeout();
+    detailsTimeoutRef.current = setTimeout(() => {
+      detailsLongPressRef.current = true;
+      setDetailsOpen(true);
+      detailsTimeoutRef.current = null;
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    clearDetailsTimeout();
+  };
+
+  const qty = item.count ?? 1;
+  const isUnavailable = item.available === false;
+  const hasPrice = typeof item.price === "number" && !isUnavailable;
+
+  return (
+    <li
+      ref={detailsRef}
+      className={`picnic-cart-item${isUnavailable ? " picnic-cart-item--unavailable" : ""}`}
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
+      onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={closeDetails}
+      onTouchMove={handleTouchEnd}
+    >
+      <div className="picnic-cart-item-info">
+        <div className="picnic-cart-item-name-row">
+          <span className="picnic-cart-item-name">{item.name}</span>
+          <button
+            type="button"
+            className="picnic-info-btn"
+            onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
+            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
+            onBlur={closeDetails}
+            aria-label="Info"
+          >i</button>
+        </div>
+        {item.unitQuantity && (
+          <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
+        )}
+        {linkedRecipes.length > 0 && (
+          <ul className="picnic-cart-item-links">
+            {linkedRecipes.map((link, index) => (
+              <li key={`${item.id}-${link.mealName}-${link.ingredientName}-${link.quantity}-${index}`} className="picnic-cart-item-link">
+                <span className="picnic-cart-item-link-meal">{link.mealName}</span>
+                <span className="picnic-cart-item-link-detail">
+                  {link.ingredientName} ({link.quantity})
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="picnic-cart-item-pricing">
+        <div className="picnic-cart-item-qty-controls">
+          <button
+            className="picnic-cart-qty-btn"
+            aria-label={t("picnicCartDecreaseQty")}
+            disabled={!!picnicCartUpdating[item.id]}
+            onClick={() => updateCartItemQuantity(item.id, qty - 1)}
+          >−</button>
+          <span className="picnic-cart-item-qty">{qty}</span>
+          <button
+            className="picnic-cart-qty-btn"
+            aria-label={t("picnicCartIncreaseQty")}
+            disabled={!!picnicCartUpdating[item.id]}
+            onClick={() => updateCartItemQuantity(item.id, qty + 1)}
+          >+</button>
+        </div>
+        {isUnavailable ? (
+          <span className="picnic-cart-item-out-of-stock">{t("picnicOutOfStock")}</span>
+        ) : (
+          <>
+            {hasPrice && (
+              <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
+            )}
+            {hasPrice && (
+              <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
+            )}
+          </>
+        )}
+      </div>
+      <PicnicProductPopover
+        product={product}
+        picnicUser={picnicUser}
+        open={detailsOpen}
+        className="picnic-association-popover picnic-cart-item-popover"
+      />
+    </li>
+  );
+}
+
 function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const detailsTimeoutRef = useRef(null);
   const detailsLongPressRef = useRef(false);
@@ -780,7 +980,7 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
     >
       <button
         type="button"
-        className={`picnic-search-result${selected ? " selected" : ""}`}
+        className={`picnic-search-result${selected ? " selected" : ""}${result.maxCount === 0 ? " picnic-search-result--unavailable" : ""}`}
         onClick={() => onSelect(result)}
       >
         <span className="picnic-search-result-name">{result.name}</span>
@@ -789,6 +989,9 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
             .filter(Boolean)
             .join(" · ")}
         </span>
+        {result.maxCount === 0 && (
+          <span className="picnic-search-result-out-of-stock">{t("picnicOutOfStock")}</span>
+        )}
       </button>
       <button
         type="button"
