@@ -213,7 +213,7 @@ export default function ShoppingList({
       });
       const data = await response.json().catch(() => ({}));
       if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
-      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
+if (response.status === 401) { setPicnicSearch({ loading: false, error: "", results: [] }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSearch({ loading: false, error: data?.message || t("picnicSearchFailed"), results: [] });
         return;
@@ -272,7 +272,7 @@ export default function ShoppingList({
         body: JSON.stringify({ productIds }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
+if (response.status === 401) { setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
         openPicnicCart();
@@ -293,7 +293,7 @@ export default function ShoppingList({
     try {
       const response = await fetch("/api/picnic-cart");
       const data = await response.json().catch(() => ({}));
-      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
+if (response.status === 401) { setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" }); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: data?.message || t("picnicCartFailed") });
         return;
