@@ -133,6 +133,11 @@ export default function ShoppingList({
   const toggleCheck = (key) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
+  const getStaplePicnicItem = (staple) => ({
+    id: `staple:${staple.id}`,
+    name: staple.name,
+    searchName: staple.name,
+  });
 
   const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
   const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
@@ -140,7 +145,9 @@ export default function ShoppingList({
   const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
-  const missingPicnicChoiceItems = checkedMealItems.filter((item) => !getAssociation(picnicAssociations, item.id));
+  const checkedStaplePicnicItems = checkedStaples.map(getStaplePicnicItem);
+  const checkedItemsForPicnic = [...checkedMealItems, ...checkedStaplePicnicItems];
+  const missingPicnicChoiceItems = checkedItemsForPicnic.filter((item) => !getAssociation(picnicAssociations, item.id));
 
   const mealCheckedCount   = checkedMealItems.length;
   const stapleCheckedCount = checkedStaples.length;
@@ -253,7 +260,7 @@ if (response.status === 401) { setPicnicSearch({ loading: false, error: "", resu
       return;
     }
 
-    const itemsWithAssociation = checkedMealItems.filter((item) => getAssociation(picnicAssociations, item.id));
+    const itemsWithAssociation = checkedItemsForPicnic.filter((item) => getAssociation(picnicAssociations, item.id));
     if (itemsWithAssociation.length === 0) {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendNoAssociations") });
       return;
@@ -487,6 +494,18 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       <div className="ingredient-details">
                         <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                         <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
+                        <PicnicAssociation
+                          item={getStaplePicnicItem(s)}
+                          association={getAssociation(picnicAssociations, `staple:${s.id}`)}
+                          picnicUser={picnicUser}
+                          pickerOpen={picnicPicker?.itemId === `staple:${s.id}`}
+                          pickerQuery={picnicPicker?.itemId === `staple:${s.id}` ? picnicPicker.query : ""}
+                          picnicSearch={picnicSearch}
+                          onTogglePicker={togglePicnicPicker}
+                          onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                          onSearch={searchPicnic}
+                          onSelect={handleSelectPicnicAssociation}
+                        />
                       </div>
                     </li>
                   ))}
@@ -561,6 +580,18 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                     <div className="ingredient-details">
                       <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                       <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
+                      <PicnicAssociation
+                        item={getStaplePicnicItem(s)}
+                        association={getAssociation(picnicAssociations, `staple:${s.id}`)}
+                        picnicUser={picnicUser}
+                        pickerOpen={picnicPicker?.itemId === `staple:${s.id}`}
+                        pickerQuery={picnicPicker?.itemId === `staple:${s.id}` ? picnicPicker.query : ""}
+                        picnicSearch={picnicSearch}
+                        onTogglePicker={togglePicnicPicker}
+                        onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                        onSearch={searchPicnic}
+                        onSelect={handleSelectPicnicAssociation}
+                      />
                     </div>
                   </li>
                 ))}
@@ -591,7 +622,21 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                           onBlur={() => saveRename(item)}
                         />
                       ) : (
-                        <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
+                       <div className="ingredient-details">
+                         <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
+                         <PicnicAssociation
+                           item={getStaplePicnicItem(item)}
+                           association={getAssociation(picnicAssociations, `staple:${item.id}`)}
+                           picnicUser={picnicUser}
+                           pickerOpen={picnicPicker?.itemId === `staple:${item.id}`}
+                           pickerQuery={picnicPicker?.itemId === `staple:${item.id}` ? picnicPicker.query : ""}
+                           picnicSearch={picnicSearch}
+                           onTogglePicker={togglePicnicPicker}
+                           onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                           onSearch={searchPicnic}
+                           onSelect={handleSelectPicnicAssociation}
+                         />
+                       </div>
                       )}
                       {staplesEditMode && (
                         <button className="staples-remove-btn" onClick={() => removeStaple(item.id)} title={t("removeItem")}>×</button>
