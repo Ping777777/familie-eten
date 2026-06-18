@@ -316,6 +316,11 @@ export default function App() {
     setPicnicUser(null);
   };
 
+  const handlePicnicSessionExpired = () => {
+    localStorage.removeItem(PICNIC_USER_KEY);
+    setPicnicUser(null);
+  };
+
   // Week plan state
   const [selectedWeekPlan, setSelectedWeekPlan] = useState(() => emptyWeek());
   const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
@@ -936,6 +941,7 @@ export default function App() {
             onUpdatePicnicAssociation={updatePicnicAssociation}
             picnicAssocSaveFailed={picnicAssocSaveFailed}
             onReloadPicnicAssociations={reloadPicnicAssociations}
+            onPicnicSessionExpired={handlePicnicSessionExpired}
           />
         )}
       </main>

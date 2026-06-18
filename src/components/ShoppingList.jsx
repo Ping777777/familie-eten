@@ -35,6 +35,7 @@ export default function ShoppingList({
   onUpdatePicnicAssociation,
   picnicAssocSaveFailed = false,
   onReloadPicnicAssociations,
+  onPicnicSessionExpired,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
@@ -212,6 +213,7 @@ export default function ShoppingList({
       });
       const data = await response.json().catch(() => ({}));
       if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSearch({ loading: false, error: data?.message || t("picnicSearchFailed"), results: [] });
         return;
@@ -270,6 +272,7 @@ export default function ShoppingList({
         body: JSON.stringify({ productIds }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
         openPicnicCart();
@@ -290,6 +293,7 @@ export default function ShoppingList({
     try {
       const response = await fetch("/api/picnic-cart");
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicCart({ open: true, loading: false, items: [], totalPrice: null, error: data?.message || t("picnicCartFailed") });
         return;
@@ -305,6 +309,7 @@ export default function ShoppingList({
     try {
       const response = await fetch("/api/picnic-cart");
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
       if (!response.ok) return;
       setPicnicCart((prev) => ({ ...prev, items: data.items ?? [], totalPrice: data.totalPrice ?? null, error: "" }));
     } catch { /* silent refresh */ }
@@ -320,6 +325,7 @@ export default function ShoppingList({
         body: JSON.stringify({ productId, count: newCount }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicCart((prev) => ({ ...prev, error: data?.message || t("picnicCartUpdateFailed") }));
       } else {
