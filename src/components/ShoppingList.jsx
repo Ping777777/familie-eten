@@ -402,67 +402,17 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               {picnicCart.items.length > 0 && (
                 <>
                   <ul className="picnic-cart-list">
-                    {picnicCart.items.map((item) => {
-                      const priceFormatter = new Intl.NumberFormat(
-                        lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
-                        { style: "currency", currency: "EUR" }
-                      );
-                      const qty = item.count ?? 1;
-                      const linkedRecipes = picnicCartAssociations[item.id] ?? [];
-                      const isUnavailable = item.available === false;
-                      const hasPrice = typeof item.price === "number" && !isUnavailable;
-                      return (
-                        <li key={item.id} className={`picnic-cart-item${isUnavailable ? " picnic-cart-item--unavailable" : ""}`}>
-                          <div className="picnic-cart-item-info">
-                            <span className="picnic-cart-item-name">{item.name}</span>
-                            {item.unitQuantity && (
-                              <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
-                            )}
-                            {linkedRecipes.length > 0 && (
-                              <ul className="picnic-cart-item-links">
-                                {linkedRecipes.map((link, index) => (
-                                  <li key={`${item.id}-${link.mealName}-${link.ingredientName}-${link.quantity}-${index}`} className="picnic-cart-item-link">
-                                    <span className="picnic-cart-item-link-meal">{link.mealName}</span>
-                                    <span className="picnic-cart-item-link-detail">
-                                      {link.ingredientName} ({link.quantity})
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                          <div className="picnic-cart-item-pricing">
-                            <div className="picnic-cart-item-qty-controls">
-                              <button
-                                className="picnic-cart-qty-btn"
-                                aria-label={t("picnicCartDecreaseQty")}
-                                disabled={!!picnicCartUpdating[item.id]}
-                                onClick={() => updateCartItemQuantity(item.id, qty - 1)}
-                              >−</button>
-                              <span className="picnic-cart-item-qty">{qty}</span>
-                              <button
-                                className="picnic-cart-qty-btn"
-                                aria-label={t("picnicCartIncreaseQty")}
-                                disabled={!!picnicCartUpdating[item.id]}
-                                onClick={() => updateCartItemQuantity(item.id, qty + 1)}
-                              >+</button>
-                            </div>
-                            {isUnavailable ? (
-                              <span className="picnic-cart-item-out-of-stock">{t("picnicOutOfStock")}</span>
-                            ) : (
-                              <>
-                                {hasPrice && (
-                                  <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
-                                )}
-                                {hasPrice && (
-                                  <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
+                    {picnicCart.items.map((item) => (
+                      <PicnicCartItem
+                        key={item.id}
+                        item={item}
+                        picnicUser={picnicUser}
+                        linkedRecipes={picnicCartAssociations[item.id] ?? []}
+                        picnicCartUpdating={picnicCartUpdating}
+                        updateCartItemQuantity={updateCartItemQuantity}
+                        lang={lang}
+                      />
+                    ))}
                   </ul>
                   {typeof picnicCart.totalPrice === "number" && (
                     <p className="picnic-cart-total">
@@ -813,6 +763,147 @@ function PicnicProductPopover({ product, picnicUser, open, className = "picnic-a
             : null
       )}
     </div>
+  );
+}
+
+function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, updateCartItemQuantity, lang }) {
+  const { t } = useLanguage();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsTimeoutRef = useRef(null);
+  const detailsLongPressRef = useRef(false);
+  const detailsRef = useRef(null);
+  const priceFormatter = useMemo(
+    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: "EUR",
+    }),
+    [lang]
+  );
+  const product = useMemo(() => ({ ...item, displayPrice: item.price }), [item]);
+
+  useEffect(() => () => {
+    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!detailsOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!detailsRef.current?.contains(event.target)) {
+        setDetailsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [detailsOpen]);
+
+  const clearDetailsTimeout = () => {
+    if (detailsTimeoutRef.current) {
+      clearTimeout(detailsTimeoutRef.current);
+      detailsTimeoutRef.current = null;
+    }
+  };
+
+  const openDetails = () => setDetailsOpen(true);
+
+  const closeDetails = () => {
+    clearDetailsTimeout();
+    detailsLongPressRef.current = false;
+    setDetailsOpen(false);
+  };
+
+  const handleTouchStart = () => {
+    detailsLongPressRef.current = false;
+    clearDetailsTimeout();
+    detailsTimeoutRef.current = setTimeout(() => {
+      detailsLongPressRef.current = true;
+      setDetailsOpen(true);
+      detailsTimeoutRef.current = null;
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    clearDetailsTimeout();
+  };
+
+  const qty = item.count ?? 1;
+  const isUnavailable = item.available === false;
+  const hasPrice = typeof item.price === "number" && !isUnavailable;
+
+  return (
+    <li
+      ref={detailsRef}
+      className={`picnic-cart-item${isUnavailable ? " picnic-cart-item--unavailable" : ""}`}
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
+      onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={closeDetails}
+      onTouchMove={handleTouchEnd}
+    >
+      <div className="picnic-cart-item-info">
+        <div className="picnic-cart-item-name-row">
+          <span className="picnic-cart-item-name">{item.name}</span>
+          <button
+            type="button"
+            className="picnic-info-btn"
+            onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
+            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
+            onBlur={closeDetails}
+            aria-label="Info"
+          >i</button>
+        </div>
+        {item.unitQuantity && (
+          <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
+        )}
+        {linkedRecipes.length > 0 && (
+          <ul className="picnic-cart-item-links">
+            {linkedRecipes.map((link, index) => (
+              <li key={`${item.id}-${link.mealName}-${link.ingredientName}-${link.quantity}-${index}`} className="picnic-cart-item-link">
+                <span className="picnic-cart-item-link-meal">{link.mealName}</span>
+                <span className="picnic-cart-item-link-detail">
+                  {link.ingredientName} ({link.quantity})
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="picnic-cart-item-pricing">
+        <div className="picnic-cart-item-qty-controls">
+          <button
+            className="picnic-cart-qty-btn"
+            aria-label={t("picnicCartDecreaseQty")}
+            disabled={!!picnicCartUpdating[item.id]}
+            onClick={() => updateCartItemQuantity(item.id, qty - 1)}
+          >−</button>
+          <span className="picnic-cart-item-qty">{qty}</span>
+          <button
+            className="picnic-cart-qty-btn"
+            aria-label={t("picnicCartIncreaseQty")}
+            disabled={!!picnicCartUpdating[item.id]}
+            onClick={() => updateCartItemQuantity(item.id, qty + 1)}
+          >+</button>
+        </div>
+        {isUnavailable ? (
+          <span className="picnic-cart-item-out-of-stock">{t("picnicOutOfStock")}</span>
+        ) : (
+          <>
+            {hasPrice && (
+              <span className="picnic-cart-item-price">{priceFormatter.format(item.price / 100)}</span>
+            )}
+            {hasPrice && (
+              <span className="picnic-cart-item-line-total">{priceFormatter.format((item.price * qty) / 100)}</span>
+            )}
+          </>
+        )}
+      </div>
+      <PicnicProductPopover
+        product={product}
+        picnicUser={picnicUser}
+        open={detailsOpen}
+        className="picnic-association-popover picnic-cart-item-popover"
+      />
+    </li>
   );
 }
 
