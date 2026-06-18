@@ -71,9 +71,18 @@ export default function ShoppingList({
           const id = name.toLowerCase();
           const displayName = getIngredientName(recipe, ingIdx, lang) ?? name;
           const mealName = getRecipeName(recipe, lang);
-          if (!map[id]) map[id] = { id, name: displayName, searchName: name, amounts: [], meals: new Set() };
-          map[id].amounts.push(unit ? `${amount} ${translateUnit(unit, lang)}` : amount);
+          const quantity = unit ? `${amount} ${translateUnit(unit, lang)}` : String(amount);
+          if (!map[id]) map[id] = {
+            id,
+            name: displayName,
+            searchName: name,
+            amounts: [],
+            meals: new Set(),
+            usages: [],
+          };
+          map[id].amounts.push(quantity);
           map[id].meals.add(mealName);
+          map[id].usages.push({ mealName, ingredientName: displayName, quantity });
         });
       });
     });
@@ -81,6 +90,16 @@ export default function ShoppingList({
   }, [weekPlan, recipes, family, days, lang]);
 
   const items = Object.values(ingredientMap).sort((a, b) => a.name.localeCompare(b.name));
+  const picnicCartAssociations = useMemo(() => {
+    const grouped = {};
+    items.forEach((ingredient) => {
+      const productId = getAssociation(picnicAssociations, ingredient.id)?.id;
+      if (!productId || !ingredient.usages?.length) return;
+      if (!grouped[productId]) grouped[productId] = [];
+      grouped[productId].push(...ingredient.usages);
+    });
+    return grouped;
+  }, [items, picnicAssociations]);
 
   const isPantry = (name) => {
     const key = name.toLowerCase();
@@ -352,6 +371,7 @@ export default function ShoppingList({
                         { style: "currency", currency: "EUR" }
                       );
                       const qty = item.count ?? 1;
+                      const linkedRecipes = picnicCartAssociations[item.id] ?? [];
                       const isUnavailable = item.available === false;
                       const hasPrice = typeof item.price === "number" && !isUnavailable;
                       return (
@@ -360,6 +380,18 @@ export default function ShoppingList({
                             <span className="picnic-cart-item-name">{item.name}</span>
                             {item.unitQuantity && (
                               <span className="picnic-cart-item-meta">{item.unitQuantity}</span>
+                            )}
+                            {linkedRecipes.length > 0 && (
+                              <ul className="picnic-cart-item-links">
+                                {linkedRecipes.map((link, index) => (
+                                  <li key={`${item.id}-${link.mealName}-${link.ingredientName}-${link.quantity}-${index}`} className="picnic-cart-item-link">
+                                    <span className="picnic-cart-item-link-meal">{link.mealName}</span>
+                                    <span className="picnic-cart-item-link-detail">
+                                      {link.ingredientName} ({link.quantity})
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
                             )}
                           </div>
                           <div className="picnic-cart-item-pricing">
