@@ -7,6 +7,7 @@ import { translateStapleName } from "../data/stapleTranslations";
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 const CAT_KEY = { Ontbijt: "catBreakfast", Lunch: "catLunch", Tussendoor: "catSnacks", Overig: "catOther" };
+const normalizeItemName = (value) => String(value ?? "").trim().toLowerCase();
 
 const loadOverrides = () => {
   try { return new Set(JSON.parse(localStorage.getItem(LS_OVERRIDES)) ?? []); }
@@ -134,10 +135,18 @@ export default function ShoppingList({
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
-  const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
-  const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
-  const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
-  const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
+  const checkedStapleNames = new Set(
+    staples
+      .filter((s) => checked[`s:${s.id}`])
+      .map((s) => normalizeItemName(s.name))
+      .filter(Boolean)
+  );
+  const isCheckedInShoppingList = (itemId) =>
+    Boolean(checked[itemId] || checkedStapleNames.has(normalizeItemName(itemId)));
+  const uncheckedFresh  = freshItems.filter((i) => !isCheckedInShoppingList(i.id));
+  const checkedFresh    = freshItems.filter((i) => isCheckedInShoppingList(i.id));
+  const uncheckedPantry = pantryItems.filter((i) => !isCheckedInShoppingList(i.id));
+  const checkedPantry   = pantryItems.filter((i) => isCheckedInShoppingList(i.id));
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
   const missingPicnicChoiceItems = checkedMealItems.filter((item) => !getAssociation(picnicAssociations, item.id));
