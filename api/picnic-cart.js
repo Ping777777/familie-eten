@@ -1,10 +1,11 @@
 import PicnicClient from "picnic-api";
+import { getPicnicAuthKey } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const authKey = String(req.query?.authKey || "").trim();
+    const authKey = getPicnicAuthKey(req);
     if (!authKey) {
-      res.status(400).json({ message: "authKey is required" });
+      res.status(401).json({ message: "Not authenticated" });
       return;
     }
 
@@ -57,11 +58,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const authKey = String(req.body?.authKey || "").trim();
+    const authKey = getPicnicAuthKey(req);
     const productIds = req.body?.productIds;
 
     if (!authKey) {
-      res.status(400).json({ message: "authKey is required" });
+      res.status(401).json({ message: "Not authenticated" });
       return;
     }
     if (!Array.isArray(productIds) || productIds.length === 0) {
@@ -100,12 +101,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PATCH") {
-    const authKey = String(req.body?.authKey || "").trim();
+    const authKey = getPicnicAuthKey(req);
     const productId = String(req.body?.productId || "").trim();
     const newCount = Number(req.body?.count);
 
     if (!authKey) {
-      res.status(400).json({ message: "authKey is required" });
+      res.status(401).json({ message: "Not authenticated" });
       return;
     }
     if (!productId) {

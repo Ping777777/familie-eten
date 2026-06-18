@@ -1,4 +1,5 @@
 import PicnicClient from "picnic-api";
+import { getPicnicAuthKey } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,11 +7,15 @@ export default async function handler(req, res) {
     return;
   }
 
-  const authKey = String(req.body?.authKey || "").trim();
+  const authKey = getPicnicAuthKey(req);
   const productId = String(req.body?.productId || "").trim();
 
-  if (!authKey || !productId) {
-    res.status(400).json({ message: "authKey and productId are required" });
+  if (!authKey) {
+    res.status(401).json({ message: "Not authenticated" });
+    return;
+  }
+  if (!productId) {
+    res.status(400).json({ message: "productId is required" });
     return;
   }
 
