@@ -1,6 +1,13 @@
 import PicnicClient from "picnic-api";
+import { setPicnicAuthCookie, clearPicnicAuthCookie } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
+  if (req.method === "DELETE") {
+    clearPicnicAuthCookie(res);
+    res.status(200).json({ ok: true });
+    return;
+  }
+
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method not allowed" });
     return;
@@ -20,22 +27,16 @@ export default async function handler(req, res) {
 
     if (loginResult.second_factor_authentication_required) {
       await client.auth.generate2FACode("SMS");
-      res.status(200).json({
-        ok: true,
-        requiresTwoFactor: true,
-        authKey: loginResult.authKey,
-      });
+      setPicnicAuthCookie(res, loginResult.authKey);
+      res.status(200).json({ ok: true, requiresTwoFactor: true });
       return;
     }
 
     const userDetails = await client.user.getUserDetails();
     const name = `${userDetails.firstname} ${userDetails.lastname}`.trim();
 
-    res.status(200).json({
-      ok: true,
-      authKey: loginResult.authKey,
-      name,
-    });
+    setPicnicAuthCookie(res, loginResult.authKey);
+    res.status(200).json({ ok: true, name });
   } catch (err) {
     const message = err?.message || "Picnic inloggen mislukt";
     res.status(401).json({ message });

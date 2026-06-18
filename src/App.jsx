@@ -28,7 +28,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
   const [picnicError, setPicnicError] = useState("");
   const [picnicBusy, setPicnicBusy] = useState(false);
-  const [picnicOtp, setPicnicOtp] = useState({ open: false, authKey: "", code: "" });
+  const [picnicOtp, setPicnicOtp] = useState({ open: false, code: "" });
 
   const handlePicnicSubmit = async (e) => {
     e.preventDefault();
@@ -37,7 +37,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
     try {
       const result = await onPicnicLogin(picnicForm.username, picnicForm.password);
       if (result?.requiresTwoFactor) {
-        setPicnicOtp({ open: true, authKey: result.authKey, code: "" });
+        setPicnicOtp({ open: true, code: "" });
       } else {
         setPicnicForm({ username: "", password: "" });
         setPicnicFormOpen(false);
@@ -54,10 +54,10 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
     setPicnicError("");
     setPicnicBusy(true);
     try {
-      await onPicnicVerify2FA(picnicOtp.authKey, picnicOtp.code);
+      await onPicnicVerify2FA(picnicOtp.code);
       setPicnicForm({ username: "", password: "" });
       setPicnicFormOpen(false);
-      setPicnicOtp({ open: false, authKey: "", code: "" });
+      setPicnicOtp({ open: false, code: "" });
     } catch (err) {
       setPicnicError(err?.message || t("picnic2faFailed"));
     } finally {
@@ -67,7 +67,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
 
   const resetPicnicForm = () => {
     setPicnicFormOpen(false);
-    setPicnicOtp({ open: false, authKey: "", code: "" });
+    setPicnicOtp({ open: false, code: "" });
     setPicnicError("");
     setPicnicForm({ username: "", password: "" });
   };
@@ -286,30 +286,37 @@ export default function App() {
       throw new Error(data?.message || t("picnicLoginFailed"));
     }
     if (data.requiresTwoFactor) {
-      return { requiresTwoFactor: true, authKey: data.authKey };
+      return { requiresTwoFactor: true };
     }
-    const user = { name: data.name, authKey: data.authKey };
+    const user = { name: data.name };
     localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
     setPicnicUser(user);
     return { requiresTwoFactor: false };
   };
 
-  const handlePicnicVerify2FA = async (authKey, code) => {
+  const handlePicnicVerify2FA = async (code) => {
     const response = await fetch("/api/picnic-2fa", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authKey, code }),
+      body: JSON.stringify({ code }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data?.message || t("picnic2faFailed"));
     }
-    const user = { name: data.name, authKey: data.authKey };
+    const user = { name: data.name };
     localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
     setPicnicUser(user);
   };
 
-  const handlePicnicLogout = () => {
+  const handlePicnicLogout = async () => {
+    const response = await fetch("/api/picnic-login", { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) return;
+    localStorage.removeItem(PICNIC_USER_KEY);
+    setPicnicUser(null);
+  };
+
+  const handlePicnicSessionExpired = () => {
     localStorage.removeItem(PICNIC_USER_KEY);
     setPicnicUser(null);
   };
@@ -934,6 +941,7 @@ export default function App() {
             onUpdatePicnicAssociation={updatePicnicAssociation}
             picnicAssocSaveFailed={picnicAssocSaveFailed}
             onReloadPicnicAssociations={reloadPicnicAssociations}
+            onPicnicSessionExpired={handlePicnicSessionExpired}
           />
         )}
       </main>
