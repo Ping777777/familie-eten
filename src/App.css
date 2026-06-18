@@ -1002,7 +1002,37 @@
   color: #64748b;
   flex-shrink: 0;
 }
-.picnic-cart-item-qty { color: #64748b; }
+.picnic-cart-item-qty { color: #64748b; font-weight: 600; min-width: 1.5ch; text-align: center; }
+.picnic-cart-item-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.picnic-cart-qty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.picnic-cart-qty-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+.picnic-cart-qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .picnic-cart-item-price { color: #64748b; }
 .picnic-cart-item-line-total { font-weight: 600; color: #1e293b; margin-left: 2px; }
 .picnic-cart-item--unavailable {
@@ -2593,6 +2623,15 @@
 .dark .picnic-cart-item-link-meal { color: var(--text); }
 .dark .picnic-cart-item-link-detail { color: var(--text-muted); }
 .dark .picnic-cart-item-qty { color: var(--text-muted); }
+.dark .picnic-cart-qty-btn {
+  background: var(--surface2);
+  border-color: var(--border);
+  color: var(--text);
+}
+.dark .picnic-cart-qty-btn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--text-muted);
+}
 .dark .picnic-cart-item-price { color: var(--text-muted); }
 .dark .picnic-cart-item-line-total { color: var(--text); }
 .dark .picnic-cart-item-out-of-stock { color: #fca5a5; background: #450a0a; }

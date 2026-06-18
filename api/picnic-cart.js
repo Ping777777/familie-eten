@@ -86,5 +86,52 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (req.method === "PATCH") {
+    const authKey = String(req.body?.authKey || "").trim();
+    const productId = String(req.body?.productId || "").trim();
+    const newCount = Number(req.body?.count);
+
+    if (!authKey) {
+      res.status(400).json({ message: "authKey is required" });
+      return;
+    }
+    if (!productId) {
+      res.status(400).json({ message: "productId is required" });
+      return;
+    }
+    if (!Number.isInteger(newCount) || newCount < 0) {
+      res.status(400).json({ message: "count must be a non-negative integer" });
+      return;
+    }
+
+    try {
+      const client = new PicnicClient({ countryCode: "NL", authKey });
+
+      // Find current quantity of the product in the cart
+      const cart = await client.cart.getCart();
+      let currentCount = 0;
+      for (const line of cart?.items ?? []) {
+        for (const article of line?.items ?? []) {
+          if (article?.id && String(article.id) === productId) {
+            currentCount = typeof article.count === "number" ? article.count : 1;
+          }
+        }
+      }
+
+      const delta = newCount - currentCount;
+      if (delta > 0) {
+        await client.cart.addProductToCart(productId, delta);
+      } else if (delta < 0) {
+        await client.cart.removeProductFromCart(productId, -delta);
+      }
+
+      res.status(200).json({ productId, count: newCount });
+    } catch (err) {
+      const message = err?.message || "Failed to update Picnic cart item";
+      res.status(500).json({ message });
+    }
+    return;
+  }
+
   res.status(405).json({ message: "Method not allowed" });
 }
