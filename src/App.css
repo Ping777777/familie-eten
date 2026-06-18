@@ -945,6 +945,7 @@
   gap: 8px;
 }
 .picnic-cart-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -954,6 +955,11 @@
   border: 1px solid #dbe7df;
   border-radius: 10px;
   background: #ffffff;
+}
+.picnic-cart-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .picnic-cart-item-info {
   display: flex;
