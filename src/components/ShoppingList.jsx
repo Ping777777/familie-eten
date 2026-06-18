@@ -7,7 +7,6 @@ import { translateStapleName } from "../data/stapleTranslations";
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 const CAT_KEY = { Ontbijt: "catBreakfast", Lunch: "catLunch", Tussendoor: "catSnacks", Overig: "catOther" };
-const normalizeItemName = (value) => String(value ?? "").trim().toLowerCase();
 
 const loadOverrides = () => {
   try { return new Set(JSON.parse(localStorage.getItem(LS_OVERRIDES)) ?? []); }
@@ -135,18 +134,10 @@ export default function ShoppingList({
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
-  const checkedStapleNames = new Set(
-    staples
-      .filter((s) => checked[`s:${s.id}`])
-      .map((s) => normalizeItemName(s.name))
-      .filter(Boolean)
-  );
-  const isCheckedInShoppingList = (itemId) =>
-    Boolean(checked[itemId] || checkedStapleNames.has(normalizeItemName(itemId)));
-  const uncheckedFresh  = freshItems.filter((i) => !isCheckedInShoppingList(i.id));
-  const checkedFresh    = freshItems.filter((i) => isCheckedInShoppingList(i.id));
-  const uncheckedPantry = pantryItems.filter((i) => !isCheckedInShoppingList(i.id));
-  const checkedPantry   = pantryItems.filter((i) => isCheckedInShoppingList(i.id));
+  const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
+  const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
+  const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
+  const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
   const missingPicnicChoiceItems = checkedMealItems.filter((item) => !getAssociation(picnicAssociations, item.id));
@@ -468,24 +459,39 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </>
           )}
 
-          {mealCheckedCount > 0 && (
+          {(mealCheckedCount > 0 || stapleCheckedCount > 0) && (
             <div className="checked-section">
-              <h4>{t("inCart", { n: mealCheckedCount })}</h4>
-              <IngredientList
-                items={checkedMealItems}
-                onCheck={toggleCheck}
-                onTogglePantry={toggleOverride}
-                isPantry={false}
-                done
-                picnicUser={picnicUser}
-                picnicAssociations={picnicAssociations}
-                picnicPicker={picnicPicker}
-                picnicSearch={picnicSearch}
-                onTogglePicnicPicker={togglePicnicPicker}
-                onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
-                onPicnicSearch={searchPicnic}
-                onSelectPicnicAssociation={handleSelectPicnicAssociation}
-              />
+              <h4>{t("inCart", { n: mealCheckedCount + stapleCheckedCount })}</h4>
+              {mealCheckedCount > 0 && (
+                <IngredientList
+                  items={checkedMealItems}
+                  onCheck={toggleCheck}
+                  onTogglePantry={toggleOverride}
+                  isPantry={false}
+                  done
+                  picnicUser={picnicUser}
+                  picnicAssociations={picnicAssociations}
+                  picnicPicker={picnicPicker}
+                  picnicSearch={picnicSearch}
+                  onTogglePicnicPicker={togglePicnicPicker}
+                  onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                  onPicnicSearch={searchPicnic}
+                  onSelectPicnicAssociation={handleSelectPicnicAssociation}
+                />
+              )}
+              {stapleCheckedCount > 0 && (
+                <ul className="ingredient-list">
+                  {checkedStaples.map((s) => (
+                    <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
+                      <span className="check-box">☑</span>
+                      <div className="ingredient-details">
+                        <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
+                        <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
