@@ -16,6 +16,10 @@ export default async function handler(req, res) {
       const productIds = new Set();
 
       for (const line of cart?.items ?? []) {
+        const qtyDecorator = Array.isArray(line.decorators)
+          ? line.decorators.find((d) => d?.type === "QUANTITY")
+          : null;
+        const lineQty = typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1;
         for (const article of line?.items ?? []) {
           if (!article?.id) continue;
           const id = String(article.id);
@@ -28,7 +32,7 @@ export default async function handler(req, res) {
             name: String(article.name || ""),
             unitQuantity: String(article.unit_quantity || ""),
             price: typeof article.price === "number" ? article.price : null,
-            count: typeof article.count === "number" ? article.count : 1,
+            count: lineQty,
             imageId: String(article.image_ids?.[0] || ""),
             available: !unavailable,
           });
@@ -107,10 +111,27 @@ export default async function handler(req, res) {
     try {
       const client = new PicnicClient({ countryCode: "NL", authKey });
 
-      if (newCount === 0) {
-        await client.cart.removeProductFromCart(productId);
-      } else {
-        await client.cart.addProductToCart(productId, newCount);
+      // Find current quantity from the QUANTITY decorator on the OrderLine
+      const cart = await client.cart.getCart();
+      let currentCount = 0;
+      for (const line of cart?.items ?? []) {
+        const hasProduct = Array.isArray(line.items)
+          && line.items.some((a) => a?.id && String(a.id) === productId);
+        if (hasProduct) {
+          const qtyDecorator = Array.isArray(line.decorators)
+            ? line.decorators.find((d) => d?.type === "QUANTITY")
+            : null;
+          currentCount = typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1;
+          break;
+        }
+      }
+
+      // Both add_product and remove_product are delta operations
+      const delta = newCount - currentCount;
+      if (delta > 0) {
+        await client.cart.addProductToCart(productId, delta);
+      } else if (delta < 0) {
+        await client.cart.removeProductFromCart(productId, -delta);
       }
 
       res.status(200).json({ productId, count: newCount });
