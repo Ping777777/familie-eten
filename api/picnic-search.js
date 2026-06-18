@@ -1,5 +1,5 @@
 import PicnicClient from "picnic-api";
-import { getPicnicAuthKey } from "./_picnicAuth.js";
+import { getPicnicAuthKey, isPicnicAuthError } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -41,6 +41,10 @@ export default async function handler(req, res) {
 
     res.status(200).json({ results: matches });
   } catch (err) {
+    if (isPicnicAuthError(err)) {
+      res.status(401).json({ message: "Not authenticated" });
+      return;
+    }
     const message = err?.message || "Picnic zoeken mislukt";
     res.status(500).json({ message });
   }

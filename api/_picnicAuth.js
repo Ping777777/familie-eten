@@ -24,3 +24,8 @@ export function setPicnicAuthCookie(res, authKey) {
 export function clearPicnicAuthCookie(res) {
   res.appendHeader("Set-Cookie", `${COOKIE_NAME}=; HttpOnly; Path=/api; SameSite=Strict; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${SECURE}`);
 }
+
+export function isPicnicAuthError(err) {
+  const msg = err?.message || "";
+  return msg.includes("401") || /unauthorized/i.test(msg);
+}

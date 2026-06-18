@@ -1,5 +1,5 @@
 import PicnicClient from "picnic-api";
-import { getPicnicAuthKey } from "./_picnicAuth.js";
+import { getPicnicAuthKey, isPicnicAuthError } from "./_picnicAuth.js";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -51,6 +51,10 @@ export default async function handler(req, res) {
 
       res.status(200).json({ items, totalPrice: cart?.total_price ?? null });
     } catch (err) {
+      if (isPicnicAuthError(err)) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
       const message = err?.message || "Failed to load Picnic cart";
       res.status(500).json({ message });
     }
@@ -94,6 +98,10 @@ export default async function handler(req, res) {
 
       res.status(200).json({ added: toAdd.length, skipped });
     } catch (err) {
+      if (isPicnicAuthError(err)) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
       const message = err?.message || "Failed to add items to Picnic cart";
       res.status(500).json({ message });
     }
@@ -157,6 +165,10 @@ export default async function handler(req, res) {
 
       res.status(200).json({ productId, count: newCount });
     } catch (err) {
+      if (isPicnicAuthError(err)) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
       const message = err?.message || "Failed to update Picnic cart item";
       res.status(500).json({ message });
     }
