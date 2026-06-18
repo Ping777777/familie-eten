@@ -107,22 +107,10 @@ export default async function handler(req, res) {
     try {
       const client = new PicnicClient({ countryCode: "NL", authKey });
 
-      // Find current quantity of the product in the cart
-      const cart = await client.cart.getCart();
-      let currentCount = 0;
-      for (const line of cart?.items ?? []) {
-        for (const article of line?.items ?? []) {
-          if (article?.id && String(article.id) === productId) {
-            currentCount = typeof article.count === "number" ? article.count : 1;
-          }
-        }
-      }
-
-      const delta = newCount - currentCount;
-      if (delta > 0) {
-        await client.cart.addProductToCart(productId, delta);
-      } else if (delta < 0) {
-        await client.cart.removeProductFromCart(productId, -delta);
+      if (newCount === 0) {
+        await client.cart.removeProductFromCart(productId);
+      } else {
+        await client.cart.addProductToCart(productId, newCount);
       }
 
       res.status(200).json({ productId, count: newCount });
