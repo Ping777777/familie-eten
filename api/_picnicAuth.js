@@ -6,7 +6,11 @@ export function getPicnicAuthKey(req) {
     const eqIdx = part.indexOf("=");
     if (eqIdx === -1) continue;
     if (part.slice(0, eqIdx).trim() === COOKIE_NAME) {
-      return decodeURIComponent(part.slice(eqIdx + 1).trim());
+      try {
+        return decodeURIComponent(part.slice(eqIdx + 1).trim());
+      } catch {
+        return null;
+      }
     }
   }
   return null;
