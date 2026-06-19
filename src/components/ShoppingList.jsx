@@ -23,6 +23,12 @@ const getAssociation = (associations, itemId) => {
   return undefined;
 };
 
+const getStaplePicnicItem = (staple) => ({
+  id: `staple:${staple.id}`,
+  name: staple.name,
+  searchName: staple.name,
+});
+
 export default function ShoppingList({
   weekPlan,
   recipes,
@@ -43,7 +49,6 @@ export default function ShoppingList({
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [copied, setCopied] = useState(false);
-  const [pantryOpen, setPantryOpen] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
   const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
@@ -133,11 +138,6 @@ export default function ShoppingList({
   const toggleCheck = (key) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
-  const getStaplePicnicItem = (staple) => ({
-    id: `staple:${staple.id}`,
-    name: staple.name,
-    searchName: staple.name,
-  });
 
   const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
   const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
@@ -151,9 +151,11 @@ export default function ShoppingList({
 
   const mealCheckedCount   = checkedMealItems.length;
   const stapleCheckedCount = checkedStaples.length;
+  const checkedItemCount = mealCheckedCount + stapleCheckedCount;
 
-  const clearMealChecks   = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) =>  k.startsWith("s:"))));
   const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
+  const clearAllChecks = () => setChecked({});
+  const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
 
   const copyList = () => {
     const lines = [t("copyTitle"), ""];
@@ -260,13 +262,15 @@ if (response.status === 401) { setPicnicSearch({ loading: false, error: "", resu
       return;
     }
 
-    const itemsWithAssociation = checkedItemsForPicnic.filter((item) => getAssociation(picnicAssociations, item.id));
+    const itemsWithAssociation = checkedItemsForPicnic
+      .map((item) => ({ item, association: getAssociation(picnicAssociations, item.id) }))
+      .filter(({ association }) => association);
     if (itemsWithAssociation.length === 0) {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendNoAssociations") });
       return;
     }
 
-    const productIds = itemsWithAssociation.map((item) => getAssociation(picnicAssociations, item.id).id);
+    const productIds = itemsWithAssociation.map(({ association }) => association.id);
     setPicnicSend({ busy: true, result: null, error: "" });
 
     // Read current cart before adding
@@ -359,9 +363,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <>
           <div className="shopping-header">
             {tabBar}
-            {mealCheckedCount > 0 && (
+            {checkedItemCount > 0 && (
               <div className="shopping-meta">
-                <button className="clear-checks-btn" onClick={clearMealChecks}>{t("uncheckAll")}</button>
+                <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
               </div>
             )}
           </div>
@@ -466,9 +470,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </>
           )}
 
-          {(mealCheckedCount > 0 || stapleCheckedCount > 0) && (
+          {checkedItemCount > 0 && (
             <div className="checked-section">
-              <h4>{t("inCart", { n: mealCheckedCount + stapleCheckedCount })}</h4>
+              <h4>{t("inCart", { n: checkedItemCount })}</h4>
               {mealCheckedCount > 0 && (
                 <IngredientList
                   items={checkedMealItems}
@@ -481,7 +485,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                   picnicPicker={picnicPicker}
                   picnicSearch={picnicSearch}
                   onTogglePicnicPicker={togglePicnicPicker}
-                  onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                  onPicnicQueryChange={updatePicnicPickerQuery}
                   onPicnicSearch={searchPicnic}
                   onSelectPicnicAssociation={handleSelectPicnicAssociation}
                 />
@@ -494,17 +498,16 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       <div className="ingredient-details">
                         <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                         <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
-                        <PicnicAssociation
-                          item={getStaplePicnicItem(s)}
-                          association={getAssociation(picnicAssociations, `staple:${s.id}`)}
+                        <StaplePicnicAssociation
+                          staple={s}
+                          picnicAssociations={picnicAssociations}
                           picnicUser={picnicUser}
-                          pickerOpen={picnicPicker?.itemId === `staple:${s.id}`}
-                          pickerQuery={picnicPicker?.itemId === `staple:${s.id}` ? picnicPicker.query : ""}
+                          picnicPicker={picnicPicker}
                           picnicSearch={picnicSearch}
-                          onTogglePicker={togglePicnicPicker}
-                          onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
-                          onSearch={searchPicnic}
-                          onSelect={handleSelectPicnicAssociation}
+                          onTogglePicnicPicker={togglePicnicPicker}
+                          onPicnicQueryChange={updatePicnicPickerQuery}
+                          onPicnicSearch={searchPicnic}
+                          onSelectPicnicAssociation={handleSelectPicnicAssociation}
                         />
                       </div>
                     </li>
@@ -531,7 +534,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 picnicPicker={picnicPicker}
                 picnicSearch={picnicSearch}
                 onTogglePicnicPicker={togglePicnicPicker}
-                onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+                onPicnicQueryChange={updatePicnicPickerQuery}
                 onPicnicSearch={searchPicnic}
                 onSelectPicnicAssociation={handleSelectPicnicAssociation}
               />
@@ -580,17 +583,16 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                     <div className="ingredient-details">
                       <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                       <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
-                      <PicnicAssociation
-                        item={getStaplePicnicItem(s)}
-                        association={getAssociation(picnicAssociations, `staple:${s.id}`)}
+                      <StaplePicnicAssociation
+                        staple={s}
+                        picnicAssociations={picnicAssociations}
                         picnicUser={picnicUser}
-                        pickerOpen={picnicPicker?.itemId === `staple:${s.id}`}
-                        pickerQuery={picnicPicker?.itemId === `staple:${s.id}` ? picnicPicker.query : ""}
+                        picnicPicker={picnicPicker}
                         picnicSearch={picnicSearch}
-                        onTogglePicker={togglePicnicPicker}
-                        onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
-                        onSearch={searchPicnic}
-                        onSelect={handleSelectPicnicAssociation}
+                        onTogglePicnicPicker={togglePicnicPicker}
+                        onPicnicQueryChange={updatePicnicPickerQuery}
+                        onPicnicSearch={searchPicnic}
+                        onSelectPicnicAssociation={handleSelectPicnicAssociation}
                       />
                     </div>
                   </li>
@@ -624,17 +626,16 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       ) : (
                        <div className="ingredient-details">
                          <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
-                         <PicnicAssociation
-                           item={getStaplePicnicItem(item)}
-                           association={getAssociation(picnicAssociations, `staple:${item.id}`)}
+                         <StaplePicnicAssociation
+                           staple={item}
+                           picnicAssociations={picnicAssociations}
                            picnicUser={picnicUser}
-                           pickerOpen={picnicPicker?.itemId === `staple:${item.id}`}
-                           pickerQuery={picnicPicker?.itemId === `staple:${item.id}` ? picnicPicker.query : ""}
+                           picnicPicker={picnicPicker}
                            picnicSearch={picnicSearch}
-                           onTogglePicker={togglePicnicPicker}
-                           onQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
-                           onSearch={searchPicnic}
-                           onSelect={handleSelectPicnicAssociation}
+                           onTogglePicnicPicker={togglePicnicPicker}
+                           onPicnicQueryChange={updatePicnicPickerQuery}
+                           onPicnicSearch={searchPicnic}
+                           onSelectPicnicAssociation={handleSelectPicnicAssociation}
                          />
                        </div>
                       )}
@@ -673,7 +674,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               picnicPicker={picnicPicker}
               picnicSearch={picnicSearch}
               onTogglePicnicPicker={togglePicnicPicker}
-              onPicnicQueryChange={(value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev)}
+              onPicnicQueryChange={updatePicnicPickerQuery}
               onPicnicSearch={searchPicnic}
               onSelectPicnicAssociation={handleSelectPicnicAssociation}
             />
@@ -733,6 +734,34 @@ function IngredientList({
         </li>
       ))}
     </ul>
+  );
+}
+
+function StaplePicnicAssociation({
+  staple,
+  picnicAssociations,
+  picnicUser,
+  picnicPicker,
+  picnicSearch,
+  onTogglePicnicPicker,
+  onPicnicQueryChange,
+  onPicnicSearch,
+  onSelectPicnicAssociation,
+}) {
+  const item = getStaplePicnicItem(staple);
+  return (
+    <PicnicAssociation
+      item={item}
+      association={getAssociation(picnicAssociations, item.id)}
+      picnicUser={picnicUser}
+      pickerOpen={picnicPicker?.itemId === item.id}
+      pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
+      picnicSearch={picnicSearch}
+      onTogglePicker={onTogglePicnicPicker}
+      onQueryChange={onPicnicQueryChange}
+      onSearch={onPicnicSearch}
+      onSelect={onSelectPicnicAssociation}
+    />
   );
 }
 
