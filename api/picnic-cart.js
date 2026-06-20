@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         const qtyDecorator = Array.isArray(line.decorators)
           ? line.decorators.find((d) => d?.type === "QUANTITY")
           : null;
-        const lineQty = typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1;
+        const lineQty = Number(qtyDecorator?.quantity) || 1;
         for (const article of line?.items ?? []) {
           if (!article?.id) continue;
           const id = String(article.id);
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
           const qtyDecorator = Array.isArray(line.decorators)
             ? line.decorators.find((d) => d?.type === "QUANTITY")
             : null;
-          currentCount = typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1;
+          currentCount = Number(qtyDecorator?.quantity) || 1;
           break;
         }
       }
