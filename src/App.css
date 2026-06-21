@@ -591,29 +591,135 @@
   color: var(--text-muted);
 }
 
-.btn-add-recipe {
-  display: inline-flex;
+/* ── Recepten header icons (Apple Reminders style) ── */
+.library-header-icons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+}
+
+.lib-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 44px;
-  padding: 0 20px;
-  background: #fc7600;
-  color: white;
+  background: none;
   border: none;
-  border-radius: 22px;
-  font-size: var(--font-label);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
   cursor: pointer;
-  white-space: nowrap;
+  color: #025c51;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
 }
-.btn-add-recipe:hover { background: #d46400; }
+.lib-icon-btn:active { opacity: 0.5; }
+.dark .lib-icon-btn { color: #4dbfb5; }
 
-.library-controls {
-  position: relative;
+.lib-done-btn {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #025c51;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
 }
+.dark .lib-done-btn { color: #4dbfb5; }
+
+.lib-dots-wrap { position: relative; }
+
+.lib-dots-menu {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  min-width: 180px;
+  z-index: 300;
+  overflow: hidden;
+}
+.lib-dots-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.lib-dots-menu button:last-child { border-bottom: none; }
+.lib-dots-menu button:active { background: var(--surface2); }
+
+.library-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.library-search-panel .filter-dropdown {
+  position: static;
+  box-shadow: none;
+  border: 1px solid var(--border-light);
+}
+
+/* ── Recipe card edit mode (iOS-style red minus) ── */
+.recipe-card--edit-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: default;
+}
+.rc-minus-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  background: #ef4444;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.4rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 14px;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: 2px;
+}
+.rc-card-body { flex: 1; min-width: 0; cursor: pointer; }
+
+/* Edit + archive buttons inside expanded body */
+.rc-expanded-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+.rc-expanded-btn {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.rc-expanded-btn:active { opacity: 0.6; }
+.rc-expanded-btn--muted { color: var(--text-muted); }
 
 .search-wrapper {
   display: flex;
