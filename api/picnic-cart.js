@@ -17,11 +17,13 @@ export default async function handler(req, res) {
       const productIds = new Set();
 
       for (const line of cart?.items ?? []) {
+        console.log("Processing line:", line);
         const qtyDecorator = Array.isArray(line.decorators)
           ? line.decorators.find((d) => d?.type === "QUANTITY")
           : null;
         const lineQty = Number(qtyDecorator?.quantity) || 1;
         for (const article of line?.items ?? []) {
+          console.log("Processing article:", article);
           if (!article?.id) continue;
           const id = String(article.id);
           if (productIds.has(id)) continue;
