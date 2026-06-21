@@ -32,7 +32,7 @@ export default async function handler(req, res) {
             name: String(article.name || ""),
             unitQuantity: String(article.unit_quantity || ""),
             price: typeof article.price === "number" ? article.price : null,
-            count: Number(qtyDecorator?.quantity) || 1,
+            count: typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1,
             imageId: String(article.image_ids?.[0] || ""),
             available: !unavailable,
           });
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
             const qtyDecorator = Array.isArray(article.decorators)
               ? article.decorators.find((d) => d?.type === "QUANTITY")
               : null;
-            currentCount = Number(qtyDecorator?.quantity) || 1;
+            currentCount = typeof qtyDecorator?.quantity === "number" ? qtyDecorator.quantity : 1;
             break outer;
           }
         }
