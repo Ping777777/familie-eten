@@ -122,34 +122,21 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
 
       {searchOpen && (
         <div className="library-search-panel">
-          <div className="search-wrapper">
+          <div className="wa-search-bar">
+            <svg className="wa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input
-              className="search-input"
+              className="wa-search-input"
               type="text"
               placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
             />
-            {activeTag && (
-              <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
-                {translateTag(activeTag, lang)} ×
-              </button>
-            )}
-          </div>
-          <div className="filter-dropdown filter-dropdown--panel">
-            <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
-              {t("filterAll")}
-            </button>
-            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
-              <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
-                {translateTag(tag, lang)}
-              </button>
-            ))}
-            {!filterExpanded && allTags.length > 9 && (
-              <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
-                +{allTags.length - 9} meer
+            {search && (
+              <button className="wa-search-clear" onClick={() => setSearch("")} aria-label="Wis zoekopdracht">
+                ✕
               </button>
             )}
           </div>
