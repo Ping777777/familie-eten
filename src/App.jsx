@@ -243,6 +243,8 @@ export default function App() {
   const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
   const recipeDotsRef = useRef(null);
+  const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
+  const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -910,6 +912,21 @@ export default function App() {
             </button>
           </div>
         )}
+        {tab === "shopping" && (
+          <div className="header-pill-group">
+            <button className="header-pill-btn" title={t("search")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button className="header-pill-btn" onClick={() => setShoppingPicnicSendKey((k) => k + 1)} title={t("sendPicnic")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>
+            </button>
+            {picnicUser && (
+              <button className="header-pill-btn" onClick={() => setShoppingPicnicCartKey((k) => k + 1)} title={t("picnicViewCart")}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              </button>
+            )}
+          </div>
+        )}
         {tab === "recipes" && (
           <div className="header-right-actions">
             <button className="header-icon-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
@@ -981,6 +998,8 @@ export default function App() {
             picnicAssocSaveFailed={picnicAssocSaveFailed}
             onReloadPicnicAssociations={reloadPicnicAssociations}
             onPicnicSessionExpired={handlePicnicSessionExpired}
+            picnicSendKey={shoppingPicnicSendKey}
+            picnicCartKey={shoppingPicnicCartKey}
           />
         )}
       </main>

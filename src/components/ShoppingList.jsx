@@ -42,13 +42,14 @@ export default function ShoppingList({
   picnicAssocSaveFailed = false,
   onReloadPicnicAssociations,
   onPicnicSessionExpired,
+  picnicSendKey = 0,
+  picnicCartKey = 0,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
-  const [copied, setCopied] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
   const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
@@ -156,31 +157,6 @@ export default function ShoppingList({
   const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
   const clearAllChecks = () => setChecked({});
   const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
-
-  const copyList = () => {
-    const lines = [t("copyTitle"), ""];
-    if (freshItems.length > 0) {
-      if (staples.length > 0) lines.push(t("copyMeals"));
-      freshItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
-    }
-    if (pantryItems.length > 0) {
-      lines.push("", t("copyPantry"));
-      pantryItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
-    }
-    if (staples.length > 0) {
-      lines.push("", t("copyStaples"));
-      STAPLE_CATEGORIES.forEach((cat) => {
-        const catItems = staples.filter((s) => s.category === cat);
-        if (catItems.length === 0) return;
-        lines.push(`${t(CAT_KEY[cat])}:`);
-        catItems.forEach((s) => lines.push(`• ${translateStapleName(s.name, lang)}`));
-      });
-    }
-    navigator.clipboard.writeText(lines.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  };
 
   const addStaple = (category, name) => {
     const nextId = staples.reduce((maxId, staple) => {
@@ -315,6 +291,14 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     }
   };
 
+  useEffect(() => {
+    if (picnicSendKey > 0) sendToPicnic();
+  }, [picnicSendKey]);
+
+  useEffect(() => {
+    if (picnicCartKey > 0) openPicnicCart();
+  }, [picnicCartKey]);
+
   const refreshPicnicCart = async () => {
     if (!picnicUser) return;
     try {
@@ -363,34 +347,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <>
           <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-icon-actions">
-              <button
-                className={`shopping-icon-btn${copied ? " shopping-icon-btn--done" : ""}`}
-                onClick={copyList}
-                title={t("copyList")}
-              >
-                {copied
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                }
-              </button>
-              <button
-                className="shopping-icon-btn"
-                onClick={sendToPicnic}
-                disabled={picnicSend.busy}
-                title={t("sendPicnic")}
-              >
-                {picnicSend.busy
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                }
-              </button>
-              {picnicUser && (
-                <button className="shopping-icon-btn" onClick={openPicnicCart} title={t("picnicViewCart")}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                </button>
-              )}
-            </div>
           </div>
           {checkedItemCount > 0 && (
             <div className="shopping-meta">
