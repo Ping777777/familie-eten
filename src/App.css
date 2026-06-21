@@ -868,6 +868,44 @@
 .shopping-tab:hover { color: var(--text); }
 .shopping-tab.active { background: var(--surface); color: #025c51; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 
+.shopping-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shopping-top-bar .shopping-tabs {
+  flex: 1;
+  min-width: 0;
+}
+
+.shopping-icon-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.shopping-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.12s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.shopping-icon-btn:active { transform: scale(0.92); }
+.shopping-icon-btn--done { color: #025c51; font-weight: 700; font-size: 0.9rem; }
+.shopping-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Keep .shopping-header for kast/staples tabs which still use it */
 .shopping-header {
   display: flex;
   align-items: center;
@@ -883,13 +921,7 @@
   flex-wrap: wrap;
   font-size: 0.85rem;
   color: #666;
-}
-
-.shopping-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-left: auto;
+  margin-bottom: 10px;
 }
 
 .btn-copy, .btn-picnic {

@@ -351,9 +351,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
   const tabBar = (
     <div className="shopping-tabs">
-      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>{t("shoppingList")}</button>
-      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => setActiveListTab("kast")}>{t("pantrySection").replace("🗄 ", "")}</button>
-      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => setActiveListTab("staples")}>{t("staples")}</button>
+      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>Lijst</button>
+      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => setActiveListTab("kast")}>Kast</button>
+      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => setActiveListTab("staples")}>Vast</button>
     </div>
   );
 
@@ -361,28 +361,36 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     <div className="shopping-list">
       {activeListTab === "maaltijden" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            {checkedItemCount > 0 && (
-              <div className="shopping-meta">
-                <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
-              </div>
-            )}
-          </div>
-
-          <div className="shopping-actions">
-            <button className="btn-copy" onClick={copyList}>
-              {copied ? t("copied") : t("copyList")}
-            </button>
-            <button className="btn-picnic" onClick={sendToPicnic} disabled={picnicSend.busy}>
-              {picnicSend.busy ? t("picnicSending") : t("sendPicnic")}
-            </button>
-            {picnicUser && (
-              <button className="btn-picnic-view" onClick={openPicnicCart}>
-                {t("picnicViewCart")}
+            <div className="shopping-icon-actions">
+              <button
+                className={`shopping-icon-btn${copied ? " shopping-icon-btn--done" : ""}`}
+                onClick={copyList}
+                title={t("copyList")}
+              >
+                {copied ? "✓" : "📋"}
               </button>
-            )}
+              <button
+                className="shopping-icon-btn"
+                onClick={sendToPicnic}
+                disabled={picnicSend.busy}
+                title={t("sendPicnic")}
+              >
+                {picnicSend.busy ? "⏳" : "🥬"}
+              </button>
+              {picnicUser && (
+                <button className="shopping-icon-btn" onClick={openPicnicCart} title={t("picnicViewCart")}>
+                  🛒
+                </button>
+              )}
+            </div>
           </div>
+          {checkedItemCount > 0 && (
+            <div className="shopping-meta">
+              <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
+            </div>
+          )}
 
           {(picnicSend.result || picnicSend.error) && (
             <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
