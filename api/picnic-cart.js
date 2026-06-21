@@ -128,7 +128,8 @@ export default async function handler(req, res) {
             const qtyDecorator = Array.isArray(article.decorators)
               ? article.decorators.find((d) => d?.type === "QUANTITY")
               : null;
-            currentCount = Number(qtyDecorator?.quantity) || 1;
+            const parsedQty = Number(qtyDecorator?.quantity);
+            currentCount = Number.isFinite(parsedQty) ? parsedQty : 1;
             break outer;
           }
         }
