@@ -17,17 +17,14 @@ export default async function handler(req, res) {
       const productIds = new Set();
 
       for (const line of cart?.items ?? []) {
-        console.log("Processing line:", line);
-        const qtyDecorator = Array.isArray(line.decorators)
-          ? line.decorators.find((d) => d?.type === "QUANTITY")
-          : null;
-        const lineQty = Number(qtyDecorator?.quantity) || 1;
         for (const article of line?.items ?? []) {
-          console.log("Processing article:", article);
           if (!article?.id) continue;
           const id = String(article.id);
           if (productIds.has(id)) continue;
           productIds.add(id);
+          const qtyDecorator = Array.isArray(article.decorators)
+            ? article.decorators.find((d) => d?.type === "QUANTITY")
+            : null;
           const unavailable = Array.isArray(article.decorators)
             && article.decorators.some((d) => d?.type === "UNAVAILABLE");
           items.push({
@@ -35,7 +32,7 @@ export default async function handler(req, res) {
             name: String(article.name || ""),
             unitQuantity: String(article.unit_quantity || ""),
             price: typeof article.price === "number" ? article.price : null,
-            count: lineQty,
+            count: Number(qtyDecorator?.quantity) || 1,
             imageId: String(article.image_ids?.[0] || ""),
             available: !unavailable,
           });
@@ -122,18 +119,18 @@ export default async function handler(req, res) {
     try {
       const client = new PicnicClient({ countryCode: "NL", authKey });
 
-      // Get current quantity from QUANTITY decorator on OrderLine
+      // Get current quantity from QUANTITY decorator on the article
       const cart = await client.cart.getCart();
       let currentCount = 0;
-      for (const line of cart?.items ?? []) {
-        const hasProduct = Array.isArray(line.items)
-          && line.items.some((a) => a?.id && String(a.id) === productId);
-        if (hasProduct) {
-          const qtyDecorator = Array.isArray(line.decorators)
-            ? line.decorators.find((d) => d?.type === "QUANTITY")
-            : null;
-          currentCount = Number(qtyDecorator?.quantity) || 1;
-          break;
+      outer: for (const line of cart?.items ?? []) {
+        for (const article of line?.items ?? []) {
+          if (article?.id && String(article.id) === productId) {
+            const qtyDecorator = Array.isArray(article.decorators)
+              ? article.decorators.find((d) => d?.type === "QUANTITY")
+              : null;
+            currentCount = Number(qtyDecorator?.quantity) || 1;
+            break outer;
+          }
         }
       }
 
