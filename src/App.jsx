@@ -1035,9 +1035,6 @@ export default function App() {
             onUpdateStaples={updateStaples}
             picnicUser={picnicUser}
             picnicAssociations={picnicAssociations}
-            onUpdatePicnicAssociation={updatePicnicAssociation}
-            picnicAssocSaveFailed={picnicAssocSaveFailed}
-            onReloadPicnicAssociations={reloadPicnicAssociations}
             onPicnicSessionExpired={handlePicnicSessionExpired}
             copyKey={shoppingCopyKey}
             picnicKey={shoppingPicnicKey}

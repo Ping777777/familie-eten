@@ -1,41 +1,9 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { isPantryByDefault } from "../data/pantryStaples";
 import { useLanguage } from "../useLanguage";
 import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
 import { translateStapleName } from "../data/stapleTranslations";
 
-function SwipeItem({ onLeft, onRight, className, onClick, children }) {
-  const [dx, setDx] = useState(0);
-  const x0 = useRef(null);
-  const THRESHOLD = 72;
-  const onTouchStart = (e) => { x0.current = e.touches[0].clientX; };
-  const onTouchMove = (e) => {
-    if (x0.current == null) return;
-    const d = e.touches[0].clientX - x0.current;
-    setDx(Math.max(-110, Math.min(110, d)));
-  };
-  const onTouchEnd = () => {
-    if (dx < -THRESHOLD) onLeft?.();
-    else if (dx > THRESHOLD) onRight?.();
-    setDx(0); x0.current = null;
-  };
-  return (
-    <li className={`swipe-item${className ? ` ${className}` : ""}`} style={{ position: "relative", overflow: "hidden" }}>
-      {dx > 10 && <div className="swipe-hint swipe-hint--right">🗄</div>}
-      {dx < -10 && <div className="swipe-hint swipe-hint--left">✓</div>}
-      <div
-        className="swipe-content"
-        style={{ transform: `translateX(${dx}px)`, transition: dx === 0 ? "transform 0.2s" : "none" }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onClick={onClick}
-      >
-        {children}
-      </div>
-    </li>
-  );
-}
 
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
@@ -71,9 +39,6 @@ export default function ShoppingList({
   onUpdateStaples,
   picnicUser,
   picnicAssociations = {},
-  onUpdatePicnicAssociation,
-  picnicAssocSaveFailed = false,
-  onReloadPicnicAssociations,
   onPicnicSessionExpired,
   copyKey = 0,
   picnicKey = 0,
@@ -96,10 +61,6 @@ export default function ShoppingList({
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [overrides, setOverrides] = useState(loadOverrides);
   const [nameEdits, setNameEdits] = useState({});
-  const [picnicPicker, setPicnicPicker] = useState(null);
-  const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
-  const picnicPickerRef = useRef(null);
-  const picnicSearchSeqRef = useRef(0);
 
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
@@ -109,11 +70,7 @@ export default function ShoppingList({
     if (!staplesEditMode) setNameEdits({});
   }, [staplesEditMode]); // eslint-disable-line
 
-  useEffect(() => {
-    picnicPickerRef.current = picnicPicker;
-  }, [picnicPicker]);
-
-  const ingredientMap = useMemo(() => {
+const ingredientMap = useMemo(() => {
     const map = {};
     days.forEach((day) => {
       family.forEach((member) => {
@@ -161,15 +118,6 @@ export default function ShoppingList({
     return overrides.has(key) ? !defaultPantry : defaultPantry;
   };
 
-  const toggleOverride = (e, name) => {
-    e.stopPropagation();
-    const key = name.toLowerCase();
-    setOverrides((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
 
   const freshItems = items.filter((i) => !isPantry(i.id));
   const pantryItems = items.filter((i) => isPantry(i.id));
@@ -194,21 +142,7 @@ export default function ShoppingList({
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
   const checkedStaplePicnicItems = checkedStaples.map(getStaplePicnicItem);
   const checkedItemsForPicnic = [...checkedMealItems, ...checkedStaplePicnicItems];
-  const missingPicnicChoiceItems = checkedItemsForPicnic.filter((item) => !getAssociation(picnicAssociations, item.id));
 
-  const mealCheckedCount   = checkedMealItems.length;
-  const stapleCheckedCount = checkedStaples.length;
-  const checkedItemCount = mealCheckedCount + stapleCheckedCount;
-
-  const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
-  const clearAllChecks = () => setChecked({});
-  const checkAll = () => {
-    const all = {};
-    uncheckedFresh.forEach((i) => { all[i.id] = true; });
-    uncheckedPantry.forEach((i) => { all[i.id] = true; });
-    setChecked((prev) => ({ ...prev, ...all }));
-  };
-  const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
 
   const copyList = () => {
     const lines = [t("copyTitle"), ""];
@@ -256,58 +190,6 @@ export default function ShoppingList({
     }
   };
 
-  const searchPicnic = async (itemId, query) => {
-    const trimmed = query.trim();
-    if (!picnicUser || !trimmed) {
-      setPicnicSearch({ loading: false, error: "", results: [] });
-      return;
-    }
-
-    const seq = picnicSearchSeqRef.current + 1;
-    picnicSearchSeqRef.current = seq;
-    setPicnicSearch({ loading: true, error: "", results: [] });
-
-    try {
-      const response = await fetch("/api/picnic-search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: trimmed }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
-if (response.status === 401) { setPicnicSearch({ loading: false, error: "", results: [] }); onPicnicSessionExpired?.(); return; }
-      if (!response.ok) {
-        setPicnicSearch({ loading: false, error: data?.message || t("picnicSearchFailed"), results: [] });
-        return;
-      }
-      setPicnicSearch({ loading: false, error: "", results: data.results ?? [] });
-    } catch {
-      if (picnicSearchSeqRef.current !== seq || picnicPickerRef.current?.itemId !== itemId) return;
-      setPicnicSearch({ loading: false, error: t("picnicSearchFailed"), results: [] });
-    }
-  };
-
-  const togglePicnicPicker = (item) => {
-    if (!picnicUser) return;
-    if (picnicPicker?.itemId === item.id) {
-      picnicPickerRef.current = null;
-      setPicnicPicker(null);
-      setPicnicSearch({ loading: false, error: "", results: [] });
-      return;
-    }
-    const query = item.searchName ?? item.name;
-    const nextPicker = { itemId: item.id, query };
-    picnicPickerRef.current = nextPicker;
-    setPicnicPicker(nextPicker);
-    searchPicnic(item.id, query);
-  };
-
-  const handleSelectPicnicAssociation = (itemId, result) => {
-    picnicPickerRef.current = null;
-    setPicnicPicker(null);
-    setPicnicSearch({ loading: false, error: "", results: [] });
-    onUpdatePicnicAssociation(itemId, result ? { ...result, ingredient: itemId } : result);
-  };
 
   const sendToPicnic = async () => {
     if (!picnicUser) {
@@ -482,26 +364,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           )}
 
-          {picnicAssocSaveFailed && (
-            <div className="save-failed-banner" role="alert">
-              <span className="warning-icon">⚠️</span>
-              <span>
-                <strong>{t("notSaved")}</strong> — {t("conflictMsg")}
-              </span>
-              {onReloadPicnicAssociations && (
-                <button className="save-failed-reload" onClick={onReloadPicnicAssociations}>
-                  {t("loadLatest")}
-                </button>
-              )}
-            </div>
-          )}
-
-          {missingPicnicChoiceItems.length > 0 && (
-            <div className="picnic-warning" role="alert">
-              <span className="warning-icon">⚠️</span>
-              <span>{t("picnicMissingChoiceWarning", { n: missingPicnicChoiceItems.length })}</span>
-            </div>
-          )}
 
           <div className="reminders-card">
             {totalPlanned === 0 ? (
@@ -644,106 +506,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
   );
 }
 
-function IngredientList({
-  items,
-  onCheck,
-  onTogglePantry,
-  isPantry,
-  done = false,
-  swipeable = false,
-  picnicUser,
-  picnicAssociations,
-  picnicPicker,
-  picnicSearch,
-  onTogglePicnicPicker,
-  onPicnicQueryChange,
-  onPicnicSearch,
-  onSelectPicnicAssociation,
-}) {
-  const { t } = useLanguage();
-  if (items.length === 0) return null;
-  return (
-    <ul className="ingredient-list">
-      {items.map((item) => {
-        const inner = (
-          <>
-            <span className="check-box">{done ? "☑" : "☐"}</span>
-            <div className="ingredient-details">
-              <span className="ingredient-name">{item.name}</span>
-              <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
-              {!done && item.meals && (
-                <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
-              )}
-              <PicnicAssociation
-                item={item}
-                association={getAssociation(picnicAssociations, item.id)}
-                picnicUser={picnicUser}
-                pickerOpen={picnicPicker?.itemId === item.id}
-                pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
-                picnicSearch={picnicSearch}
-                onTogglePicker={onTogglePicnicPicker}
-                onQueryChange={onPicnicQueryChange}
-                onSearch={onPicnicSearch}
-                onSelect={onSelectPicnicAssociation}
-              />
-            </div>
-            {!done && !isPantry && (
-              <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
-                🗄
-              </button>
-            )}
-          </>
-        );
-        if (swipeable) {
-          return (
-            <SwipeItem
-              key={item.id}
-              className={`ingredient-item${done ? " done" : ""}`}
-              onClick={() => onCheck(item.id)}
-              onLeft={() => onCheck(item.id)}
-              onRight={() => onTogglePantry({ stopPropagation: () => {} }, item.id)}
-            >
-              {inner}
-            </SwipeItem>
-          );
-        }
-        return (
-          <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-            {inner}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function StaplePicnicAssociation({
-  staple,
-  picnicAssociations,
-  picnicUser,
-  picnicPicker,
-  picnicSearch,
-  onTogglePicnicPicker,
-  onPicnicQueryChange,
-  onPicnicSearch,
-  onSelectPicnicAssociation,
-}) {
-  const item = getStaplePicnicItem(staple);
-  return (
-    <PicnicAssociation
-      item={item}
-      association={getAssociation(picnicAssociations, item.id)}
-      picnicUser={picnicUser}
-      pickerOpen={picnicPicker?.itemId === item.id}
-      pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
-      picnicSearch={picnicSearch}
-      onTogglePicker={onTogglePicnicPicker}
-      onQueryChange={onPicnicQueryChange}
-      onSearch={onPicnicSearch}
-      onSelect={onSelectPicnicAssociation}
-    />
-  );
-}
 
 const PICNIC_IMAGE_BASE = "https://storefront-prod.nl.picnicinternational.com/static/images";
 
@@ -1080,184 +842,6 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
   );
 }
 
-function PicnicAssociation({
-  item,
-  association,
-  picnicUser,
-  pickerOpen,
-  pickerQuery,
-  picnicSearch,
-  onTogglePicker,
-  onQueryChange,
-  onSearch,
-  onSelect,
-}) {
-  const { t, lang } = useLanguage();
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const detailsTimeoutRef = useRef(null);
-  const detailsLongPressRef = useRef(false);
-  const detailsRef = useRef(null);
-
-  const priceFormatter = useMemo(
-    () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
-      style: "currency",
-      currency: "EUR",
-    }),
-    [lang]
-  );
-  const formattedPrice = typeof association?.displayPrice === "number"
-    ? priceFormatter.format(association.displayPrice / 100)
-    : null;
-
-  const summary = association
-    ? [
-      association.name,
-      association.unitQuantity,
-      formattedPrice,
-    ].filter(Boolean).join(" · ")
-    : t("picnicAssociationNone");
-
-  useEffect(() => () => {
-    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
-  }, []);
-
-  useEffect(() => {
-    if (!detailsOpen) return undefined;
-    const handlePointerDown = (event) => {
-      if (!detailsRef.current?.contains(event.target)) {
-        setDetailsOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [detailsOpen]);
-
-  const clearDetailsTimeout = () => {
-    if (detailsTimeoutRef.current) {
-      clearTimeout(detailsTimeoutRef.current);
-      detailsTimeoutRef.current = null;
-    }
-  };
-
-  const openDetails = () => {
-    if (association) setDetailsOpen(true);
-  };
-
-  const closeDetails = () => {
-    clearDetailsTimeout();
-    detailsLongPressRef.current = false;
-    setDetailsOpen(false);
-  };
-
-  const handleTouchStart = () => {
-    if (!association) return;
-    detailsLongPressRef.current = false;
-    clearDetailsTimeout();
-    detailsTimeoutRef.current = setTimeout(() => {
-      detailsLongPressRef.current = true;
-      setDetailsOpen(true);
-      detailsTimeoutRef.current = null;
-    }, 450);
-  };
-
-  const handleTouchEnd = () => {
-    clearDetailsTimeout();
-  };
-
-  const handleTriggerClick = () => {
-    if (!association) return;
-    if (detailsLongPressRef.current) {
-      detailsLongPressRef.current = false;
-      return;
-    }
-    setDetailsOpen((open) => !open);
-  };
-
-  return (
-    <div className="picnic-association-block" onClick={(e) => e.stopPropagation()}>
-      {association ? (
-        <div
-          ref={detailsRef}
-          className={`picnic-association-summary${detailsOpen ? " open" : ""}`}
-          onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
-          onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={closeDetails}
-          onTouchMove={handleTouchEnd}
-        >
-          <button
-            type="button"
-            className="picnic-association-trigger"
-            onClick={handleTriggerClick}
-            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
-            onBlur={closeDetails}
-            title={summary}
-          >
-            <span className="picnic-association-label">
-              {t("picnicAssociationLabel")}: {summary}
-            </span>
-            <span className="picnic-info-icon" aria-hidden="true">i</span>
-          </button>
-          <PicnicProductPopover product={association} picnicUser={picnicUser} open={detailsOpen} />
-        </div>
-      ) : (
-        <span className="picnic-association-label empty">
-          {t("picnicAssociationLabel")}: {summary}
-        </span>
-      )}
-      {picnicUser && (
-        <div className="picnic-association-actions">
-          <button
-            type="button"
-            className="picnic-select-btn"
-            onClick={() => onTogglePicker(item)}
-          >
-            {association ? t("picnicAssociationChange") : t("picnicAssociationChoose")}
-          </button>
-        </div>
-      )}
-      {pickerOpen && (
-        <div className="picnic-search-panel">
-          <form
-            className="picnic-search-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onSearch(item.id, pickerQuery);
-            }}
-          >
-            <input
-              className="search-input picnic-search-input"
-              value={pickerQuery}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder={t("picnicSearchPlaceholder")}
-            />
-            <button type="submit" className="picnic-select-btn" disabled={picnicSearch.loading}>
-              {picnicSearch.loading ? t("picnicSearchBusy") : t("picnicSearchBtn")}
-            </button>
-          </form>
-          {picnicSearch.error && <p className="picnic-search-feedback">{picnicSearch.error}</p>}
-          {!picnicSearch.loading && !picnicSearch.error && picnicSearch.results.length === 0 && (
-            <p className="picnic-search-feedback">{t("picnicSearchEmpty")}</p>
-          )}
-          {picnicSearch.results.length > 0 && (
-            <ul className="picnic-search-results">
-              {picnicSearch.results.map((result) => (
-                <PicnicSearchResult
-                  key={result.id}
-                  result={result}
-                  selected={association?.id === result.id}
-                  picnicUser={picnicUser}
-                  onSelect={(r) => onSelect(item.id, r)}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function AddStapleRow({ onAdd, placeholder }) {
   const [name, setName] = useState("");
