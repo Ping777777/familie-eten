@@ -928,18 +928,18 @@ export default function App() {
           </div>
         )}
         {tab === "recipes" && (
-          <div className="header-right-actions">
-            <button className="header-icon-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
+          <div className="header-pill-group">
+            <button className="header-pill-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
-            <button className="header-icon-btn header-icon-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
+            <button className="header-pill-btn header-pill-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             {recipeEditListMode ? (
               <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
             ) : (
               <div ref={recipeDotsRef} style={{ position: "relative" }}>
-                <button className="header-icon-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
                 </button>
                 {recipeDotsOpen && (
