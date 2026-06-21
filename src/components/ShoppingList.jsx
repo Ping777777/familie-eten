@@ -4,6 +4,39 @@ import { useLanguage } from "../useLanguage";
 import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
 import { translateStapleName } from "../data/stapleTranslations";
 
+function SwipeItem({ onLeft, onRight, className, onClick, children }) {
+  const [dx, setDx] = useState(0);
+  const x0 = useRef(null);
+  const THRESHOLD = 72;
+  const onTouchStart = (e) => { x0.current = e.touches[0].clientX; };
+  const onTouchMove = (e) => {
+    if (x0.current == null) return;
+    const d = e.touches[0].clientX - x0.current;
+    setDx(Math.max(-110, Math.min(110, d)));
+  };
+  const onTouchEnd = () => {
+    if (dx < -THRESHOLD) onLeft?.();
+    else if (dx > THRESHOLD) onRight?.();
+    setDx(0); x0.current = null;
+  };
+  return (
+    <li className={`swipe-item${className ? ` ${className}` : ""}`} style={{ position: "relative", overflow: "hidden" }}>
+      {dx > 10 && <div className="swipe-hint swipe-hint--right">🗄</div>}
+      {dx < -10 && <div className="swipe-hint swipe-hint--left">✓</div>}
+      <div
+        className="swipe-content"
+        style={{ transform: `translateX(${dx}px)`, transition: dx === 0 ? "transform 0.2s" : "none" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={onClick}
+      >
+        {children}
+      </div>
+    </li>
+  );
+}
+
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 const CAT_KEY = { Ontbijt: "catBreakfast", Lunch: "catLunch", Tussendoor: "catSnacks", Overig: "catOther" };
@@ -42,17 +75,27 @@ export default function ShoppingList({
   picnicAssocSaveFailed = false,
   onReloadPicnicAssociations,
   onPicnicSessionExpired,
+  copyKey = 0,
+  picnicKey = 0,
+  onCopied,
+  onPicnicBusy,
+  activeTab = "maaltijden",
+  onTabChange,
+  staplesEditMode = false,
+  onStaplesEditModeChange,
 }) {
   const { t, lang } = useLanguage();
+  const activeListTab = activeTab;
+  const setActiveListTab = (v) => onTabChange?.(v);
+  const setStaplesEditMode = (fn) => {
+    onStaplesEditModeChange?.(typeof fn === "function" ? fn(staplesEditMode) : fn);
+  };
   const [checked, setChecked] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
-  const [copied, setCopied] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
-  const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
-  const [activeListTab, setActiveListTab] = useState("maaltijden");
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
@@ -61,6 +104,10 @@ export default function ShoppingList({
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
+
+  useEffect(() => {
+    if (!staplesEditMode) setNameEdits({});
+  }, [staplesEditMode]); // eslint-disable-line
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -155,6 +202,12 @@ export default function ShoppingList({
 
   const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
   const clearAllChecks = () => setChecked({});
+  const checkAll = () => {
+    const all = {};
+    uncheckedFresh.forEach((i) => { all[i.id] = true; });
+    uncheckedPantry.forEach((i) => { all[i.id] = true; });
+    setChecked((prev) => ({ ...prev, ...all }));
+  };
   const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
 
   const copyList = () => {
@@ -177,8 +230,8 @@ export default function ShoppingList({
       });
     }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      onCopied?.(true);
+      setTimeout(() => onCopied?.(false), 2500);
     });
   };
 
@@ -272,6 +325,7 @@ if (response.status === 401) { setPicnicSearch({ loading: false, error: "", resu
 
     const productIds = itemsWithAssociation.map(({ association }) => association.id);
     setPicnicSend({ busy: true, result: null, error: "" });
+    onPicnicBusy?.(true);
 
     // Read current cart before adding
     await openPicnicCart();
@@ -283,19 +337,26 @@ if (response.status === 401) { setPicnicSearch({ loading: false, error: "", resu
         body: JSON.stringify({ productIds }),
       });
       const data = await response.json().catch(() => ({}));
-if (response.status === 401) { setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") }); onPicnicSessionExpired?.(); return; }
+if (response.status === 401) { setPicnicSend({ busy: false, result: null, error: t("picnicSendNotLoggedIn") }); onPicnicBusy?.(false); onPicnicSessionExpired?.(); return; }
       if (!response.ok) {
         setPicnicSend({ busy: false, result: null, error: data?.message || t("picnicSendFailed") });
+        onPicnicBusy?.(false);
         openPicnicCart();
         return;
       }
       setPicnicSend({ busy: false, result: { added: data.added, skipped: data.skipped }, error: "" });
+      onPicnicBusy?.(false);
       // Read cart again after adding to show updated contents
       openPicnicCart();
     } catch {
       setPicnicSend({ busy: false, result: null, error: t("picnicSendFailed") });
+      onPicnicBusy?.(false);
     }
   };
+
+  // ponytail: omit functions from deps — only fire on key bump
+  useEffect(() => { if (copyKey > 0) copyList(); }, [copyKey]); // eslint-disable-line
+  useEffect(() => { if (picnicKey > 0) sendToPicnic(); }, [picnicKey]); // eslint-disable-line
 
   const openPicnicCart = async () => {
     if (!picnicUser) return;
@@ -363,40 +424,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <>
           <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-icon-actions">
-              <button
-                className={`shopping-icon-btn${copied ? " shopping-icon-btn--done" : ""}`}
-                onClick={copyList}
-                title={t("copyList")}
-              >
-                {copied
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                }
-              </button>
-              <button
-                className="shopping-icon-btn"
-                onClick={sendToPicnic}
-                disabled={picnicSend.busy}
-                title={t("sendPicnic")}
-              >
-                {picnicSend.busy
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                }
-              </button>
-              {picnicUser && (
-                <button className="shopping-icon-btn" onClick={openPicnicCart} title={t("picnicViewCart")}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                </button>
-              )}
-            </div>
           </div>
-          {checkedItemCount > 0 && (
-            <div className="shopping-meta">
-              <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
-            </div>
-          )}
 
           {(picnicSend.result || picnicSend.error) && (
             <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
@@ -475,195 +503,103 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           )}
 
-          {items.length > 0 && (
-            <>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(mealCheckedCount / items.length) * 100}%` }} />
-              </div>
-              <p className="progress-label">{t("checkedProgress", { meals: totalPlanned, done: mealCheckedCount, total: items.length })}</p>
-            </>
-          )}
-
-          {checkedItemCount > 0 && (
-            <div className="checked-section">
-              <h4>{t("inCart", { n: checkedItemCount })}</h4>
-              {mealCheckedCount > 0 && (
-                <IngredientList
-                  items={checkedMealItems}
-                  onCheck={toggleCheck}
-                  onTogglePantry={toggleOverride}
-                  isPantry={false}
-                  done
-                  picnicUser={picnicUser}
-                  picnicAssociations={picnicAssociations}
-                  picnicPicker={picnicPicker}
-                  picnicSearch={picnicSearch}
-                  onTogglePicnicPicker={togglePicnicPicker}
-                  onPicnicQueryChange={updatePicnicPickerQuery}
-                  onPicnicSearch={searchPicnic}
-                  onSelectPicnicAssociation={handleSelectPicnicAssociation}
-                />
-              )}
-              {stapleCheckedCount > 0 && (
-                <ul className="ingredient-list">
-                  {checkedStaples.map((s) => (
-                    <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                      <span className="check-box">☑</span>
-                      <div className="ingredient-details">
-                        <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
-                        <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
-                        <StaplePicnicAssociation
-                          staple={s}
-                          picnicAssociations={picnicAssociations}
-                          picnicUser={picnicUser}
-                          picnicPicker={picnicPicker}
-                          picnicSearch={picnicSearch}
-                          onTogglePicnicPicker={togglePicnicPicker}
-                          onPicnicQueryChange={updatePicnicPickerQuery}
-                          onPicnicSearch={searchPicnic}
-                          onSelectPicnicAssociation={handleSelectPicnicAssociation}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {totalPlanned === 0 ? (
-            <div className="meal-empty-notice">
-              <p>{t("noMealsPlanned")}</p>
-              <p>{t("goToPlanner")}</p>
-            </div>
-          ) : (
-            <>
-              <IngredientList
-                items={uncheckedFresh}
-                onCheck={toggleCheck}
-                onTogglePantry={toggleOverride}
-                isPantry={false}
-                picnicUser={picnicUser}
-                picnicAssociations={picnicAssociations}
-                picnicPicker={picnicPicker}
-                picnicSearch={picnicSearch}
-                onTogglePicnicPicker={togglePicnicPicker}
-                onPicnicQueryChange={updatePicnicPickerQuery}
-                onPicnicSearch={searchPicnic}
-                onSelectPicnicAssociation={handleSelectPicnicAssociation}
-              />
-            </>
-          )}
+          <div className="reminders-card">
+            {totalPlanned === 0 ? (
+              <>
+                <div className="reminders-row reminders-row--divider">
+                  <span className="reminders-item-name reminders-item-name--muted">{t("noMealsPlanned")}</span>
+                </div>
+                <div className="reminders-row">
+                  <span className="reminders-item-name reminders-item-name--muted reminders-item-name--small">{t("goToPlanner")}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {uncheckedFresh.map((item, idx) => (
+                  <div key={item.id} className={`reminders-row${idx < uncheckedFresh.length - 1 || checkedFresh.length > 0 ? " reminders-row--divider" : ""}`}>
+                    <button className="reminders-circle" onClick={() => toggleCheck(item.id)} aria-label="aanvinken" />
+                    <div className="reminders-ingredient">
+                      <span className="reminders-item-name">{item.name}</span>
+                      {item.amounts?.length > 0 && <span className="reminders-amount">{item.amounts.join(", ")}</span>}
+                    </div>
+                  </div>
+                ))}
+                {checkedFresh.map((item, idx) => (
+                  <div key={item.id} className={`reminders-row reminders-row--checked${idx < checkedFresh.length - 1 ? " reminders-row--divider" : ""}`}>
+                    <button className="reminders-circle reminders-circle--done" onClick={() => toggleCheck(item.id)} aria-label="uitvinken">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                    <div className="reminders-ingredient">
+                      <span className="reminders-item-name reminders-item-name--done">{item.name}</span>
+                      {item.amounts?.length > 0 && <span className="reminders-amount">{item.amounts.join(", ")}</span>}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </>
       )}
 
       {activeListTab === "staples" && (
         <>
-          <div className="shopping-top-bar">
+          <div className="shopping-header">
             {tabBar}
-            <div className="shopping-icon-actions">
-              {stapleCheckedCount > 0 && (
-                <button className="shopping-icon-btn" onClick={clearStapleChecks} title={t("uncheckAll")}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
-                </button>
-              )}
-              <button
-                className={`shopping-icon-btn${staplesEditMode ? " shopping-icon-btn--done" : ""}`}
-                onClick={() => {
-                  if (staplesEditMode) setNameEdits({});
-                  setStaplesEditMode((e) => !e);
-                }}
-                title={staplesEditMode ? t("doneEditing") : t("editMode")}
-              >
-                {staplesEditMode
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                }
-              </button>
-            </div>
           </div>
-
-          {stapleCheckedCount > 0 && staples.length > 0 && (
-            <>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(stapleCheckedCount / staples.length) * 100}%` }} />
-              </div>
-              <p className="progress-label">{t("checkedProgress", { done: stapleCheckedCount, total: staples.length })}</p>
-            </>
-          )}
-
-          {stapleCheckedCount > 0 && (
-            <div className="checked-section">
-              <h4>{t("inCart", { n: stapleCheckedCount })}</h4>
-              <ul className="ingredient-list">
-                {checkedStaples.map((s) => (
-                  <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                    <span className="check-box">☑</span>
-                    <div className="ingredient-details">
-                      <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
-                      <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
-                      <StaplePicnicAssociation
-                        staple={s}
-                        picnicAssociations={picnicAssociations}
-                        picnicUser={picnicUser}
-                        picnicPicker={picnicPicker}
-                        picnicSearch={picnicSearch}
-                        onTogglePicnicPicker={togglePicnicPicker}
-                        onPicnicQueryChange={updatePicnicPickerQuery}
-                        onPicnicSearch={searchPicnic}
-                        onSelectPicnicAssociation={handleSelectPicnicAssociation}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {STAPLE_CATEGORIES.map((cat) => {
             const catItems = staples.filter((s) => s.category === cat);
             const uncheckedCatItems = catItems.filter((s) => !checked[`s:${s.id}`]);
-            if (!staplesEditMode && uncheckedCatItems.length === 0) return null;
+            const checkedCatItems = catItems.filter((s) => !!checked[`s:${s.id}`]);
+            if (!staplesEditMode && catItems.length === 0) return null;
+            const displayItems = staplesEditMode ? catItems : uncheckedCatItems;
             return (
-              <div key={cat} className="staples-category">
-                <h4 className="staples-category-title">{t(CAT_KEY[cat])}</h4>
-                <ul className="staples-list">
-                  {(staplesEditMode ? catItems : uncheckedCatItems).map((item) => (
-                    <li
-                      key={item.id}
-                      className={`staples-item${staplesEditMode ? " editing" : ""}`}
-                      onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
-                    >
-                      {!staplesEditMode && <span className="check-box">☐</span>}
+              <div key={cat} className="reminders-card">
+                <div className="reminders-card-header">{t(CAT_KEY[cat])}</div>
+                {displayItems.map((item, idx) => (
+                  <div key={item.id} className={`reminders-row${idx < displayItems.length - 1 || staplesEditMode || checkedCatItems.length > 0 ? " reminders-row--divider" : ""}`}>
+                    <button className="reminders-circle" onClick={() => toggleStaple(item.id)} aria-label="aanvinken" />
+                    {staplesEditMode ? (
+                      <input
+                        className="reminders-rename-input"
+                        value={nameEdits[item.id] ?? item.name}
+                        onChange={(e) => setNameEdits((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        onBlur={() => saveRename(item)}
+                      />
+                    ) : (
+                      <span className="reminders-item-name">{translateStapleName(item.name, lang)}</span>
+                    )}
+                    {staplesEditMode && (
+                      <button className="reminders-remove-btn" onClick={() => removeStaple(item.id)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {checkedCatItems.length > 0 && (
+                  checkedCatItems.map((item, idx) => (
+                    <div key={item.id} className={`reminders-row reminders-row--checked${idx < checkedCatItems.length - 1 || staplesEditMode ? " reminders-row--divider" : ""}`}>
+                      <button className="reminders-circle reminders-circle--done" onClick={() => toggleStaple(item.id)} aria-label="uitvinken">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
                       {staplesEditMode ? (
                         <input
-                          className="staples-rename-input"
+                          className="reminders-rename-input reminders-rename-input--done"
                           value={nameEdits[item.id] ?? item.name}
                           onChange={(e) => setNameEdits((prev) => ({ ...prev, [item.id]: e.target.value }))}
                           onBlur={() => saveRename(item)}
                         />
                       ) : (
-                       <div className="ingredient-details">
-                         <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
-                         <StaplePicnicAssociation
-                           staple={item}
-                           picnicAssociations={picnicAssociations}
-                           picnicUser={picnicUser}
-                           picnicPicker={picnicPicker}
-                           picnicSearch={picnicSearch}
-                           onTogglePicnicPicker={togglePicnicPicker}
-                           onPicnicQueryChange={updatePicnicPickerQuery}
-                           onPicnicSearch={searchPicnic}
-                           onSelectPicnicAssociation={handleSelectPicnicAssociation}
-                         />
-                       </div>
+                        <span className="reminders-item-name reminders-item-name--done">{translateStapleName(item.name, lang)}</span>
                       )}
                       {staplesEditMode && (
-                        <button className="staples-remove-btn" onClick={() => removeStaple(item.id)} title={t("removeItem")}>×</button>
+                        <button className="reminders-remove-btn" onClick={() => removeStaple(item.id)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
                       )}
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  ))
+                )}
                 {staplesEditMode && <AddStapleRow onAdd={(name) => addStaple(cat, name)} placeholder={t("addItemPlaceholder")} />}
               </div>
             );
@@ -673,31 +609,40 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
       {activeListTab === "kast" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-meta">
-              <span>{t("pantryCount", { n: uncheckedPantry.length })}</span>
-            </div>
           </div>
-          <p className="pantry-hint">{t("pantryHint")}</p>
-          {pantryItems.length === 0 ? (
-            <div className="meal-empty-notice"><p>{t("noMealsPlanned")}</p></div>
-          ) : (
-            <IngredientList
-              items={uncheckedPantry}
-              onCheck={toggleCheck}
-              onTogglePantry={toggleOverride}
-              isPantry={true}
-              picnicUser={picnicUser}
-              picnicAssociations={picnicAssociations}
-              picnicPicker={picnicPicker}
-              picnicSearch={picnicSearch}
-              onTogglePicnicPicker={togglePicnicPicker}
-              onPicnicQueryChange={updatePicnicPickerQuery}
-              onPicnicSearch={searchPicnic}
-              onSelectPicnicAssociation={handleSelectPicnicAssociation}
-            />
-          )}
+
+          <div className="reminders-card">
+            {pantryItems.length === 0 ? (
+              <div className="reminders-row">
+                <span className="reminders-item-name reminders-item-name--muted">{t("noMealsPlanned")}</span>
+              </div>
+            ) : (
+              <>
+                {uncheckedPantry.map((item, idx) => (
+                  <div key={item.id} className={`reminders-row${idx < uncheckedPantry.length - 1 || checkedPantry.length > 0 ? " reminders-row--divider" : ""}`}>
+                    <button className="reminders-circle" onClick={() => toggleCheck(item.id)} aria-label="aanvinken" />
+                    <div className="reminders-ingredient">
+                      <span className="reminders-item-name">{item.name}</span>
+                      {item.amounts?.length > 0 && <span className="reminders-amount">{item.amounts.join(", ")}</span>}
+                    </div>
+                  </div>
+                ))}
+                {checkedPantry.map((item, idx) => (
+                  <div key={item.id} className={`reminders-row reminders-row--checked${idx < checkedPantry.length - 1 ? " reminders-row--divider" : ""}`}>
+                    <button className="reminders-circle reminders-circle--done" onClick={() => toggleCheck(item.id)} aria-label="uitvinken">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                    <div className="reminders-ingredient">
+                      <span className="reminders-item-name reminders-item-name--done">{item.name}</span>
+                      {item.amounts?.length > 0 && <span className="reminders-amount">{item.amounts.join(", ")}</span>}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -710,6 +655,7 @@ function IngredientList({
   onTogglePantry,
   isPantry,
   done = false,
+  swipeable = false,
   picnicUser,
   picnicAssociations,
   picnicPicker,
@@ -723,35 +669,55 @@ function IngredientList({
   if (items.length === 0) return null;
   return (
     <ul className="ingredient-list">
-      {items.map((item) => (
-        <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-          <span className="check-box">{done ? "☑" : "☐"}</span>
-          <div className="ingredient-details">
-            <span className="ingredient-name">{item.name}</span>
-            <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
-            {!done && item.meals && (
-              <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
+      {items.map((item) => {
+        const inner = (
+          <>
+            <span className="check-box">{done ? "☑" : "☐"}</span>
+            <div className="ingredient-details">
+              <span className="ingredient-name">{item.name}</span>
+              <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
+              {!done && item.meals && (
+                <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
+              )}
+              <PicnicAssociation
+                item={item}
+                association={getAssociation(picnicAssociations, item.id)}
+                picnicUser={picnicUser}
+                pickerOpen={picnicPicker?.itemId === item.id}
+                pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
+                picnicSearch={picnicSearch}
+                onTogglePicker={onTogglePicnicPicker}
+                onQueryChange={onPicnicQueryChange}
+                onSearch={onPicnicSearch}
+                onSelect={onSelectPicnicAssociation}
+              />
+            </div>
+            {!done && !isPantry && (
+              <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
+                🗄
+              </button>
             )}
-            <PicnicAssociation
-              item={item}
-              association={getAssociation(picnicAssociations, item.id)}
-              picnicUser={picnicUser}
-              pickerOpen={picnicPicker?.itemId === item.id}
-              pickerQuery={picnicPicker?.itemId === item.id ? picnicPicker.query : ""}
-              picnicSearch={picnicSearch}
-              onTogglePicker={onTogglePicnicPicker}
-              onQueryChange={onPicnicQueryChange}
-              onSearch={onPicnicSearch}
-              onSelect={onSelectPicnicAssociation}
-            />
-          </div>
-          {!done && !isPantry && (
-            <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
-              🗄
-            </button>
-          )}
-        </li>
-      ))}
+          </>
+        );
+        if (swipeable) {
+          return (
+            <SwipeItem
+              key={item.id}
+              className={`ingredient-item${done ? " done" : ""}`}
+              onClick={() => onCheck(item.id)}
+              onLeft={() => onCheck(item.id)}
+              onRight={() => onTogglePantry({ stopPropagation: () => {} }, item.id)}
+            >
+              {inner}
+            </SwipeItem>
+          );
+        }
+        return (
+          <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
+            {inner}
+          </li>
+        );
+      })}
     </ul>
   );
 }

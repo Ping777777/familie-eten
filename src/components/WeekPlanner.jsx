@@ -60,7 +60,16 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const [pickerFilter, setPickerFilter] = useState(null);
 
   const months = t("months");
-  const { week, year } = getIsoWeekInfo(weekOffset);
+  const { year } = getIsoWeekInfo(weekOffset);
+  const monday = getMondayOfWeek(weekOffset);
+  const dayDates = days.map((_, idx) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + idx);
+    return d.getDate();
+  });
+  const midweek = new Date(monday);
+  midweek.setDate(monday.getDate() + 2);
+  const monthLabel = months[midweek.getMonth()];
 
   const SPECIAL_MEALS = [
     { id: -1, name: t("specialMeal1"), emoji: "🍱", tags: [], ingredients: [] },
@@ -85,15 +94,21 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   return (
     <div className="week-planner">
       <div className="week-nav">
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>‹</button>
-        <div className="week-label-group">
-          <span className="week-relative">{t("weekLabel", { n: week, year })}</span>
-          <span className="week-dates">{formatWeekRange(weekOffset, months)}</span>
+        <div className="week-nav-side">
+          {weekOffset !== 0 && (
+            <button className="week-today-btn" onClick={() => onWeekChange(0)}>{t("today")}</button>
+          )}
         </div>
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>›</button>
-        {weekOffset !== 0 && (
-          <button className="week-today-btn" onClick={() => onWeekChange(0)}>{t("today")}</button>
-        )}
+        <div className="week-nav-center">
+          <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span className="week-month">{monthLabel}</span>
+          <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div className="week-nav-side week-nav-side--right"></div>
       </div>
 
       {saveFailed && (
@@ -125,7 +140,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       )}
 
       <div className="planner-grid">
-        <div className="grid-header" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
+        {/* Header: corner + member name columns */}
+        <div className="grid-header" style={{ gridTemplateColumns: `36px repeat(${family.length}, 1fr)` }}>
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
@@ -134,9 +150,13 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           ))}
         </div>
 
+        {/* One row per day */}
         {days.map((day, idx) => (
-          <div key={day} className="grid-row" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
-            <div className="day-letter">{tDay(day).slice(0, 2)}</div>
+          <div key={day} className="grid-row" style={{ gridTemplateColumns: `36px repeat(${family.length}, 1fr)` }}>
+            <div className="day-row-label">
+              <span className="drl-name">{tDay(day).slice(0, 2)}</span>
+              <span className="drl-date">{dayDates[idx]}</span>
+            </div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
@@ -165,7 +185,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                         title={t("removeMeal")}
                       >×</button>
                       <div className="meal-tag">
-                        <span>{recipe.emoji}</span>
+                        <span className="meal-emoji">{recipe.emoji}</span>
                         <span className="meal-name">{getRecipeName(recipe, lang)}</span>
                       </div>
                     </>
@@ -182,9 +202,19 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       {selecting && (() => {
         const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
         const isReplacing = Boolean(currentId && getRecipe(currentId));
+        const scheduledIds = new Set(
+          Object.entries(weekPlan).flatMap(([day, dayPlan]) =>
+            Object.entries(dayPlan)
+              .filter(([member, id]) => id && id > 0 && !(day === selecting.day && member === selecting.member))
+              .map(([, id]) => id)
+          )
+        );
         const visibleRecipes = recipes
           .filter((r) => !r.archived)
-          .filter((r) => matchesFilter(r, pickerFilter));
+          .filter((r) => !scheduledIds.has(r.id))
+          .filter((r) => matchesFilter(r, pickerFilter))
+          .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+        const firstNonFavIdx = visibleRecipes.findIndex((r) => !r.favorite);
         return (
           <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
@@ -235,23 +265,30 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 {visibleRecipes.length === 0 && (
                   <p className="picker-empty">{t("noRecipesCategory")}</p>
                 )}
-                {visibleRecipes.map((r) => {
+                {visibleRecipes.map((r, idx) => {
                   const isCurrent = r.id === currentId;
                   return (
-                    <button
-                      key={r.id}
-                      className={`picker-card ${isCurrent ? "picker-card--current" : ""}`}
-                      onClick={() => handleSelect(r.id)}
-                    >
-                      <span className="picker-emoji">{r.emoji}</span>
-                      <span className="picker-name">{getRecipeName(r, lang)}</span>
-                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
-                      <div className="picker-tags">
-                        {r.tags.map((tag) => (
-                          <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
-                        ))}
-                      </div>
-                    </button>
+                    <div key={r.id} className="picker-card-wrap">
+                      {idx === firstNonFavIdx && firstNonFavIdx > 0 && (
+                        <div className="picker-separator" />
+                      )}
+                      <button
+                        className={`picker-card ${isCurrent ? "picker-card--current" : ""}`}
+                        onClick={() => handleSelect(r.id)}
+                      >
+                        {r.favorite && (
+                          <svg className="picker-fav-star" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        )}
+                        <span className="picker-emoji">{r.emoji}</span>
+                        <span className="picker-name">{getRecipeName(r, lang)}</span>
+                        {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
+                        <div className="picker-tags">
+                          {r.tags.map((tag) => (
+                            <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
+                          ))}
+                        </div>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
