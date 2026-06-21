@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { getIsoWeekInfo, getMondayOfWeek } from "../week";
+import { getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 import { useLanguage } from "../useLanguage";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
@@ -37,30 +37,13 @@ function computeWarnings(days, weekPlan, recipes) {
     }));
 }
 
-function formatWeekRange(offset, months) {
-  const monday = getMondayOfWeek(offset);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const d1 = monday.getDate();
-  const d2 = sunday.getDate();
-  const m1 = months[monday.getMonth()];
-  const m2 = months[sunday.getMonth()];
-  const y = sunday.getFullYear();
-
-  if (monday.getMonth() === sunday.getMonth()) {
-    return `${d1} — ${d2} ${m1}`;
-  }
-  return `${d1} ${m1} — ${d2} ${m2}`;
-}
-
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
   const { t, tDay, lang } = useLanguage();
   const [selecting, setSelecting] = useState(null);
   const [pickerFilter, setPickerFilter] = useState(null);
 
   const months = t("months");
-  const { week, year } = getIsoWeekInfo(weekOffset);
+  const monday = getMondayOfWeek(weekOffset);
 
   const SPECIAL_MEALS = [
     { id: -1, name: t("specialMeal1"), emoji: "🍱", tags: [], ingredients: [] },
@@ -86,14 +69,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     <div className="week-planner">
       <div className="week-nav">
         <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>‹</button>
-        <div className="week-label-group">
-          <span className="week-relative">{t("weekLabel", { n: week, year })}</span>
-          <span className="week-dates">{formatWeekRange(weekOffset, months)}</span>
-        </div>
+        <span className="week-month-label">{months[monday.getMonth()]}</span>
         <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>›</button>
-        {weekOffset !== 0 && (
-          <button className="week-today-btn" onClick={() => onWeekChange(0)}>{t("today")}</button>
-        )}
       </div>
 
       {saveFailed && (
@@ -134,9 +111,15 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           ))}
         </div>
 
-        {days.map((day, idx) => (
+        {days.map((day, idx) => {
+          const cellDate = new Date(monday);
+          cellDate.setDate(monday.getDate() + idx);
+          return (
           <div key={day} className="grid-row" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
-            <div className="day-letter">{tDay(day).slice(0, 2)}</div>
+            <div className="day-letter">
+              <span className="day-abbr">{tDay(day).slice(0, 2)}</span>
+              <span className="day-num">{cellDate.getDate()}</span>
+            </div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
@@ -176,7 +159,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               );
             })}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {selecting && (() => {
