@@ -166,7 +166,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
             onEdit={(e) => handleEditClick(e, recipe)}
             onArchive={(e) => handleArchive(e, recipe)}
             onDelete={(e) => handleDeleteClick(e, recipe.id)}
-            archiveBtn={{ label: "📦", title: t("toArchive") }}
+            archiveBtn={{ label: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>, title: t("toArchive") }}
             editMode={editListMode}
           />
         ))}
@@ -195,7 +195,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
                     onEdit={(e) => handleEditClick(e, recipe)}
                     onArchive={(e) => handleRestore(e, recipe)}
                     onDelete={(e) => handleDeleteClick(e, recipe.id)}
-                    archiveBtn={{ label: "🔄", title: t("restore") }}
+                    archiveBtn={{ label: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>, title: t("restore") }}
                     dimmed
                     editMode={editListMode}
                   />
@@ -280,7 +280,7 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
               </div>
             )}
             <div className="rc-expanded-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="rc-expanded-btn" onClick={onEdit}>✏️ {t("editRecipeBtn")}</button>
+              <button className="rc-expanded-btn" onClick={onEdit}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> {t("editRecipeBtn")}</button>
               <button className="rc-expanded-btn rc-expanded-btn--muted" onClick={onArchive}>{archiveBtn.label} {archiveBtn.title}</button>
             </div>
           </div>
