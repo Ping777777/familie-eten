@@ -553,26 +553,26 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
       {activeListTab === "staples" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-meta">
-              <span>{t("staplesMeta", { n: staples.length })}</span>
+            <div className="shopping-icon-actions">
               {stapleCheckedCount > 0 && (
-                <button className="clear-checks-btn" onClick={clearStapleChecks}>{t("uncheckAll")}</button>
+                <button className="shopping-icon-btn" onClick={clearStapleChecks} title={t("uncheckAll")}>↺</button>
               )}
               <button
-                className={`staples-edit-btn${staplesEditMode ? " active" : ""}`}
+                className={`shopping-icon-btn${staplesEditMode ? " shopping-icon-btn--done" : ""}`}
                 onClick={() => {
                   if (staplesEditMode) setNameEdits({});
                   setStaplesEditMode((e) => !e);
                 }}
+                title={staplesEditMode ? t("doneEditing") : t("editMode")}
               >
-                {staplesEditMode ? t("doneEditing") : t("editMode")}
+                {staplesEditMode ? "✓" : "✏️"}
               </button>
             </div>
           </div>
 
-          {staples.length > 0 && (
+          {stapleCheckedCount > 0 && staples.length > 0 && (
             <>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${(stapleCheckedCount / staples.length) * 100}%` }} />

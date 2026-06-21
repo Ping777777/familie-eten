@@ -158,7 +158,7 @@
 
 .app-main {
   flex: 1;
-  padding: 24px 16px calc(60px + env(safe-area-inset-bottom, 0px) + 24px);
+  padding: 24px 16px calc(62px + 10px + env(safe-area-inset-bottom, 0px) + 24px);
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -2814,17 +2814,18 @@
 }
 
 /* ── Bottom navigation (Apple Health style) ── */
+/* ── Bottom nav — WhatsApp-style floating pill ── */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
-  border-top: 1px solid var(--border);
+  border-radius: 28px;
   display: flex;
   z-index: 100;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--border-light);
 }
 
 .bottom-nav-btn {
@@ -2833,57 +2834,45 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 10px 4px 12px;
-  min-height: 60px;
+  gap: 4px;
+  padding: 11px 4px 13px;
+  min-height: 62px;
   border: none;
   background: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   font-family: inherit;
-  position: relative;
-  transition: background 0.12s;
-  border-radius: 0;
+  color: var(--text-muted);
+  transition: color 0.15s, opacity 0.15s;
 }
 
-.bottom-nav-btn:active { background: var(--surface2); }
+.bottom-nav-btn:active { opacity: 0.6; }
 
-.bottom-nav-btn.active {
-  background: rgba(2, 92, 81, 0.09);
-}
-
-.bottom-nav-btn.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: #025c51;
-}
+.bottom-nav-btn.active { color: #025c51; }
 
 .bottom-nav-icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.15s;
 }
 
-.bottom-nav-btn.active .bottom-nav-icon { transform: scale(1.1); }
+.bottom-nav-btn.active .bottom-nav-icon { transform: scale(1.08); }
 
 .bottom-nav-label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  transition: color 0.15s;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: inherit;
 }
 
-.bottom-nav-btn.active .bottom-nav-label { color: #025c51; }
-
-.dark .bottom-nav { box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3); }
-.dark .bottom-nav-btn.active { background: rgba(77, 191, 181, 0.12); }
-.dark .bottom-nav-btn.active::before { background: #4dbfb5; }
-.dark .bottom-nav-btn.active .bottom-nav-label { color: #4dbfb5; }
+/* Dark mode: brighter contrast on the dark pill */
+.dark .bottom-nav {
+  background: rgba(34, 36, 50, 0.96);
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.dark .bottom-nav-btn { color: rgba(255, 255, 255, 0.38); }
+.dark .bottom-nav-btn.active { color: #ffffff; }
