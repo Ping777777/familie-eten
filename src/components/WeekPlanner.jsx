@@ -82,13 +82,6 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     [days, weekPlan, recipes]
   );
 
-  function getDayDate(dayIndex) {
-    const monday = getMondayOfWeek(weekOffset);
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + dayIndex);
-    return d.getDate();
-  }
-
   return (
     <div className="week-planner">
       <div className="week-nav">
@@ -132,7 +125,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       )}
 
       <div className="planner-grid">
-        <div className="grid-header" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
+        <div className="grid-header" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
@@ -142,11 +135,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         </div>
 
         {days.map((day, idx) => (
-          <div key={day} className="grid-row" style={{ gridTemplateColumns: `110px repeat(${family.length}, 1fr)` }}>
-            <div className="day-label">
-              <span className="day-name">{tDay(day).slice(0, 3).toUpperCase()}</span>
-              <span className="day-date">{getDayDate(idx)}</span>
-            </div>
+          <div key={day} className="grid-row" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
+            <div className="day-letter">{tDay(day).slice(0, 2)}</div>
             {family.map((member) => {
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
@@ -180,7 +170,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       </div>
                     </>
                   ) : isDayLocked ? null : (
-                    <span className="add-hint">{t("addMeal")}</span>
+                    <span className="add-hint">+</span>
                   )}
                 </div>
               );
