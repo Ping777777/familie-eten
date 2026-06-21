@@ -505,14 +505,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
           <div className="reminders-card">
             {totalPlanned === 0 ? (
-              <>
-                <div className="reminders-row reminders-row--divider">
-                  <span className="reminders-item-name reminders-item-name--muted">{t("noMealsPlanned")}</span>
-                </div>
-                <div className="reminders-row">
-                  <span className="reminders-item-name reminders-item-name--muted reminders-item-name--small">{t("goToPlanner")}</span>
-                </div>
-              </>
+              <div className="reminders-row">
+                <span className="reminders-item-name reminders-item-name--muted">{t("noMealsPlanned")}</span>
+              </div>
             ) : (
               <>
                 {uncheckedFresh.map((item, idx) => (
