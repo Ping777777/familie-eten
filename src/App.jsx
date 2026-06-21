@@ -884,21 +884,6 @@ export default function App() {
         <div className="header-left">
           <img src="/logo.png" alt="Familie Eten" className="app-header-logo" />
         </div>
-        <nav className="tabs">
-          {[
-            { key: "planner", label: t("tabPlanner") },
-            { key: "shopping", label: t("tabShopping") },
-            { key: "recipes", label: t("tabRecipes") },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              className={`tab-btn ${tab === key ? "active" : ""}`}
-              onClick={() => setTab(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
       </header>
 
 
@@ -945,6 +930,23 @@ export default function App() {
           />
         )}
       </main>
+
+      <nav className="bottom-nav">
+        {[
+          { key: "planner",  emoji: "📅", labelKey: "tabPlanner" },
+          { key: "shopping", emoji: "🛒", labelKey: "tabShopping" },
+          { key: "recipes",  emoji: "📖", labelKey: "tabRecipes" },
+        ].map(({ key, emoji, labelKey }) => (
+          <button
+            key={key}
+            className={`bottom-nav-btn${tab === key ? " active" : ""}`}
+            onClick={() => setTab(key)}
+          >
+            <span className="bottom-nav-icon">{emoji}</span>
+            <span className="bottom-nav-label">{t(labelKey).replace(/^\S+\s/, "")}</span>
+          </button>
+        ))}
+      </nav>
 
       {recipeView && (
         <RecipeDetail

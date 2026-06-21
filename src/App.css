@@ -61,10 +61,9 @@
 }
 
 .app-header-logo {
-  height: 160px;
+  height: 38px;
   width: auto;
   display: block;
-  margin: 0 auto;
 }
 
 .login-form {
@@ -105,14 +104,14 @@
 }
 
 .app-header {
-  background: radial-gradient(circle, rgba(252, 118, 0, 1) 0%, rgba(2, 92, 81, 1) 100%);
+  background: radial-gradient(135deg, #fc7600 0%, #025c51 100%);
   color: white;
-  padding: 2px 20px 2px;
-  text-align: center;
+  height: 56px;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   position: relative;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -159,7 +158,7 @@
 
 .app-main {
   flex: 1;
-  padding: 24px 16px;
+  padding: 24px 16px calc(60px + env(safe-area-inset-bottom, 0px) + 24px);
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -177,10 +176,10 @@
 .week-arrow {
   background: transparent;
   border: 2px solid transparent;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
-  font-size: 1.3rem;
+  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -365,8 +364,8 @@
   position: relative;
   background: var(--surface);
   border-radius: 12px;
-  padding: 16px;
-  min-height: 68px;
+  padding: 16px 10px;
+  min-height: 80px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -582,8 +581,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 18px;
+  height: 44px;
+  padding: 0 20px;
   background: #fc7600;
   color: white;
   border: none;
@@ -641,11 +640,11 @@
 .filter-icon-btn {
   background: var(--surface2);
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  height: 36px;
-  width: 36px;
+  border-radius: 10px;
+  height: 44px;
+  width: 44px;
   padding: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s;
@@ -809,18 +808,16 @@
   align-items: center;
   background: var(--surface2);
   border: 2px solid var(--border-light);
-  border-radius: 20px;
-  height: 36px;
+  border-radius: 22px;
+  height: 44px;
   margin-bottom: 0;
-  padding: 8px 16px;
-  font-size: 0.9rem;
+  padding: 0 18px;
   font-size: var(--font-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0 14px;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -855,9 +852,9 @@
   display: inline-flex;
   align-items: center;
   border: none;
-  border-radius: 8px;
-  height: 36px;
-  padding: 0 16px;
+  border-radius: 10px;
+  height: 44px;
+  padding: 0 18px;
   font-size: var(--font-label);
   font-weight: 700;
   text-transform: uppercase;
@@ -1018,13 +1015,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #f1f5f9;
   color: #334155;
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -1564,11 +1561,11 @@
 
 @media (max-width: 640px) {
   .grid-header, .grid-row {
-    grid-template-columns: 80px repeat(4, 1fr);
+    grid-template-columns: 72px repeat(4, 1fr);
   }
-  .member-header { font-size: 0.75rem; padding: 6px 3px; }
-  .meal-cell { min-height: 56px; padding: 6px 4px; }
-  .meal-name { font-size: 0.68rem; }
+  .member-header { font-size: 0.72rem; padding: 8px 3px; }
+  .meal-cell { min-height: 76px; padding: 10px 4px; }
+  .meal-name { font-size: 0.72rem; }
 }
 
 /* ── Recipe card action buttons (archive, edit, delete) ── */
@@ -2195,15 +2192,15 @@
 /* ── Hamburger button ── */
 .hamburger-btn {
   position: absolute;
-  top: 14px;
-  left: 16px;
+  top: 6px;
+  left: 12px;
   background: rgba(255, 255, 255, 0.15);
   border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
-  font-size: 1.2rem;
-  width: 38px;
-  height: 38px;
+  font-size: 1.3rem;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2734,3 +2731,58 @@
 @media (max-width: 400px) {
   .side-menu { width: 88vw; }
 }
+
+/* ── Bottom navigation (Apple Health style) ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.07);
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 4px 12px;
+  min-height: 60px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.bottom-nav-btn:active { background: var(--surface2); }
+
+.bottom-nav-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+
+.bottom-nav-btn.active .bottom-nav-icon { transform: scale(1.12); }
+
+.bottom-nav-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.bottom-nav-btn.active .bottom-nav-label { color: #025c51; }
+
+.dark .bottom-nav { box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3); }
+.dark .bottom-nav-btn.active .bottom-nav-label { color: #4dbfb5; }
