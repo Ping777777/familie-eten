@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../useLanguage";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
@@ -52,7 +52,7 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, newRecipeKey }) {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
@@ -60,21 +60,11 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [filterExpanded, setFilterExpanded] = useState(false);
-  const [editListMode, setEditListMode] = useState(false);
-  const [dotsOpen, setDotsOpen] = useState(false);
-  const dotsRef = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dotsRef.current && !dotsRef.current.contains(e.target)) {
-        setDotsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (newRecipeKey > 0) setEditingRecipe(newRecipeTemplate());
+  }, [newRecipeKey]);
 
   const activeRecipes = recipes.filter((r) => !r.archived);
   const archivedRecipes = recipes.filter((r) => r.archived);
@@ -130,66 +120,41 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="library-header">
-        <div className="library-header-icons">
-          <button className="lib-icon-btn" onClick={() => setSearchOpen((o) => !o)} title={t("searchPlaceholder")}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </button>
-          <button className="lib-icon-btn" onClick={() => setEditingRecipe(newRecipeTemplate())} title={t("newRecipe")}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          {editListMode ? (
-            <button className="lib-done-btn" onClick={() => setEditListMode(false)}>Klaar</button>
-          ) : (
-            <div className="lib-dots-wrap" ref={dotsRef}>
-              <button className="lib-icon-btn" onClick={() => setDotsOpen((o) => !o)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>
+      {searchOpen && (
+        <div className="library-search-panel">
+          <div className="search-wrapper">
+            <input
+              className="search-input"
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+            />
+            {activeTag && (
+              <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
+                {translateTag(activeTag, lang)} ×
               </button>
-              {dotsOpen && (
-                <div className="lib-dots-menu" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => { setEditListMode(true); setDotsOpen(false); }}>Bewerk lijst</button>
-                  <button onClick={() => setDotsOpen(false)}>Sjablonen</button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {searchOpen && (
-          <div className="library-search-panel">
-            <div className="search-wrapper">
-              <input
-                className="search-input"
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                autoFocus
-              />
-              {activeTag && (
-                <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
-                  {translateTag(activeTag, lang)} ×
-                </button>
-              )}
-            </div>
-            <div className="filter-dropdown filter-dropdown--panel">
-              <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
-                {t("filterAll")}
-              </button>
-              {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
-                <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
-                  {translateTag(tag, lang)}
-                </button>
-              ))}
-              {!filterExpanded && allTags.length > 9 && (
-                <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
-                  +{allTags.length - 9} meer
-                </button>
-              )}
-            </div>
+            )}
           </div>
-        )}
-      </div>
+          <div className="filter-dropdown filter-dropdown--panel">
+            <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
+              {t("filterAll")}
+            </button>
+            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
+              <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
+                {translateTag(tag, lang)}
+              </button>
+            ))}
+            {!filterExpanded && allTags.length > 9 && (
+              <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
+                +{allTags.length - 9} meer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="recipe-grid">
         {filtered.map((recipe) => (

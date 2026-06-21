@@ -238,12 +238,27 @@ export default function App() {
   const [tab, setTab] = useState("planner");
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [recipeSearchOpen, setRecipeSearchOpen] = useState(false);
+  const [recipeEditListMode, setRecipeEditListMode] = useState(false);
+  const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
+  const [recipeAddKey, setRecipeAddKey] = useState(0);
+  const recipeDotsRef = useRef(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e) => setDarkMode(e.matches);
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (recipeDotsRef.current && !recipeDotsRef.current.contains(e.target)) {
+        setRecipeDotsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
   const [visibleMembers, setVisibleMembers] = useState(() => {
     try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
@@ -833,7 +848,9 @@ export default function App() {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
         <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
-        <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
+        <button className="header-dots-btn header-dots-btn--login" onClick={() => setMenuOpen(true)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
         <main className="login-card">
           <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
           <p className="subtitle">{t("loginSubtitle")}</p>
@@ -880,10 +897,34 @@ export default function App() {
     <div className={`app${darkMode ? " dark" : ""}`}>
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
       <header className="app-header">
-        <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
-        <div className="header-left">
-          <img src="/logo.png" alt="Familie Eten" className="app-header-logo" />
-        </div>
+        <button className="header-dots-btn" onClick={() => setMenuOpen(true)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
+        {tab === "recipes" && (
+          <div className="header-right-actions">
+            <button className="header-icon-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button className="header-icon-btn header-icon-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            {recipeEditListMode ? (
+              <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
+            ) : (
+              <div ref={recipeDotsRef} style={{ position: "relative" }}>
+                <button className="header-icon-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+                {recipeDotsOpen && (
+                  <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
+                    <button onClick={() => setRecipeDotsOpen(false)}>Sjablonen</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
 
@@ -911,6 +952,9 @@ export default function App() {
             onUpdate={updateRecipe}
             saveFailed={recipesSaveFailed}
             onDismissSaveFailed={reloadRecipes}
+            searchOpen={recipeSearchOpen}
+            editListMode={recipeEditListMode}
+            newRecipeKey={recipeAddKey}
           />
         )}
         {tab === "shopping" && (

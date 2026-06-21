@@ -104,19 +104,113 @@
 }
 
 .app-header {
-  background: radial-gradient(135deg, #fc7600 0%, #025c51 100%);
-  color: white;
+  background: var(--bg);
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 8px;
   position: relative;
   flex-shrink: 0;
 }
 
-.header-left {
-  text-align: center;
+/* Three-dots circle button (replaces hamburger) */
+.header-dots-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.07);
+  border: none;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
+.header-dots-btn:active { opacity: 0.6; }
+.dark .header-dots-btn { background: rgba(255, 255, 255, 0.1); color: white; }
+
+.header-dots-btn--login {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.07);
+  border: none;
+}
+.dark .header-dots-btn--login { background: rgba(255, 255, 255, 0.08); }
+
+/* Right side contextual icons */
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.header-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.07);
+  border: none;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-icon-btn:active { opacity: 0.6; }
+.dark .header-icon-btn { background: rgba(255, 255, 255, 0.1); color: white; }
+
+.header-icon-btn--add {
+  background: #025c51;
+  color: white;
+}
+.header-icon-btn--add:active { opacity: 0.75; }
+.dark .header-icon-btn--add { background: #025c51; }
+
+.header-done-btn {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #025c51;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.dark .header-done-btn { color: #4dbfb5; }
+
+.header-recipe-menu {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  min-width: 180px;
+  z-index: 300;
+  overflow: hidden;
+}
+.header-recipe-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.header-recipe-menu button:last-child { border-bottom: none; }
+.header-recipe-menu button:active { background: var(--surface2); }
 
 .app-header h1 {
   margin: 0 0 4px;
@@ -2371,33 +2465,7 @@
 }
 
 /* ── Hamburger button ── */
-.hamburger-btn {
-  position: absolute;
-  top: 6px;
-  left: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  color: white;
-  font-size: 1.3rem;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: background 0.15s;
-}
-.hamburger-btn:hover { background: rgba(255, 255, 255, 0.28); }
-
-.hamburger-btn--login {
-  background: rgba(0, 0, 0, 0.07);
-  border-color: rgba(0, 0, 0, 0.12);
-  color: #444;
-}
-.dark .hamburger-btn--login { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #e2e8f0; }
-.hamburger-btn--login:hover { background: rgba(0, 0, 0, 0.12); }
+/* .hamburger-btn removed — replaced by .header-dots-btn */
 
 /* ── Side menu overlay ── */
 .menu-overlay {
