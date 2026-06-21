@@ -239,6 +239,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [recipeSearchOpen, setRecipeSearchOpen] = useState(false);
+  const [recipeSearchQuery, setRecipeSearchQuery] = useState("");
   const [recipeEditListMode, setRecipeEditListMode] = useState(false);
   const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
@@ -928,29 +929,49 @@ export default function App() {
           </div>
         )}
         {tab === "recipes" && (
-          <div className="header-pill-group">
-            <button className="header-pill-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-            <button className="header-pill-btn header-pill-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            {recipeEditListMode ? (
-              <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
-            ) : (
-              <div ref={recipeDotsRef} style={{ position: "relative" }}>
-                <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-                </button>
-                {recipeDotsOpen && (
-                  <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
-                    <button onClick={() => setRecipeDotsOpen(false)}>Sjablonen</button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          recipeSearchOpen ? (
+            <div className="header-search-expand">
+              <svg className="header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                className="header-search-input"
+                type="text"
+                placeholder={t("searchPlaceholder")}
+                value={recipeSearchQuery}
+                onChange={(e) => setRecipeSearchQuery(e.target.value)}
+                autoFocus
+              />
+              {recipeSearchQuery && (
+                <button className="header-search-clear" onClick={() => setRecipeSearchQuery("")} aria-label="Wis">✕</button>
+              )}
+              <button className="header-search-cancel" onClick={() => { setRecipeSearchOpen(false); setRecipeSearchQuery(""); }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          ) : (
+            <div className="header-pill-group">
+              <button className="header-pill-btn" onClick={() => setRecipeSearchOpen(true)}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button className="header-pill-btn header-pill-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              {recipeEditListMode ? (
+                <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
+              ) : (
+                <div ref={recipeDotsRef} style={{ position: "relative" }}>
+                  <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                  </button>
+                  {recipeDotsOpen && (
+                    <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
+                      <button onClick={() => setRecipeDotsOpen(false)}>Sjablonen</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
         )}
       </header>
 
@@ -979,7 +1000,7 @@ export default function App() {
             onUpdate={updateRecipe}
             saveFailed={recipesSaveFailed}
             onDismissSaveFailed={reloadRecipes}
-            searchOpen={recipeSearchOpen}
+            search={recipeSearchQuery}
             editListMode={recipeEditListMode}
             newRecipeKey={recipeAddKey}
           />

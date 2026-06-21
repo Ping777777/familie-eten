@@ -52,9 +52,8 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, newRecipeKey }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, search = "", editListMode, newRecipeKey }) {
   const { t, lang } = useLanguage();
-  const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [expanded, setExpanded] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
@@ -120,28 +119,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      {searchOpen && (
-        <div className="library-search-panel">
-          <div className="wa-search-bar">
-            <svg className="wa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input
-              className="wa-search-input"
-              type="text"
-              placeholder={t("searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-            {search && (
-              <button className="wa-search-clear" onClick={() => setSearch("")} aria-label="Wis zoekopdracht">
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="recipe-grid">
         {filtered.map((recipe) => (
