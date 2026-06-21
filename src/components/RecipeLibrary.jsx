@@ -265,25 +265,24 @@ function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, a
       className={`recipe-card ${expanded ? "expanded" : ""} ${dimmed ? "recipe-card--archived" : ""}`}
       onClick={onToggle}
     >
-      <div className="recipe-card-top">
-        <span className="recipe-big-emoji">{recipe.emoji}</span>
-        <div className="recipe-info">
-          <h3>{getRecipeName(recipe, lang)}</h3>
-          <div className="recipe-meta">⏱ {recipe.cookTime} · {t("perServings", { n: recipe.servings })}</div>
-          <div className="recipe-tags">
-            {recipe.tags.map((tag) => <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>)}
-          </div>
+      <div className="rc-header">
+        <span className="rc-emoji">{recipe.emoji}</span>
+        <span className="rc-title">{getRecipeName(recipe, lang)}</span>
+        <div className="rc-header-right">
+          {recipe.cookTime && <span className="rc-time">{recipe.cookTime}</span>}
+          <span className={`rc-chevron${expanded ? " rc-chevron--open" : ""}`}>›</span>
         </div>
-        <div className="card-actions">
-          <button className="card-action-btn" title={archiveBtn.title} onClick={onArchive}>
-            {archiveBtn.label}
-          </button>
-          <button className="card-action-btn" title={t("editRecipeBtn")} onClick={onEdit}>
-            ✏️
-          </button>
-          <button className="card-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>
-            🗑️
-          </button>
+      </div>
+      <div className="rc-footer">
+        <div className="rc-tags">
+          {recipe.tags.map((tag) => (
+            <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
+          ))}
+        </div>
+        <div className="rc-actions" onClick={(e) => e.stopPropagation()}>
+          <button className="rc-action-btn" title={archiveBtn.title} onClick={onArchive}>{archiveBtn.label}</button>
+          <button className="rc-action-btn" title={t("editRecipeBtn")} onClick={onEdit}>✏️</button>
+          <button className="rc-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>🗑️</button>
         </div>
       </div>
 
