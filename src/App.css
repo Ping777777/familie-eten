@@ -119,7 +119,7 @@
   width: 44px;
   height: 44px;
   border-radius: 22px;
-  background: rgba(0, 0, 0, 0.07);
+  background: none;
   border: none;
   color: var(--text);
   display: flex;
@@ -130,7 +130,7 @@
   flex-shrink: 0;
 }
 .header-dots-btn:active { opacity: 0.6; }
-.dark .header-dots-btn { background: rgba(255, 255, 255, 0.1); color: white; }
+.dark .header-dots-btn { background: none; color: white; }
 
 .header-dots-btn--login {
   position: absolute;
@@ -170,11 +170,11 @@
 .dark .header-pill-btn { color: white; }
 
 .header-pill-btn--add {
-  background: #025c51;
-  color: white;
+  background: none;
+  color: var(--text);
 }
 .header-pill-btn--add:active { opacity: 0.75; }
-.dark .header-pill-btn--add { background: #025c51; }
+.dark .header-pill-btn--add { background: none; color: white; }
 
 .header-done-btn {
   font-size: 0.88rem;
