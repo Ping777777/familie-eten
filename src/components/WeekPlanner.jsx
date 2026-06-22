@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { getMondayOfWeek } from "../week";
 import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 import { useLanguage } from "../useLanguage";
@@ -65,12 +65,19 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
     [days, weekPlan, recipes]
   );
 
+  const swipeRef = useRef(null);
+  const swipeStartX = useRef(0);
+
+  const onTouchStart = (e) => { swipeStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    const dx = e.changedTouches[0].clientX - swipeStartX.current;
+    if (Math.abs(dx) > 60) onWeekChange(weekOffset + (dx < 0 ? 1 : -1));
+  };
+
   return (
-    <div className="week-planner">
+    <div className="week-planner" ref={swipeRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="week-nav">
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset - 1)} title={t("prevWeek")}>‹</button>
         <span className="week-month-label">{months[monday.getMonth()]}</span>
-        <button className="week-arrow" onClick={() => onWeekChange(weekOffset + 1)} title={t("nextWeek")}>›</button>
       </div>
 
       {saveFailed && (
