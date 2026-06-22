@@ -464,7 +464,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 <ul className="ingredient-list">
                   {checkedStaples.map((s) => (
                     <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                      <span className="check-box">☑</span>
+                      <span className="check-box">●</span>
                       <div className="ingredient-details">
                         <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                         <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
@@ -554,7 +554,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               <ul className="ingredient-list">
                 {checkedStaples.map((s) => (
                   <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                    <span className="check-box">☑</span>
+                    <span className="check-box">●</span>
                     <div className="ingredient-details">
                       <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                       <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
@@ -590,7 +590,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       className={`staples-item${staplesEditMode ? " editing" : ""}`}
                       onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
                     >
-                      {!staplesEditMode && <span className="check-box">☐</span>}
+                      {!staplesEditMode && <span className="check-box">○</span>}
                       {staplesEditMode ? (
                         <input
                           className="staples-rename-input"
@@ -681,7 +681,7 @@ function IngredientList({
     <ul className="ingredient-list">
       {items.map((item) => (
         <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-          <span className="check-box">{done ? "☑" : "☐"}</span>
+          <span className="check-box">{done ? "●" : "○"}</span>
           <div className="ingredient-details">
             <span className="ingredient-name">{item.name}</span>
             <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
