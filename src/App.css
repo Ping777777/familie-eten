@@ -1352,13 +1352,13 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: #fff4e5;
-  border: 1px solid #ffcc80;
-  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 14px;
-  font-size: 0.88rem;
-  color: #8a4b08;
+  font-size: 0.78rem;
+  color: var(--text-muted);
   font-weight: 500;
 }
 .picnic-close {
@@ -1423,7 +1423,7 @@
 
 .check-box { font-size: 1.4rem; color: #025c51; line-height: 1; }
 .ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
-.ingredient-name { font-size: 0.9rem; color: #333; }
+.ingredient-name { font-size: 0.9rem; color: #333; text-transform: lowercase; }
 .ingredient-amounts { color: #025c51; font-size: var(--font-label); font-weight: 600; }
 .ingredient-meals { color: #aaa; font-size: var(--font-xs); }
 .picnic-association-block {
