@@ -52,13 +52,12 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
-  const [archiveOpen, setArchiveOpen] = useState(false);
   const [filterExpanded, setFilterExpanded] = useState(false);
 
   useEffect(() => {
@@ -166,49 +165,37 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="recipe-grid">
-        {filtered.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe}
-            onToggle={() => onViewRecipe(recipe)}
-            onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
-            onDelete={(e) => handleDeleteClick(e, recipe.id)}
-            editMode={editListMode}
-          />
-        ))}
-        {filtered.length === 0 && (
-          <p className="no-results">{t("noRecipesFound")}</p>
-        )}
-      </div>
-
-      {archivedRecipes.length > 0 && (
-        <div className="archive-section">
-          <button className="archive-toggle" onClick={() => setArchiveOpen((o) => !o)}>
-            <span>{t("archiveLabel")}</span>
-            <span className="archive-count">{t("archiveCount", { n: archivedRecipes.length })}</span>
-            <span className="archive-chevron">{archiveOpen ? "▲" : "▼"}</span>
-          </button>
-          {archiveOpen && (
-            <div className="archive-body">
-              <p className="archive-hint">{t("archiveHint")}</p>
-              <div className="recipe-grid">
-                {archivedRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    expanded={expanded === recipe.id}
-                    onToggle={() => setExpanded(expanded === recipe.id ? null : recipe.id)}
-                    onEdit={(e) => handleEditClick(e, recipe)}
-                    onArchive={(e) => handleRestore(e, recipe)}
-                    onDelete={(e) => handleDeleteClick(e, recipe.id)}
-                    archiveBtn={{ label: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>, title: t("restore") }}
-                    dimmed
-                    editMode={editListMode}
-                  />
-                ))}
-              </div>
-            </div>
+      {showArchived ? (
+        <div className="recipe-grid">
+          {archivedRecipes.length === 0 && (
+            <p className="no-results">Geen gearchiveerde recepten</p>
+          )}
+          {archivedRecipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onToggle={() => onViewRecipe(recipe)}
+              onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
+              onDelete={(e) => handleDeleteClick(e, recipe.id)}
+              dimmed
+              editMode={editListMode}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="recipe-grid">
+          {filtered.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onToggle={() => onViewRecipe(recipe)}
+              onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
+              onDelete={() => onUpdate({ ...recipe, archived: true })}
+              editMode={editListMode}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <p className="no-results">{t("noRecipesFound")}</p>
           )}
         </div>
       )}
