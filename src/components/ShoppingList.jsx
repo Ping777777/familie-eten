@@ -372,14 +372,12 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           </div>
           {freshItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${freshItems.every((item) => checked[item.id]) ? " on" : ""}`} onClick={() => {
                 const allChecked = freshItems.every((item) => checked[item.id]);
                 freshItems.forEach((item) => {
                   if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
                 });
-              }}>
-                {freshItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
+              }} />
             </div>
           )}
 
@@ -499,14 +497,12 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
           {staples.length > 0 && !staplesEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${staples.every((s) => checked[`s:${s.id}`]) ? " on" : ""}`} onClick={() => {
                 const allChecked = staples.every((s) => checked[`s:${s.id}`]);
                 staples.forEach((s) => {
                   if (allChecked ? checked[`s:${s.id}`] : !checked[`s:${s.id}`]) toggleStaple(s.id);
                 });
-              }}>
-                {staples.every((s) => checked[`s:${s.id}`]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
+              }} />
             </div>
           )}
 
@@ -572,14 +568,12 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           </div>
           {pantryItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${pantryItems.every((item) => checked[item.id]) ? " on" : ""}`} onClick={() => {
                 const allChecked = pantryItems.every((item) => checked[item.id]);
                 pantryItems.forEach((item) => {
                   if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
                 });
-              }}>
-                {pantryItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
+              }} />
             </div>
           )}
           {pantryItems.length === 0 ? (
