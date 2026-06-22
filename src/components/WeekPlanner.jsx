@@ -5,13 +5,13 @@ import { useLanguage } from "../useLanguage";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
-  Papa: "#2a9d8f",
-  Mama: "#fc7600",
+  Neil: "#2a9d8f",
+  Larisa: "#fc7600",
   Inga: "#5cb85c",
   Kevin: "#e8c247",
 };
 
-const MEMBER_INITIALS = { Papa: "N", Mama: "L", Inga: "I", Kevin: "K" };
+const MEMBER_INITIALS = { Neil: "N", Larisa: "L", Inga: "I", Kevin: "K" };
 
 function computeWarnings(days, weekPlan, recipes) {
   const warningFilters = PICKER_FILTERS.filter((f) => f.threshold != null);
