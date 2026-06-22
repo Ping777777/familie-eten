@@ -523,7 +523,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       className={`staples-item${staplesEditMode ? " editing" : ""}${isChecked ? " done" : ""}`}
                       onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
                     >
-                      {!staplesEditMode && <span className="check-box">{isChecked ? "●" : "○"}</span>}
+                      {!staplesEditMode && <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>}
                       {staplesEditMode ? (
                         <input
                           className="staples-rename-input"
@@ -643,7 +643,7 @@ function IngredientList({
               const isDone = checkedIds ? checkedIds[item.id] : done;
               return (
               <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-                <span className="check-box">{isDone ? "●" : "○"}</span>
+                <span className={`check-box${isDone ? " checked" : ""}`}>{isDone ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                 <div className="ingredient-details">
                   <span className="ingredient-name">{item.name}</span>
                   <span className="ingredient-amounts">{item.amounts.join(", ")}</span>

@@ -240,8 +240,7 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
         <div className="lib-detail-meta">
           {recipe.cookTime && <span>⏱ {recipe.cookTime}</span>}
           {recipe.cookTime && <span className="lib-detail-dot">·</span>}
-          <span>👥 {recipe.servings} pers.</span>
-          {recipe.addedBy && <><span className="lib-detail-dot">·</span><span>✍ {recipe.addedBy}</span></>}
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: "-2px", marginRight: "3px"}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>{recipe.servings} pers.</span>
         </div>
         {recipe.tags.length > 0 && (
           <div className="lib-detail-tags">
@@ -267,8 +266,8 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
           <section className="lib-detail-section">
             <div className="lib-detail-steps-header">
               <h2 className="lib-detail-section-title">{t("sectionInstructions")}</h2>
-              <span className={`lib-detail-progress${doneCount === steps.length ? " lib-detail-progress--done" : ""}`}>
-                {doneCount === steps.length ? t("allDone") : `${doneCount}/${steps.length}`}
+              <span className="lib-detail-progress">
+                {doneCount}/{steps.length}
               </span>
             </div>
             <ol className="lib-detail-steps">

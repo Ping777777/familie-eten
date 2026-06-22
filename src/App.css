@@ -116,9 +116,9 @@
 
 .header-recipe-title {
   position: absolute;
-  left: 0;
-  right: 0;
-  text-align: center;
+  left: 36px;
+  right: 70px;
+  text-align: left;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text);
@@ -371,18 +371,19 @@
 
 /* Tags */
 .tag {
-  background: #d0efed;
-  color: #025c51;
+  background: transparent;
+  color: var(--text-muted);
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 0.72rem;
+  border: 1px solid var(--text-muted);
+  font-size: 0.78rem;
   font-weight: 500;
 }
-.tag.tag--vlees       { background: #fee2e2; color: #991b1b; }
-.tag.tag--vis         { background: #dbeafe; color: #1d4ed8; }
-.tag.tag--kip         { background: #fef9c3; color: #78350f; }
-.tag.tag--vegetarisch { background: #dcfce7; color: #166534; }
-.tag.tag--burger      { background: #ffedd5; color: #c2410c; }
+.tag.tag--vlees       { border-color: #991b1b; color: #991b1b; }
+.tag.tag--vis         { border-color: #1d4ed8; color: #1d4ed8; }
+.tag.tag--kip         { border-color: #78350f; color: #78350f; }
+.tag.tag--vegetarisch { border-color: #166534; color: #166534; }
+.tag.tag--burger      { border-color: #c2410c; color: #c2410c; }
 
 /* ── Week Planner ── */
 .week-planner h2 {
@@ -1419,9 +1420,10 @@
   transition: opacity 0.15s;
 }
 .ingredient-item:hover { background: var(--surface2); }
-.ingredient-item.done { opacity: 0.5; }
+.ingredient-item.done, .staples-item.done { opacity: 0.5; }
 
-.check-box { font-size: 1.4rem; color: #025c51; line-height: 1; }
+.check-box { font-size: 1.4rem; color: var(--text-muted); line-height: 1; }
+.check-box.checked { color: #2a9d8f; }
 .ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
 .ingredient-name { font-size: 0.9rem; color: #333; text-transform: lowercase; }
 .ingredient-amounts { color: #025c51; font-size: var(--font-label); font-weight: 600; }
@@ -2279,7 +2281,7 @@
 .lib-detail-body { padding: 0 20px 80px; }
 .lib-detail-section { padding: 20px 0 0; }
 .lib-detail-section-title {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2288,9 +2290,9 @@
 }
 .lib-detail-ing-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .lib-detail-ing-row { display: flex; gap: 10px; align-items: baseline; }
-.lib-detail-ing-amount { font-size: 0.85rem; color: var(--text-muted); min-width: 60px; flex-shrink: 0; }
+.lib-detail-ing-amount { font-size: 0.85rem; color: var(--text-muted); min-width: 75px; flex-shrink: 0; }
 .lib-detail-ing-name { font-size: 0.95rem; color: var(--text); }
-.lib-detail-steps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.lib-detail-steps-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
 .lib-detail-progress { font-size: 0.8rem; color: var(--text-muted); }
 .lib-detail-progress--done { color: #2a9d8f; font-weight: 600; }
 .lib-detail-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -2319,6 +2321,7 @@
   flex-shrink: 0;
 }
 .lib-detail-step-text { margin: 0; font-size: 0.9rem; color: var(--text); line-height: 1.5; padding-top: 3px; }
+.lib-detail-step--done .lib-detail-step-text { text-decoration: line-through; color: #888; }
 
 .recipe-detail {
   position: fixed;
@@ -2444,7 +2447,7 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   padding: 4px 0;
   border-bottom: 1px solid #e8f7f6;
 }
@@ -3062,7 +3065,7 @@
 .dark .shopping-tabs { background: rgba(255,255,255,0.08); }
 .dark .shopping-tab { color: var(--text-muted); }
 .dark .shopping-tab:hover { color: var(--text); }
-.dark .shopping-tab.active { background: #025c51; color: white; box-shadow: none; }
+.dark .shopping-tab.active { background: #2a9d8f; color: white; box-shadow: none; }
 .dark .btn-copy { background: var(--surface2); border-color: #4dbfb5; color: #4dbfb5; }
 .dark .btn-copy:hover { background: #1a3f3d; }
 
