@@ -7,9 +7,10 @@ A family meal planning app built with React + Vite. Deployed on Vercel.
 - Never commit directly to `main`. Always create a feature branch.
 - One feature per branch, one PR per branch.
 - Never run `vercel deploy`. Vercel auto-deploys on every PR — do not trigger it manually.
-- Dad (Ping777777) is the only one who approves and merges PRs.
+- Dad (neilboyd) is the only one who approves and merges PRs.
 - Run `git fetch origin` at the start of every session before doing any git work.
 - Commit, push, and open PRs automatically without asking for confirmation. Only report back if something fails.
+- Keep all README content in English.
 
 ## Stack
 
