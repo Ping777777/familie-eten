@@ -41,6 +41,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const { t, tDay, lang } = useLanguage();
   const [selecting, setSelecting] = useState(null);
   const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerSearchOpen, setPickerSearchOpen] = useState(false);
 
   const months = t("months");
   const monday = getMondayOfWeek(weekOffset);
@@ -57,7 +58,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const handleSelect = (recipeId) => {
     if (!selecting) return;
     onAssign(selecting.day, selecting.member, recipeId);
-    setSelecting(null);
+    setSelecting(null); setPickerSearchOpen(false); setPickerSearch("");
   };
 
   const warnings = useMemo(
@@ -152,7 +153,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                         className="clear-btn"
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
-                      >×</button>
+                      ><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                       <div className="meal-tag">
                         <span>{recipe.emoji}</span>
                         <span className="meal-name">{getRecipeName(recipe, lang)}</span>
@@ -172,36 +173,46 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       {selecting && (() => {
         const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
         const isReplacing = Boolean(currentId && getRecipe(currentId));
+        const usedIds = new Set(days.flatMap((d) => Object.values(weekPlan[d] ?? {})).filter(Boolean));
         const q = pickerSearch.toLowerCase();
         const visibleRecipes = recipes
           .filter((r) => !r.archived)
           .filter((r) => !q || getRecipeName(r, lang).toLowerCase().includes(q) || r.tags.some((t) => t.toLowerCase().includes(q)))
           .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
         return (
-          <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
+          <div className="recipe-picker-overlay" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); }}>
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
               <div className="picker-header">
-                <h3>
-                  {isReplacing ? t("replaceMeal") : t("chooseMeal")}{" "}
-                  {t("mealFor", { day: tDay(selecting.day) })}
-                </h3>
-                <button className="close-btn" onClick={() => setSelecting(null)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-              </div>
-
-              <div className="picker-search header-search-bar">
-                <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input
-                  type="text"
-                  className="header-search-input"
-                  placeholder={t("search")}
-                  value={pickerSearch}
-                  onChange={(e) => setPickerSearch(e.target.value)}
-                  autoFocus
-                />
-                {pickerSearch && (
-                  <button className="header-search-clear" onClick={() => setPickerSearch("")}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
+                {pickerSearchOpen ? (
+                  <div className="header-search-bar" style={{ flex: 1 }}>
+                    <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input
+                      type="text"
+                      className="header-search-input"
+                      placeholder={t("search")}
+                      value={pickerSearch}
+                      onChange={(e) => setPickerSearch(e.target.value)}
+                      autoFocus
+                    />
+                    <button className="header-search-clear" onClick={() => { setPickerSearchOpen(false); setPickerSearch(""); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h3>
+                      {isReplacing ? t("replaceMeal") : t("chooseMeal")}{" "}
+                      {t("mealFor", { day: tDay(selecting.day) })}
+                    </h3>
+                    <div className="header-pill-group">
+                      <button className="header-pill-btn" onClick={() => setPickerSearchOpen(true)} title={t("search")}>
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      </button>
+                      <button className="header-pill-btn" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); }} title={t("close")}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -218,8 +229,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 })}
                 {visibleRecipes.map((r) => {
                   const isCurrent = r.id === currentId;
+                  const isUsed = usedIds.has(r.id) && !isCurrent;
                   return (
-                    <button key={r.id} className={`picker-card${isCurrent ? " picker-card--current" : ""}`} onClick={() => handleSelect(r.id)}>
+                    <button key={r.id} className={`picker-card${isCurrent ? " picker-card--current" : ""}${isUsed ? " picker-card--used" : ""}`} onClick={() => handleSelect(r.id)}>
                       <span className="picker-emoji">{r.emoji}</span>
                       <span className="picker-name">{getRecipeName(r, lang)}</span>
                       {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}

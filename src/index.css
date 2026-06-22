@@ -24,7 +24,10 @@
   --label-transform: uppercase;
 }
 
-body { margin: 0; }
+body { margin: 0; background: #f0f4f8; }
+@media (prefers-color-scheme: dark) {
+  body { background: #16171f; }
+}
 
 #root {
   min-height: 100svh;
