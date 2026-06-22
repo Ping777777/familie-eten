@@ -341,14 +341,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     </div>
   );
 
-  // Shown on every shopping sub-tab while not logged in to Picnic.
-  const picnicLoginNotice = !picnicUser && (
-    <div className="picnic-warning" role="status">
-      <span className="warning-icon">⚠️</span>
-      <span>{t("picnicSendNotLoggedIn")}</span>
-    </div>
-  );
-
   return (
     <div className="shopping-list">
       {activeListTab === "maaltijden" && (
@@ -356,7 +348,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {picnicLoginNotice}
           {checkedItemCount > 0 && (
             <div className="shopping-meta">
               <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
@@ -547,7 +538,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               </button>
             </div>
           </div>
-          {picnicLoginNotice}
 
           {stapleCheckedCount > 0 && staples.length > 0 && (
             <>
@@ -645,7 +635,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               <span>{t("pantryCount", { n: uncheckedPantry.length })}</span>
             </div>
           </div>
-          {picnicLoginNotice}
           <p className="pantry-hint">{t("pantryHint")}</p>
           {pantryItems.length === 0 ? (
             <div className="meal-empty-notice"><p>{t("noMealsPlanned")}</p></div>
