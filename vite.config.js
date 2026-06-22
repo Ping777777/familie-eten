@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'favicon.svg'],
+      includeAssets: ['logo.png', 'favicon.svg'],
       manifest: {
         name: 'Familie Eten',
         short_name: 'FamEten',
@@ -20,15 +20,15 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'maskable',
           },
         ],
@@ -36,7 +36,7 @@ export default defineConfig({
       workbox: {
         // Cache the app shell and all static assets
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        globIgnores: ['**/logo.png'],
+        globIgnores: [],
         runtimeCaching: [
           {
             // Cache all navigation requests so the app loads offline
