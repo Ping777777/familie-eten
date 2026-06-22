@@ -347,8 +347,17 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     </div>
   );
 
+  const totalAll = items.length;
+  const checkedAll = mealCheckedCount;
+
   return (
     <div className="shopping-list">
+      {totalAll > 0 && (
+        <div className="progress-bar">
+          <div className={`progress-fill${checkedAll === totalAll ? " complete" : ""}`} style={{ width: `${(checkedAll / totalAll) * 100}%` }} />
+        </div>
+      )}
+
       {activeListTab === "maaltijden" && (
         <>
           <div className="shopping-top-bar">
@@ -447,14 +456,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           )}
 
-          {items.length > 0 && (
-            <>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(mealCheckedCount / items.length) * 100}%` }} />
-              </div>
-              <p className="progress-label">{t("checkedProgress", { meals: totalPlanned, done: mealCheckedCount, total: items.length })}</p>
-            </>
-          )}
 
           {checkedItemCount > 0 && (
             <div className="checked-section">
@@ -559,14 +560,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           )}
 
-          {stapleCheckedCount > 0 && staples.length > 0 && (
-            <>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(stapleCheckedCount / staples.length) * 100}%` }} />
-              </div>
-              <p className="progress-label">{t("checkedProgress", { done: stapleCheckedCount, total: staples.length })}</p>
-            </>
-          )}
 
           {stapleCheckedCount > 0 && (
             <div className="checked-section">

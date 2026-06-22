@@ -1383,16 +1383,19 @@
 .clear-checks-btn:hover { border-color: #999; }
 
 .progress-bar {
-  background: #e0e0e0;
+  background: var(--surface2);
   border-radius: 4px;
   height: 8px;
   margin-bottom: 4px;
   overflow: hidden;
 }
 .progress-fill {
-  background: linear-gradient(90deg, #025c51, #fc7600);
+  background: #025c51;
   height: 100%;
-  transition: width 0.3s;
+  transition: width 0.3s, background 0.3s;
+}
+.progress-fill.complete {
+  background: #fc7600;
 }
 .progress-label { font-size: 0.8rem; color: #888; margin-bottom: 16px; }
 
