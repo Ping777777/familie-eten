@@ -543,6 +543,22 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           </div>
 
+          {staples.length > 0 && !staplesEditMode && (
+            <div className="pantry-actions">
+              <button className="pantry-action-btn" onClick={() => {
+                const allChecked = staples.every((s) => checked[`s:${s.id}`]);
+                staples.forEach((s) => {
+                  if (allChecked ? checked[`s:${s.id}`] : !checked[`s:${s.id}`]) toggleStaple(s.id);
+                });
+              }}>
+                {staples.every((s) => checked[`s:${s.id}`]) ? "Deselecteer alles" : "Selecteer alles"}
+              </button>
+              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
+                Naar lijst
+              </button>
+            </div>
+          )}
+
           {stapleCheckedCount > 0 && staples.length > 0 && (
             <>
               <div className="progress-bar">
@@ -694,20 +710,27 @@ function IngredientList({
 }) {
   const { t } = useLanguage();
   if (items.length === 0) return null;
+  const grouped = {};
+  items.forEach((item) => {
+    const meal = item.meals ? [...item.meals][0] : "_";
+    if (!grouped[meal]) grouped[meal] = [];
+    grouped[meal].push(item);
+  });
   return (
-    <ul className="ingredient-list">
-      {items.map((item) => {
-        const isDone = checkedIds ? checkedIds[item.id] : done;
-        return (
-        <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-          <span className="check-box">{isDone ? "●" : "○"}</span>
-          <div className="ingredient-details">
-            <span className="ingredient-name">{item.name}</span>
-            <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
-            {!isDone && item.meals && (
-              <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
-            )}
-            <PicnicAssociation
+    <>
+      {Object.entries(grouped).map(([meal, groupItems]) => (
+        <div key={meal} className="staples-category">
+          {meal !== "_" && <h4 className="staples-category-title">{meal}</h4>}
+          <ul className="ingredient-list">
+            {groupItems.map((item) => {
+              const isDone = checkedIds ? checkedIds[item.id] : done;
+              return (
+              <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
+                <span className="check-box">{isDone ? "●" : "○"}</span>
+                <div className="ingredient-details">
+                  <span className="ingredient-name">{item.name}</span>
+                  <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
+                  <PicnicAssociation
               item={item}
               association={getAssociation(picnicAssociations, item.id)}
               picnicUser={picnicUser}
@@ -721,9 +744,12 @@ function IngredientList({
             />
           </div>
         </li>
-        );
-      })}
-    </ul>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </>
   );
 }
 
