@@ -10,6 +10,7 @@ A family meal planning app built with React + Vite. Deployed on Vercel.
 - Dad (neilboyd) is the only one who approves and merges PRs.
 - Run `git fetch origin` at the start of every session before doing any git work.
 - Commit, push, and open PRs automatically without asking for confirmation. Only report back if something fails.
+- Keep all README content in English.
 
 ## Stack
 
