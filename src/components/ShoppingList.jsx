@@ -48,9 +48,13 @@ export default function ShoppingList({
   onActiveListTabChange,
   staplesEditMode = false,
   onStaplesEditModeChange,
+  shoppingEditMode = false,
+  onShoppingEditModeChange,
+  searchQuery = "",
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
+  const [dismissed, setDismissed] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
@@ -131,8 +135,14 @@ export default function ShoppingList({
     });
   };
 
-  const freshItems = items.filter((i) => !isPantry(i.id));
-  const pantryItems = items.filter((i) => isPantry(i.id));
+  const searchFilter = (i) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return i.name.toLowerCase().includes(q) ||
+      i.usages?.some((u) => u.recipe?.toLowerCase().includes(q));
+  };
+  const freshItems = items.filter((i) => !isPantry(i.id) && searchFilter(i));
+  const pantryItems = items.filter((i) => isPantry(i.id) && searchFilter(i));
 
   const totalPlanned = days.reduce(
     (acc, day) => acc + family.filter((m) => {
@@ -144,6 +154,8 @@ export default function ShoppingList({
 
   const toggleCheck = (key) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleDismiss = (key) =>
+    setDismissed((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
   const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
@@ -347,8 +359,10 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     </div>
   );
 
-  const totalAll = items.length;
-  const checkedAll = mealCheckedCount;
+  const activeFresh = freshItems.filter((i) => !dismissed[i.id]);
+  const activePantry = pantryItems.filter((i) => !dismissed[i.id]);
+  const totalAll = activeFresh.length + activePantry.length;
+  const checkedAll = [...activeFresh, ...activePantry].filter((i) => checked[i.id]).length;
 
   const picnicSendPanel = (
     <>
@@ -363,7 +377,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                   ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
                   : t("picnicSendSuccess", { added: picnicSend.result.added })}
           </span>
-          <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}>×</button>
+          <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
       )}
 
@@ -371,7 +385,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <div className="picnic-cart-panel">
           <div className="picnic-cart-header">
             <strong>{t("picnicCartTitle")}</strong>
-            <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}>×</button>
+            <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
           {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
           {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
@@ -423,19 +437,14 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {freshItems.length > 0 && (
+          {freshItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${freshItems.every((item) => checked[item.id]) ? " on" : ""}`} onClick={() => {
                 const allChecked = freshItems.every((item) => checked[item.id]);
                 freshItems.forEach((item) => {
                   if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
                 });
-              }}>
-                {freshItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("kast")}>
-                Naar kast
-              </button>
+              }} />
             </div>
           )}
 
@@ -457,6 +466,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
           {missingPicnicChoiceItems.length > 0 && (
             <div className="picnic-warning" role="alert">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span>{t("picnicMissingChoiceWarning", { n: missingPicnicChoiceItems.length })}</span>
             </div>
           )}
@@ -476,6 +486,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 checkedIds={checked}
                 onTogglePantry={toggleOverride}
                 isPantry={false}
+                editMode={shoppingEditMode}
+                dismissedIds={dismissed}
+                onToggleDismiss={toggleDismiss}
                 picnicUser={picnicUser}
                 picnicAssociations={picnicAssociations}
                 picnicPicker={picnicPicker}
@@ -498,17 +511,12 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
           {staples.length > 0 && !staplesEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${staples.every((s) => checked[`s:${s.id}`]) ? " on" : ""}`} onClick={() => {
                 const allChecked = staples.every((s) => checked[`s:${s.id}`]);
                 staples.forEach((s) => {
                   if (allChecked ? checked[`s:${s.id}`] : !checked[`s:${s.id}`]) toggleStaple(s.id);
                 });
-              }}>
-                {staples.every((s) => checked[`s:${s.id}`]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
-                Naar lijst
-              </button>
+              }} />
             </div>
           )}
 
@@ -517,7 +525,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
 
           {STAPLE_CATEGORIES.map((cat) => {
-            const catItems = staples.filter((s) => s.category === cat);
+            const catItems = staples.filter((s) => s.category === cat && (!searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || translateStapleName(s.name, lang).toLowerCase().includes(searchQuery.toLowerCase())));
             if (!staplesEditMode && catItems.length === 0) return null;
             return (
               <div key={cat} className="staples-category">
@@ -525,21 +533,25 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 <ul className="staples-list">
                   {catItems.map((item) => {
                     const isChecked = checked[`s:${item.id}`];
+                    if (staplesEditMode) {
+                      return (
+                        <li key={item.id} className="staples-item editing" onClick={() => removeStaple(item.id)}>
+                          <span className="check-box dismiss-circle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#c0392b" fillOpacity="0.5" stroke="none"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                          </span>
+                          <div className="ingredient-details">
+                            <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
+                          </div>
+                        </li>
+                      );
+                    }
                     return (
                     <li
                       key={item.id}
-                      className={`staples-item${staplesEditMode ? " editing" : ""}${isChecked ? " done" : ""}`}
-                      onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
+                      className={`staples-item${isChecked ? " done" : ""}`}
+                      onClick={() => toggleStaple(item.id)}
                     >
-                      {!staplesEditMode && <span className="check-box">{isChecked ? "●" : "○"}</span>}
-                      {staplesEditMode ? (
-                        <input
-                          className="staples-rename-input"
-                          value={nameEdits[item.id] ?? item.name}
-                          onChange={(e) => setNameEdits((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          onBlur={() => saveRename(item)}
-                        />
-                      ) : (
+                      <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                        <div className="ingredient-details">
                          <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
                          <StaplePicnicAssociation
@@ -554,10 +566,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                            onSelectPicnicAssociation={handleSelectPicnicAssociation}
                          />
                        </div>
-                      )}
-                      {staplesEditMode && (
-                        <button className="staples-remove-btn" onClick={() => removeStaple(item.id)} title={t("removeItem")}>×</button>
-                      )}
                     </li>
                     );
                   })}
@@ -574,23 +582,18 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {pantryItems.length > 0 && (
+          {picnicSendPanel}
+
+          {pantryItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
-              <button className="pantry-action-btn" onClick={() => {
+              <button className={`select-all-toggle${pantryItems.every((item) => checked[item.id]) ? " on" : ""}`} onClick={() => {
                 const allChecked = pantryItems.every((item) => checked[item.id]);
                 pantryItems.forEach((item) => {
                   if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
                 });
-              }}>
-                {pantryItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
-                Naar lijst
-              </button>
+              }} />
             </div>
           )}
-
-          {picnicSendPanel}
           {pantryItems.length === 0 ? (
             <div className="empty-state">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -603,6 +606,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               checkedIds={checked}
               onTogglePantry={toggleOverride}
               isPantry={true}
+              editMode={shoppingEditMode}
+              dismissedIds={dismissed}
+              onToggleDismiss={toggleDismiss}
               picnicUser={picnicUser}
               picnicAssociations={picnicAssociations}
               picnicPicker={picnicPicker}
@@ -626,6 +632,9 @@ function IngredientList({
   isPantry,
   done = false,
   checkedIds,
+  editMode = false,
+  dismissedIds = {},
+  onToggleDismiss,
   picnicUser,
   picnicAssociations,
   picnicPicker,
@@ -645,15 +654,35 @@ function IngredientList({
   });
   return (
     <>
-      {Object.entries(grouped).map(([meal, groupItems]) => (
+      {Object.entries(grouped).map(([meal, groupItems]) => {
+        const visibleItems = editMode ? groupItems : groupItems.filter((item) => !dismissedIds[item.id]);
+        if (visibleItems.length === 0) return null;
+        return (
         <div key={meal} className="staples-category">
           {meal !== "_" && <h4 className="staples-category-title">{meal}</h4>}
           <ul className="ingredient-list">
-            {groupItems.map((item) => {
+            {visibleItems.map((item) => {
               const isDone = checkedIds ? checkedIds[item.id] : done;
+              const isDismissed = !!dismissedIds[item.id];
+              if (editMode) {
+                return (
+                  <li key={item.id} className={`ingredient-item${isDismissed ? " dismissed" : ""}`} onClick={() => onToggleDismiss(item.id)}>
+                    <span className="check-box dismiss-circle">
+                      {isDismissed
+                        ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="none" stroke="#888" strokeWidth="1.5"/><line x1="8" y1="12" x2="16" y2="12" stroke="#888" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="8" x2="12" y2="16" stroke="#888" strokeWidth="2" strokeLinecap="round"/></svg>
+                        : <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#c0392b" fillOpacity="0.5" stroke="none"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                      }
+                    </span>
+                    <div className="ingredient-details">
+                      <span className="ingredient-name">{item.name}</span>
+                      <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
+                    </div>
+                  </li>
+                );
+              }
               return (
               <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-                <span className="check-box">{isDone ? "●" : "○"}</span>
+                <span className={`check-box${isDone ? " checked" : ""}`}>{isDone ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                 <div className="ingredient-details">
                   <span className="ingredient-name">{item.name}</span>
                   <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
@@ -675,7 +704,8 @@ function IngredientList({
             })}
           </ul>
         </div>
-      ))}
+        );
+      })}
     </>
   );
 }
