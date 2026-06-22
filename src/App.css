@@ -904,6 +904,7 @@
   cursor: pointer;
   transition: background 0.12s;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 .recipe-card:hover { background: var(--surface2); filter: brightness(1.04); }
 
@@ -913,6 +914,7 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+  padding-right: 28px;
 }
 .rc-emoji { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
 .rc-title {
@@ -926,10 +928,20 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.rc-header-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-.rc-time { font-size: 0.72rem; color: var(--text-muted); }
-.rc-chevron { font-size: 1.1rem; color: var(--text-muted); display: inline-block; transition: transform 0.2s; }
-.rc-chevron--open { transform: rotate(90deg); }
+.rc-fav-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.rc-fav-btn--on { color: #f4a61d; }
 
 .rc-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .rc-tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
