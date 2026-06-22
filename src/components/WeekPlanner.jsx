@@ -168,7 +168,8 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         const isReplacing = Boolean(currentId && getRecipe(currentId));
         const visibleRecipes = recipes
           .filter((r) => !r.archived)
-          .filter((r) => matchesFilter(r, pickerFilter));
+          .filter((r) => matchesFilter(r, pickerFilter))
+          .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
         return (
           <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>

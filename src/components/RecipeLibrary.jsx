@@ -79,7 +79,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
       getRecipeName(r, lang).toLowerCase().includes(q);
     const matchTag = !activeTag || r.tags.includes(activeTag);
     return matchSearch && matchTag;
-  });
+  }).sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
 
   const confirmRecipe = recipes.find((r) => r.id === confirmId);
 
@@ -189,6 +189,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               onToggle={() => onViewRecipe(recipe)}
               onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
               onDelete={() => onUpdate({ ...recipe, archived: true })}
+              onFavourite={() => onUpdate({ ...recipe, favourite: !recipe.favourite })}
               editMode={editListMode}
             />
           ))}
@@ -292,7 +293,7 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
   );
 }
 
-function RecipeCard({ recipe, onToggle, onEdit, onDelete, dimmed, editMode }) {
+function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, editMode }) {
   const { lang } = useLanguage();
   return (
     <div className={`recipe-card${dimmed ? " recipe-card--archived" : ""}${editMode ? " recipe-card--edit-mode" : ""}`}>
@@ -303,10 +304,15 @@ function RecipeCard({ recipe, onToggle, onEdit, onDelete, dimmed, editMode }) {
         <div className="rc-header">
           <span className="rc-emoji">{recipe.emoji}</span>
           <span className="rc-title">{getRecipeName(recipe, lang)}</span>
-          <div className="rc-header-right">
-            {recipe.cookTime && <span className="rc-time">{recipe.cookTime}</span>}
-            <span className="rc-chevron">›</span>
-          </div>
+          {!dimmed && onFavourite && (
+            <button
+              className={`rc-fav-btn${recipe.favourite ? " rc-fav-btn--on" : ""}`}
+              onClick={(e) => { e.stopPropagation(); onFavourite(); }}
+              title={recipe.favourite ? "Verwijder favoriet" : "Favoriet"}
+            >
+              {recipe.favourite ? "★" : "☆"}
+            </button>
+          )}
         </div>
         <div className="rc-footer">
           <div className="rc-tags">
