@@ -40,7 +40,7 @@ function computeWarnings(days, weekPlan, recipes) {
 export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeekChange, recipes, onAssign, onClear, saveFailed, onReloadWeekPlan, onViewRecipe }) {
   const { t, tDay, lang } = useLanguage();
   const [selecting, setSelecting] = useState(null);
-  const [pickerFilter, setPickerFilter] = useState(null);
+  const [pickerSearch, setPickerSearch] = useState("");
 
   const months = t("months");
   const monday = getMondayOfWeek(weekOffset);
@@ -173,9 +173,10 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       {selecting && (() => {
         const currentId = weekPlan?.[selecting.day]?.[selecting.member] ?? null;
         const isReplacing = Boolean(currentId && getRecipe(currentId));
+        const q = pickerSearch.toLowerCase();
         const visibleRecipes = recipes
           .filter((r) => !r.archived)
-          .filter((r) => matchesFilter(r, pickerFilter))
+          .filter((r) => !q || getRecipeName(r, lang).toLowerCase().includes(q) || r.tags.some((t) => t.toLowerCase().includes(q)))
           .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
         return (
           <div className="recipe-picker-overlay" onClick={() => setSelecting(null)}>
@@ -188,64 +189,41 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
               </div>
 
-              <div className="picker-specials">
-                {SPECIAL_MEALS.map((s) => {
-                  const isCurrent = s.id === currentId;
-                  return (
-                    <button
-                      key={s.id}
-                      className={`picker-special-btn${isCurrent ? " picker-special-btn--current" : ""}`}
-                      onClick={() => handleSelect(s.id)}
-                    >
-                      <span className="picker-special-emoji">{s.emoji}</span>
-                      <span className="picker-special-name">{s.name}</span>
-                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="picker-filters">
-                <button
-                  className={`picker-filter-btn ${!pickerFilter ? "active" : ""}`}
-                  onClick={() => setPickerFilter(null)}
-                >
-                  {t("filterAll")}
-                </button>
-                {PICKER_FILTERS.map((f) => (
-                  <button
-                    key={f.key}
-                    className={`picker-filter-btn ${pickerFilter === f.key ? "active" : ""}`}
-                    onClick={() => setPickerFilter(pickerFilter === f.key ? null : f.key)}
-                  >
-                    {f.emoji} {t("filter_" + f.key)}
-                  </button>
-                ))}
+              <div className="picker-search">
+                <input
+                  type="text"
+                  className="picker-search-input"
+                  placeholder={t("search") + "..."}
+                  value={pickerSearch}
+                  onChange={(e) => setPickerSearch(e.target.value)}
+                  autoFocus
+                />
               </div>
 
               <div className="picker-grid">
-                {visibleRecipes.length === 0 && (
-                  <p className="picker-empty">{t("noRecipesCategory")}</p>
-                )}
-                {visibleRecipes.map((r) => {
-                  const isCurrent = r.id === currentId;
+                {SPECIAL_MEALS.filter((s) => !q || s.name.toLowerCase().includes(q)).map((s) => {
+                  const isCurrent = s.id === currentId;
                   return (
-                    <button
-                      key={r.id}
-                      className={`picker-card ${isCurrent ? "picker-card--current" : ""}`}
-                      onClick={() => handleSelect(r.id)}
-                    >
-                      <span className="picker-emoji">{r.emoji}</span>
-                      <span className="picker-name">{getRecipeName(r, lang)}</span>
+                    <button key={s.id} className={`picker-card${isCurrent ? " picker-card--current" : ""}`} onClick={() => handleSelect(s.id)}>
+                      <span className="picker-emoji">{s.emoji}</span>
+                      <span className="picker-name">{s.name}</span>
                       {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
-                      <div className="picker-tags">
-                        {r.tags.map((tag) => (
-                          <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
-                        ))}
-                      </div>
                     </button>
                   );
                 })}
+                {visibleRecipes.map((r) => {
+                  const isCurrent = r.id === currentId;
+                  return (
+                    <button key={r.id} className={`picker-card${isCurrent ? " picker-card--current" : ""}`} onClick={() => handleSelect(r.id)}>
+                      <span className="picker-emoji">{r.emoji}</span>
+                      <span className="picker-name">{getRecipeName(r, lang)}</span>
+                      {isCurrent && <span className="picker-current-label">{t("currentLabel")}</span>}
+                    </button>
+                  );
+                })}
+                {visibleRecipes.length === 0 && SPECIAL_MEALS.filter((s) => !q || s.name.toLowerCase().includes(q)).length === 0 && (
+                  <p className="picker-empty">{t("noRecipesCategory")}</p>
+                )}
               </div>
             </div>
           </div>
