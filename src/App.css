@@ -1007,16 +1007,15 @@
 .recipe-grid { display: flex; flex-direction: column; gap: 0; }
 
 .recipe-card {
-  background: none;
-  border-bottom: 1px solid var(--border, #333);
-  border-radius: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 14px 16px;
   cursor: pointer;
   transition: background 0.12s;
   -webkit-tap-highlight-color: transparent;
   position: relative;
 }
-.recipe-card:last-child { border-bottom: none; }
 .recipe-card:hover { background: var(--surface2); }
 
 /* Apple Health–style card layout */
