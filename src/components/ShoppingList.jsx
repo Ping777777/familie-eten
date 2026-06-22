@@ -44,6 +44,10 @@ export default function ShoppingList({
   onPicnicSessionExpired,
   picnicSendKey = 0,
   picnicCartKey = 0,
+  activeListTab = "maaltijden",
+  onActiveListTabChange,
+  staplesEditMode = false,
+  onStaplesEditModeChange,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
@@ -51,9 +55,7 @@ export default function ShoppingList({
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [overrides, setOverrides] = useState(loadOverrides);
-  const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
-  const [activeListTab, setActiveListTab] = useState("maaltijden");
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
@@ -62,6 +64,10 @@ export default function ShoppingList({
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
+
+  useEffect(() => {
+    if (!staplesEditMode) setNameEdits({});
+  }, [staplesEditMode]);
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -335,9 +341,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
   const tabBar = (
     <div className="shopping-tabs">
-      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>Lijst</button>
-      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => setActiveListTab("kast")}>Kast</button>
-      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => setActiveListTab("staples")}>Vast</button>
+      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => onActiveListTabChange("maaltijden")}>Lijst</button>
+      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => onActiveListTabChange("kast")}>Kast</button>
+      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => onActiveListTabChange("staples")}>Vast</button>
     </div>
   );
 
@@ -523,19 +529,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
                 </button>
               )}
-              <button
-                className={`shopping-icon-btn${staplesEditMode ? " shopping-icon-btn--done" : ""}`}
-                onClick={() => {
-                  if (staplesEditMode) setNameEdits({});
-                  setStaplesEditMode((e) => !e);
-                }}
-                title={staplesEditMode ? t("doneEditing") : t("editMode")}
-              >
-                {staplesEditMode
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                }
-              </button>
             </div>
           </div>
 

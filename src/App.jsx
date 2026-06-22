@@ -249,6 +249,8 @@ export default function App() {
   const recipeDotsRef = useRef(null);
   const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
   const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
+  const [shoppingListTab, setShoppingListTab] = useState("maaltijden");
+  const [staplesEditMode, setStaplesEditMode] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -934,6 +936,14 @@ export default function App() {
             <button className="header-pill-btn" title={t("search")}>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
+            {shoppingListTab === "staples" && (
+              <button className="header-pill-btn" onClick={() => setStaplesEditMode((e) => !e)} title={staplesEditMode ? t("doneEditing") : t("editMode")}>
+                {staplesEditMode
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                }
+              </button>
+            )}
             <button className="header-pill-btn" onClick={() => setShoppingPicnicSendKey((k) => k + 1)} title={t("sendPicnic")}>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>
             </button>
@@ -1058,6 +1068,10 @@ export default function App() {
             onPicnicSessionExpired={handlePicnicSessionExpired}
             picnicSendKey={shoppingPicnicSendKey}
             picnicCartKey={shoppingPicnicCartKey}
+            activeListTab={shoppingListTab}
+            onActiveListTabChange={setShoppingListTab}
+            staplesEditMode={staplesEditMode}
+            onStaplesEditModeChange={setStaplesEditMode}
           />
         )}
       </main>
