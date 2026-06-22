@@ -509,8 +509,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             {tabBar}
           </div>
 
-          {picnicSendPanel}
-
           {staples.length > 0 && !staplesEditMode && (
             <div className="pantry-actions">
               <button className={`select-all-toggle${staples.every((s) => checked[`s:${s.id}`]) ? " on" : ""}`} onClick={() => {
@@ -521,6 +519,8 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               }} />
             </div>
           )}
+
+          {picnicSendPanel}
 
 
 
