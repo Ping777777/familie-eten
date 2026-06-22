@@ -335,34 +335,13 @@
 .week-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
   margin-bottom: 14px;
-  position: relative;
 }
-.week-arrow {
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  width: 44px;
-  height: 44px;
-  font-size: 1.4rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
-  flex-shrink: 0;
-  transition: border-color 0.15s, color 0.15s;
-}
-.week-arrow:hover { border-color: #025c51; color: #025c51; }
 .week-month-label {
   font-weight: 700;
   font-size: 1.3rem;
   text-transform: capitalize;
   color: var(--text);
-  min-width: 120px;
-  text-align: center;
 }
 
 /* Variety warnings */
@@ -470,7 +449,7 @@
 .hint { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
 
 .planner-grid {
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .grid-header {
@@ -3089,7 +3068,6 @@
 
 /* Planner grid */
 .dark .meal-cell.locked { background: var(--surface2); }
-.dark .week-arrow { background: transparent; border-color: transparent; color: var(--text-muted); }
 
 /* Recipe picker */
 .dark .picker-card { background: var(--surface2); border-color: var(--border); }
