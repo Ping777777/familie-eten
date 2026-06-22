@@ -1815,9 +1815,10 @@
 .staples-edit-btn.active { background: #fc7600; color: white; border-color: #fc7600; }
 
 .staples-category {
-  border-top: 1px solid #d0efed;
-  padding: 12px 16px 8px;
-  background: var(--surface);
+  background: var(--surface2);
+  border-radius: 16px;
+  padding: 16px 16px 12px;
+  margin-bottom: 12px;
 }
 
 .staples-category-title {
@@ -1825,7 +1826,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #025c51;
+  color: var(--text-muted);
   margin: 0 0 8px;
 }
 
