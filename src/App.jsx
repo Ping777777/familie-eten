@@ -19,10 +19,11 @@ const LANGUAGES = [
   { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
 ];
 
-const MEMBER_COLORS = { Papa: "#2a9d8f", Mama: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
-const MEMBER_EMOJI  = { Papa: "👱🏼‍♂️", Mama: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
+const MEMBER_COLORS = { Neil: "#2a9d8f", Larisa: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
+const MEMBER_EMOJI  = { Neil: "👱🏼‍♂️", Larisa: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
 
 function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember, tab, onTabChange }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
   const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
@@ -75,151 +76,144 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
   return (
     <>
       {open && <div className="menu-overlay" onClick={onClose} />}
-      <aside className={`side-menu${open ? " side-menu--open" : ""}`}>
-        <div className="side-menu-top">
-          <div className="side-menu-flag-group">
-            {LANGUAGES.map(({ code, img, label }) => (
-              <button key={code} className={`side-menu-flag-btn${lang === code ? " active" : ""}`} onClick={() => setLang(code)} title={label}>
-                <img src={img} alt={label} className="side-menu-flag-img" />
+      <aside className={`side-menu${open ? " side-menu--open" : ""}`} onClick={(e) => e.stopPropagation()}>
+        {settingsOpen ? (
+          <>
+            <div className="side-menu-top">
+              <button className="side-menu-back" onClick={() => setSettingsOpen(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
-            ))}
-          </div>
-          <button className="side-menu-close" onClick={onClose}>✕</button>
-        </div>
-
-        {onTabChange && (
-          <nav className="side-menu-nav">
-            {[
-              { key: "planner", label: t("tabPlanner") },
-              { key: "shopping", label: t("tabShopping") },
-              { key: "recipes", label: t("tabRecipes") },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`side-menu-nav-btn${tab === key ? " active" : ""}`}
-                onClick={() => onTabChange(key)}
-              >
-                {label.replace(/^\S+\s/, "")}
-              </button>
-            ))}
-          </nav>
-        )}
-
-        <div className="side-menu-section">
-          <p className="side-menu-label">{t("familySection")}</p>
-          <div className="member-toggle-grid">
-            {FAMILY.map((name) => {
-              const on = visibleMembers.includes(name);
-              return (
-                <button
-                  key={name}
-                  className={`member-toggle-btn${on ? " member-toggle-btn--on" : ""}`}
-                  style={on ? { borderColor: MEMBER_COLORS[name], color: MEMBER_COLORS[name] } : {}}
-                  onClick={() => onToggleMember(name)}
-                  disabled={on && visibleMembers.length === 1}
-                  title={on ? `${name} verbergen` : `${name} tonen`}
-                >
-                  <span>{MEMBER_EMOJI[name]}</span>
-                  <span>{name}</span>
-                  {on && <span className="member-toggle-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="side-menu-section">
-          <p className="side-menu-label">{t("picnicSection")}</p>
-          {picnicUser ? (
-            <>
-              <div className="side-menu-picnic-user">
-                <span className="side-menu-user-label">{t("picnicLoggedInAs")}</span>
-                <strong className="side-menu-user-name">{picnicUser.name}</strong>
-              </div>
-              <button
-                className="side-menu-picnic-logout"
-                onClick={() => { onPicnicLogout(); }}
-              >
-                {t("picnicLogout")}
-              </button>
-            </>
-          ) : picnicOtp.open ? (
-            <form className="side-menu-picnic-form" onSubmit={handlePicnicOtpSubmit}>
-              <p className="side-menu-picnic-2fa-hint">{t("picnic2faHint")}</p>
-              <input
-                className="side-menu-picnic-input"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder={t("picnic2faPlaceholder")} aria-label={t("picnic2faPlaceholder")}
-                value={picnicOtp.code}
-                onChange={(e) => setPicnicOtp((p) => ({ ...p, code: e.target.value }))}
-                required
-              />
-              {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
-              <div className="side-menu-picnic-actions">
-                <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
-                  {picnicBusy ? t("picnic2faBusy") : t("picnic2faBtn")}
-                </button>
-                <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
-                  {t("cancel")}
-                </button>
-              </div>
-            </form>
-          ) : picnicFormOpen ? (
-            <form className="side-menu-picnic-form" onSubmit={handlePicnicSubmit}>
-              <input
-                className="side-menu-picnic-input"
-                type="email"
-                placeholder={t("picnicLoginUsername")} aria-label={t("picnicLoginUsername")}
-                value={picnicForm.username}
-                onChange={(e) => setPicnicForm((p) => ({ ...p, username: e.target.value }))}
-                autoComplete="email"
-                required
-              />
-              <input
-                className="side-menu-picnic-input"
-                type="password"
-                placeholder={t("picnicLoginPassword")} aria-label={t("picnicLoginPassword")}
-                value={picnicForm.password}
-                onChange={(e) => setPicnicForm((p) => ({ ...p, password: e.target.value }))}
-                autoComplete="current-password"
-                required
-              />
-              {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
-              <div className="side-menu-picnic-actions">
-                <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
-                  {picnicBusy ? t("picnicLoginBusy") : t("picnicLoginBtn")}
-                </button>
-                <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
-                  {t("cancel")}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <button className="side-menu-picnic-login-btn" onClick={() => setPicnicFormOpen(true)}>
-              {t("picnicLogin")}
-            </button>
-          )}
-        </div>
-
-        {currentUser && (
-          <div className="side-menu-footer">
-            <div className="side-menu-user">
-              <span className="side-menu-user-label">{t("loggedInAs")}</span>
-              <strong className="side-menu-user-name">{currentUser}</strong>
+              <button className="side-menu-close" onClick={() => { setSettingsOpen(false); onClose(); }}>✕</button>
             </div>
-            <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
-              {t("logout")}
-            </button>
-          </div>
+
+            <div className="side-menu-section">
+              <p className="side-menu-label">{t("languageSection")}</p>
+              <div className="side-menu-flag-group">
+                {LANGUAGES.map(({ code, img, label }) => (
+                  <button key={code} className={`side-menu-flag-btn${lang === code ? " active" : ""}`} onClick={() => setLang(code)} title={label}>
+                    <img src={img} alt={label} className="side-menu-flag-img" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="side-menu-section">
+              <p className="side-menu-label">{t("familySection")}</p>
+              <div className="member-toggle-grid">
+                {FAMILY.map((name) => {
+                  const on = visibleMembers.includes(name);
+                  return (
+                    <button
+                      key={name}
+                      className={`member-toggle-btn${on ? " member-toggle-btn--on" : ""}`}
+                      style={on ? { borderColor: MEMBER_COLORS[name], color: MEMBER_COLORS[name] } : {}}
+                      onClick={() => onToggleMember(name)}
+                      disabled={on && visibleMembers.length === 1}
+                    >
+                      <span>{name}</span>
+                      {on && <span className="member-toggle-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+          </>
+        ) : (
+          <>
+            <div className="side-menu-top">
+              <button className="side-menu-dots" onClick={() => setSettingsOpen(true)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+              </button>
+              <button className="side-menu-close" onClick={onClose}>✕</button>
+            </div>
+
+            <div className="side-menu-section">
+              {picnicUser ? (
+                <>
+                  <div className="side-menu-picnic-user">
+                    <span className="side-menu-user-label">{t("picnicLoggedInAs")}</span>
+                    <strong className="side-menu-user-name">{picnicUser.name}</strong>
+                  </div>
+                  <button className="side-menu-picnic-logout" onClick={() => { onPicnicLogout(); }}>
+                    {t("picnicLogout")}
+                  </button>
+                </>
+              ) : picnicOtp.open ? (
+                <form className="side-menu-picnic-form" onSubmit={handlePicnicOtpSubmit}>
+                  <p className="side-menu-picnic-2fa-hint">{t("picnic2faHint")}</p>
+                  <input
+                    className="side-menu-picnic-input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder={t("picnic2faPlaceholder")} aria-label={t("picnic2faPlaceholder")}
+                    value={picnicOtp.code}
+                    onChange={(e) => setPicnicOtp((p) => ({ ...p, code: e.target.value }))}
+                    required
+                  />
+                  {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
+                  <div className="side-menu-picnic-actions">
+                    <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
+                      {picnicBusy ? t("picnic2faBusy") : t("picnic2faBtn")}
+                    </button>
+                    <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </form>
+              ) : picnicFormOpen ? (
+                <form className="side-menu-picnic-form" onSubmit={handlePicnicSubmit}>
+                  <input
+                    className="side-menu-picnic-input"
+                    type="email"
+                    placeholder={t("picnicLoginUsername")} aria-label={t("picnicLoginUsername")}
+                    value={picnicForm.username}
+                    onChange={(e) => setPicnicForm((p) => ({ ...p, username: e.target.value }))}
+                    autoComplete="email"
+                    required
+                  />
+                  <input
+                    className="side-menu-picnic-input"
+                    type="password"
+                    placeholder={t("picnicLoginPassword")} aria-label={t("picnicLoginPassword")}
+                    value={picnicForm.password}
+                    onChange={(e) => setPicnicForm((p) => ({ ...p, password: e.target.value }))}
+                    autoComplete="current-password"
+                    required
+                  />
+                  {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
+                  <div className="side-menu-picnic-actions">
+                    <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
+                      {picnicBusy ? t("picnicLoginBusy") : t("picnicLoginBtn")}
+                    </button>
+                    <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button className="side-menu-picnic-login-btn" onClick={() => setPicnicFormOpen(true)}>
+                  {t("picnicLogin")}
+                </button>
+              )}
+            </div>
+
+            {currentUser && (
+              <div className="side-menu-footer">
+                <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
+                  {t("logout")}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </aside>
     </>
   );
 }
 
-const FAMILY = ["Papa", "Mama", "Inga", "Kevin"];
+const FAMILY = ["Neil", "Larisa", "Inga", "Kevin"];
 const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
 const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const AUTH_USER_KEY = "familie-eten:user";

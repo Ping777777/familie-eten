@@ -5,8 +5,8 @@ import { useLanguage } from "../useLanguage";
 import { getRecipeName, translateTag } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
-  Papa: "#2a9d8f",
-  Mama: "#fc7600",
+  Neil: "#2a9d8f",
+  Larisa: "#fc7600",
   Inga: "#5cb85c",
   Kevin: "#e8c247",
 };
