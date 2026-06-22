@@ -1689,11 +1689,25 @@
   background: white;
   padding: 12px 16px 16px;
 }
-.pantry-hint {
-  font-size: 0.78rem;
-  color: #999;
+.pantry-actions {
+  display: flex;
+  gap: 10px;
   margin-bottom: 12px;
 }
+.pantry-action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #333);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
+}
+.pantry-action-btn:active { opacity: 0.7; }
 
 .empty-shopping {
   text-align: center;
@@ -3012,7 +3026,6 @@
 .dark .pantry-toggle { background: var(--surface2); color: #4dbfb5; }
 .dark .pantry-toggle:hover { background: #163e3a; }
 .dark .pantry-body { background: var(--surface); }
-.dark .pantry-hint { color: var(--text-muted); }
 .dark .archive-toggle { background: var(--surface2); color: #4dbfb5; }
 .dark .archive-body { background: var(--surface); }
 .dark .archive-hint { color: var(--text-muted); }

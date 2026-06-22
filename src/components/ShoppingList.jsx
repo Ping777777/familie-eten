@@ -622,19 +622,31 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
       {activeListTab === "kast" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-meta">
-              <span>{t("pantryCount", { n: uncheckedPantry.length })}</span>
-            </div>
           </div>
-          <p className="pantry-hint">{t("pantryHint")}</p>
+          {pantryItems.length > 0 && (
+            <div className="pantry-actions">
+              <button className="pantry-action-btn" onClick={() => {
+                const allChecked = pantryItems.every((item) => checked[item.id]);
+                pantryItems.forEach((item) => {
+                  if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
+                });
+              }}>
+                {pantryItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
+              </button>
+              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
+                Naar lijst
+              </button>
+            </div>
+          )}
           {pantryItems.length === 0 ? (
             <div className="meal-empty-notice"><p>{t("noMealsPlanned")}</p></div>
           ) : (
             <IngredientList
-              items={uncheckedPantry}
+              items={pantryItems}
               onCheck={toggleCheck}
+              checkedIds={checked}
               onTogglePantry={toggleOverride}
               isPantry={true}
               picnicUser={picnicUser}
@@ -659,6 +671,7 @@ function IngredientList({
   onTogglePantry,
   isPantry,
   done = false,
+  checkedIds,
   picnicUser,
   picnicAssociations,
   picnicPicker,
@@ -672,13 +685,15 @@ function IngredientList({
   if (items.length === 0) return null;
   return (
     <ul className="ingredient-list">
-      {items.map((item) => (
-        <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-          <span className="check-box">{done ? "●" : "○"}</span>
+      {items.map((item) => {
+        const isDone = checkedIds ? checkedIds[item.id] : done;
+        return (
+        <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
+          <span className="check-box">{isDone ? "●" : "○"}</span>
           <div className="ingredient-details">
             <span className="ingredient-name">{item.name}</span>
             <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
-            {!done && item.meals && (
+            {!isDone && item.meals && (
               <span className="ingredient-meals">{[...item.meals].join(" · ")}</span>
             )}
             <PicnicAssociation
@@ -694,13 +709,14 @@ function IngredientList({
               onSelect={onSelectPicnicAssociation}
             />
           </div>
-          {!done && !isPantry && (
+          {!isDone && !isPantry && (
             <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
               🗄
             </button>
           )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
