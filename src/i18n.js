@@ -17,6 +17,9 @@ export const translations = {
     tabPlanner: "📅 Weekplanner",
     tabRecipes: "📖 Recepten",
     tabShopping: "🛒 Boodschappen",
+    navPlanner: "Planner",
+    navShopping: "Boodschappen",
+    navRecipes: "Recepten",
 
     prevWeek: "Vorige week",
     nextWeek: "Volgende week",
@@ -190,6 +193,9 @@ export const translations = {
     tabPlanner: "📅 Week planner",
     tabRecipes: "📖 Recipes",
     tabShopping: "🛒 Shopping",
+    navPlanner: "Planner",
+    navShopping: "Shopping",
+    navRecipes: "Recipes",
 
     prevWeek: "Previous week",
     nextWeek: "Next week",
@@ -363,6 +369,9 @@ export const translations = {
     tabPlanner: "📅 Планировщик",
     tabRecipes: "📖 Рецепты",
     tabShopping: "🛒 Покупки",
+    navPlanner: "Планировщик",
+    navShopping: "Покупки",
+    navRecipes: "Рецепты",
 
     prevWeek: "Предыдущая неделя",
     nextWeek: "Следующая неделя",

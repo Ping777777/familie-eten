@@ -93,11 +93,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
     setEditingRecipe(null);
   };
 
-  const handleRestore = (e, recipe) => {
-    e.stopPropagation();
-    onUpdate({ ...recipe, archived: false });
-  };
-
   if (viewRecipe) {
     return (
       <LibraryRecipeDetail

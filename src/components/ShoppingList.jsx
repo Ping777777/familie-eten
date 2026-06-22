@@ -364,6 +364,66 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
   const totalAll = activeFresh.length + activePantry.length;
   const checkedAll = [...activeFresh, ...activePantry].filter((i) => checked[i.id]).length;
 
+  const picnicSendPanel = (
+    <>
+      {(picnicSend.result || picnicSend.error) && (
+        <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
+          <span>
+            {picnicSend.error
+              ? picnicSend.error
+              : picnicSend.result.added === 0
+                ? t("picnicSendNoneAdded")
+                : picnicSend.result.skipped > 0
+                  ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
+                  : t("picnicSendSuccess", { added: picnicSend.result.added })}
+          </span>
+          <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      )}
+
+      {picnicCart.open && (
+        <div className="picnic-cart-panel">
+          <div className="picnic-cart-header">
+            <strong>{t("picnicCartTitle")}</strong>
+            <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
+          {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
+          {!picnicCart.loading && !picnicCart.error && picnicCart.items.length === 0 && (
+            <p className="picnic-cart-feedback">{t("picnicCartEmpty")}</p>
+          )}
+          {picnicCart.items.length > 0 && (
+            <>
+              <ul className="picnic-cart-list">
+                {picnicCart.items.map((item) => (
+                  <PicnicCartItem
+                    key={item.id}
+                    item={item}
+                    picnicUser={picnicUser}
+                    linkedRecipes={picnicCartAssociations[item.id] ?? []}
+                    picnicCartUpdating={picnicCartUpdating}
+                    updateCartItemQuantity={updateCartItemQuantity}
+                    lang={lang}
+                  />
+                ))}
+              </ul>
+              {typeof picnicCart.totalPrice === "number" && (
+                <p className="picnic-cart-total">
+                  {t("picnicCartTotal", {
+                    price: new Intl.NumberFormat(
+                      lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
+                      { style: "currency", currency: "EUR" }
+                    ).format(picnicCart.totalPrice / 100),
+                  })}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="shopping-list">
       {totalAll > 0 && (
@@ -388,61 +448,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             </div>
           )}
 
-          {(picnicSend.result || picnicSend.error) && (
-            <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
-              <span>
-                {picnicSend.error
-                  ? picnicSend.error
-                  : picnicSend.result.added === 0
-                    ? t("picnicSendNoneAdded")
-                    : picnicSend.result.skipped > 0
-                      ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
-                      : t("picnicSendSuccess", { added: picnicSend.result.added })}
-              </span>
-              <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-          )}
-
-          {picnicCart.open && (
-            <div className="picnic-cart-panel">
-              <div className="picnic-cart-header">
-                <strong>{t("picnicCartTitle")}</strong>
-                <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-              </div>
-              {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
-              {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
-              {!picnicCart.loading && !picnicCart.error && picnicCart.items.length === 0 && (
-                <p className="picnic-cart-feedback">{t("picnicCartEmpty")}</p>
-              )}
-              {picnicCart.items.length > 0 && (
-                <>
-                  <ul className="picnic-cart-list">
-                    {picnicCart.items.map((item) => (
-                      <PicnicCartItem
-                        key={item.id}
-                        item={item}
-                        picnicUser={picnicUser}
-                        linkedRecipes={picnicCartAssociations[item.id] ?? []}
-                        picnicCartUpdating={picnicCartUpdating}
-                        updateCartItemQuantity={updateCartItemQuantity}
-                        lang={lang}
-                      />
-                    ))}
-                  </ul>
-                  {typeof picnicCart.totalPrice === "number" && (
-                    <p className="picnic-cart-total">
-                      {t("picnicCartTotal", {
-                        price: new Intl.NumberFormat(
-                          lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
-                          { style: "currency", currency: "EUR" }
-                        ).format(picnicCart.totalPrice / 100),
-                      })}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          {picnicSendPanel}
 
           {picnicAssocSaveFailed && (
             <div className="save-failed-banner" role="alert">
@@ -502,6 +508,8 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
+
+          {picnicSendPanel}
 
           {staples.length > 0 && !staplesEditMode && (
             <div className="pantry-actions">
@@ -574,6 +582,8 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
+          {picnicSendPanel}
+
           {pantryItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
               <button className={`select-all-toggle${pantryItems.every((item) => checked[item.id]) ? " on" : ""}`} onClick={() => {
