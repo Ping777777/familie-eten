@@ -11,6 +11,8 @@ const MEMBER_COLORS = {
   Kevin: "#e8c247",
 };
 
+const MEMBER_INITIALS = { Papa: "N", Mama: "L", Inga: "I", Kevin: "K" };
+
 function computeWarnings(days, weekPlan, recipes) {
   const warningFilters = PICKER_FILTERS.filter((f) => f.threshold != null);
   const counts = {};
@@ -113,7 +115,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
           <div className="corner-cell"></div>
           {family.map((m) => (
             <div key={m} className="member-header" style={{ borderBottom: `3px solid ${MEMBER_COLORS[m]}` }}>
-              {m}
+              {MEMBER_INITIALS[m] || m[0]}
             </div>
           ))}
         </div>
