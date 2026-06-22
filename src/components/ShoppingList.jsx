@@ -353,9 +353,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
   const tabBar = (
     <div className="shopping-tabs">
-      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => onActiveListTabChange("maaltijden")}>Lijst</button>
-      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => onActiveListTabChange("kast")}>Kast</button>
-      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => onActiveListTabChange("staples")}>Vast</button>
+      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => onActiveListTabChange("maaltijden")}>{t("tabList")}</button>
+      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => onActiveListTabChange("kast")}>{t("tabPantry")}</button>
+      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => onActiveListTabChange("staples")}>{t("tabStaples")}</button>
     </div>
   );
 
@@ -551,7 +551,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       className={`staples-item${isChecked ? " done" : ""}`}
                       onClick={() => toggleStaple(item.id)}
                     >
-                      <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
+                      <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                        <div className="ingredient-details">
                          <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
                          <StaplePicnicAssociation
@@ -682,7 +682,7 @@ function IngredientList({
               }
               return (
               <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-                <span className={`check-box${isDone ? " checked" : ""}`}>{isDone ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
+                <span className={`check-box${isDone ? " checked" : ""}`}>{isDone ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                 <div className="ingredient-details">
                   <span className="ingredient-name">{item.name}</span>
                   <span className="ingredient-amounts">{item.amounts.join(", ")}</span>

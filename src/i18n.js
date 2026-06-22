@@ -101,6 +101,9 @@ export const translations = {
     perServings: "{n} pers.",
 
     shoppingList: "Boodschappenlijst",
+    tabList: "Lijst",
+    tabPantry: "Kast",
+    tabStaples: "Vast",
     staples: "Vaste boodschappen",
     mealMeta: "{meals} maaltijden · {ingr} ingrediënten",
     staplesMeta: "{n} items",
@@ -277,6 +280,9 @@ export const translations = {
     perServings: "{n} serv.",
 
     shoppingList: "Shopping List",
+    tabList: "List",
+    tabPantry: "Pantry",
+    tabStaples: "Staples",
     staples: "Staples",
     mealMeta: "{meals} meals · {ingr} ingredients",
     staplesMeta: "{n} items",
@@ -453,6 +459,9 @@ export const translations = {
     perServings: "{n} порц.",
 
     shoppingList: "Список покупок",
+    tabList: "Список",
+    tabPantry: "Шкаф",
+    tabStaples: "Постоянные",
     staples: "Постоянные покупки",
     mealMeta: "{meals} блюд · {ingr} ингредиентов",
     staplesMeta: "{n} позиций",

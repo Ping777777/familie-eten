@@ -28,6 +28,10 @@
   background: var(--bg);
   color: var(--text);
   transition: background 0.2s, color 0.2s;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: max(env(safe-area-inset-left, 0px), 4px);
+  padding-right: max(env(safe-area-inset-right, 0px), 4px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .login-screen {
@@ -228,22 +232,6 @@
   min-width: 0;
 }
 .header-search-input::placeholder { color: var(--text-muted); }
-.header-search-clear {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  border: none;
-  color: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.65rem;
-  flex-shrink: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
 .header-search-cancel {
   background: none;
   border: none;
@@ -586,15 +574,15 @@
 
 .clear-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
   color: #aaa;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0;
+  line-height: 0;
+  padding: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 .clear-btn:hover { color: #fc7600; }
 
@@ -627,16 +615,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
-.picker-header h3 { margin: 0; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #333; }
+.picker-header h3 { margin: 0; font-size: var(--font-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text); }
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.4rem;
   cursor: pointer;
-  color: #999;
-  line-height: 1;
+  color: var(--text-muted);
+  line-height: 0;
+  padding: 0;
 }
 
 .picker-filters {
@@ -677,7 +665,7 @@
 }
 
 .picker-search {
-  padding: 10px 16px;
+  margin: 10px 16px;
 }
 .picker-search-input {
   width: 100%;
@@ -708,6 +696,9 @@
 .picker-card:hover { background: var(--surface2); filter: brightness(1.08); }
 .picker-card--current {
   box-shadow: 0 0 0 2px var(--accent);
+}
+.picker-card--used {
+  opacity: 0.35;
 }
 .picker-current-label {
   font-size: 0.68rem;
