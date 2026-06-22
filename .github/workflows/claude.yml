@@ -14,10 +14,10 @@ permissions:
 
 jobs:
   claude:
+    if: github.actor == 'neilboyd'
     runs-on: ubuntu-latest
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          allowed_users: "neilboyd"
           claude_args: "--max-turns 5"
