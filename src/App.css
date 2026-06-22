@@ -116,8 +116,8 @@
 
 .header-recipe-title {
   position: absolute;
-  left: 56px;
-  right: 120px;
+  left: 0;
+  right: 0;
   text-align: center;
   font-size: 0.95rem;
   font-weight: 700;
@@ -126,6 +126,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+  padding: 0 80px;
 }
 
 /* Three-dots circle button (replaces hamburger) */

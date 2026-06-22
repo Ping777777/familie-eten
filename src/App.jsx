@@ -244,6 +244,7 @@ export default function App() {
   const [recipeEditListMode, setRecipeEditListMode] = useState(false);
   const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
+  const [showArchived, setShowArchived] = useState(false);
   const recipeDotsRef = useRef(null);
   const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
   const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
@@ -264,6 +265,7 @@ export default function App() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
   const [visibleMembers, setVisibleMembers] = useState(() => {
     try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
     catch { return FAMILY; }
@@ -901,8 +903,8 @@ export default function App() {
     <div className={`app${darkMode ? " dark" : ""}`}>
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
       <header className="app-header">
-        {tab === "recipes" && libraryViewRecipe ? (
-          <button className="header-dots-btn header-dots-btn--back" onClick={() => setLibraryViewRecipe(null)}>
+        {tab === "recipes" && (libraryViewRecipe || showArchived) ? (
+          <button className="header-dots-btn header-dots-btn--back" onClick={() => { setLibraryViewRecipe(null); if (!libraryViewRecipe) setShowArchived(false); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
         ) : (
@@ -912,6 +914,9 @@ export default function App() {
         )}
         {tab === "recipes" && libraryViewRecipe && (
           <span className="header-recipe-title">{libraryViewRecipe.name}</span>
+        )}
+        {tab === "recipes" && !libraryViewRecipe && showArchived && (
+          <span className="header-recipe-title">Archief</span>
         )}
         {tab === "planner" && (
           <div className="header-pill-group">
@@ -940,14 +945,40 @@ export default function App() {
         )}
         {tab === "recipes" && (
           libraryViewRecipe ? (
-            <div className="header-pill-group">
-              <button className="header-pill-btn" title="Bewerk recept" onClick={() => setLibraryEditKey((k) => k + 1)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              </button>
-              <button className="header-pill-btn" title="Archiveer" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: true }); setLibraryViewRecipe(null); }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-              </button>
-            </div>
+            libraryViewRecipe.archived ? (
+              <div className="header-pill-group">
+                <button className="header-pill-btn" title="Herstellen" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: false }); setLibraryViewRecipe(null); }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
+                </button>
+                <button className="header-pill-btn" title="Verwijder" onClick={() => { if (window.confirm(`"${libraryViewRecipe.name}" permanent verwijderen?`)) { deleteRecipe(libraryViewRecipe.id); setLibraryViewRecipe(null); } }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            ) : (
+              <div className="header-pill-group">
+                <button className="header-pill-btn" title="Bewerk recept" onClick={() => setLibraryEditKey((k) => k + 1)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+                <button className="header-pill-btn" title="Archiveer" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: true }); setLibraryViewRecipe(null); }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                </button>
+              </div>
+            )
+          ) : showArchived ? (
+            recipeEditListMode ? (
+              <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
+            ) : (
+              <div ref={recipeDotsRef} style={{ position: "relative" }}>
+                <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+                {recipeDotsOpen && (
+                  <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             <div className="header-pill-group">
               <button className="header-pill-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
@@ -966,7 +997,7 @@ export default function App() {
                   {recipeDotsOpen && (
                     <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
-                      <button onClick={() => setRecipeDotsOpen(false)}>Sjablonen</button>
+                      <button onClick={() => { setShowArchived(true); setRecipeDotsOpen(false); }}>Archief</button>
                     </div>
                   )}
                 </div>
@@ -1003,6 +1034,7 @@ export default function App() {
             onDismissSaveFailed={reloadRecipes}
             searchOpen={recipeSearchOpen}
             editListMode={recipeEditListMode}
+            showArchived={showArchived}
             newRecipeKey={recipeAddKey}
             viewRecipe={libraryViewRecipe}
             onViewRecipe={setLibraryViewRecipe}
