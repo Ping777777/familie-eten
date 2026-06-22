@@ -50,6 +50,7 @@ export default function ShoppingList({
   onStaplesEditModeChange,
   shoppingEditMode = false,
   onShoppingEditModeChange,
+  searchQuery = "",
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
@@ -134,8 +135,14 @@ export default function ShoppingList({
     });
   };
 
-  const freshItems = items.filter((i) => !isPantry(i.id));
-  const pantryItems = items.filter((i) => isPantry(i.id));
+  const searchFilter = (i) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return i.name.toLowerCase().includes(q) ||
+      i.usages?.some((u) => u.recipe?.toLowerCase().includes(q));
+  };
+  const freshItems = items.filter((i) => !isPantry(i.id) && searchFilter(i));
+  const pantryItems = items.filter((i) => isPantry(i.id) && searchFilter(i));
 
   const totalPlanned = days.reduce(
     (acc, day) => acc + family.filter((m) => {
@@ -392,7 +399,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
                       : t("picnicSendSuccess", { added: picnicSend.result.added })}
               </span>
-              <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}>×</button>
+              <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
           )}
 
@@ -400,7 +407,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
             <div className="picnic-cart-panel">
               <div className="picnic-cart-header">
                 <strong>{t("picnicCartTitle")}</strong>
-                <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}>×</button>
+                <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
               {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
               {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
@@ -510,7 +517,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
 
           {STAPLE_CATEGORIES.map((cat) => {
-            const catItems = staples.filter((s) => s.category === cat);
+            const catItems = staples.filter((s) => s.category === cat && (!searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || translateStapleName(s.name, lang).toLowerCase().includes(searchQuery.toLowerCase())));
             if (!staplesEditMode && catItems.length === 0) return null;
             return (
               <div key={cat} className="staples-category">

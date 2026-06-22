@@ -133,15 +133,14 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               const dayPlan = weekPlan?.[day] ?? {};
               const recipeId = dayPlan[member] ?? null;
               const recipe = recipeId ? getRecipe(recipeId) : null;
-              const isDayLocked = !recipe && family.some((m) => m !== member && (dayPlan[m] ?? null));
               const isSelecting = selecting?.day === day && selecting?.member === member;
 
               return (
                 <div
                   key={member}
-                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : isDayLocked ? "locked" : "empty"}`}
+                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"}`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
-                  onClick={isDayLocked ? undefined : () => {
+                  onClick={() => {
                     if (recipe && recipe.id > 0) {
                       onViewRecipe(recipe.id, day, member);
                     } else {
@@ -161,7 +160,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                         <span className="meal-name">{getRecipeName(recipe, lang)}</span>
                       </div>
                     </>
-                  ) : isDayLocked ? null : (
+                  ) : (
                     <span className="add-hint">+</span>
                   )}
                 </div>
@@ -188,18 +187,24 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   {isReplacing ? t("replaceMeal") : t("chooseMeal")}{" "}
                   {t("mealFor", { day: tDay(selecting.day) })}
                 </h3>
-                <button className="close-btn" onClick={() => setSelecting(null)}>×</button>
+                <button className="close-btn" onClick={() => setSelecting(null)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
 
-              <div className="picker-search">
+              <div className="picker-search header-search-bar">
+                <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input
                   type="text"
-                  className="picker-search-input"
-                  placeholder={t("search") + "..."}
+                  className="header-search-input"
+                  placeholder={t("search")}
                   value={pickerSearch}
                   onChange={(e) => setPickerSearch(e.target.value)}
                   autoFocus
                 />
+                {pickerSearch && (
+                  <button className="header-search-clear" onClick={() => setPickerSearch("")}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                )}
               </div>
 
               <div className="picker-grid">
