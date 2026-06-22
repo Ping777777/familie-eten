@@ -52,13 +52,10 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchQuery = "", editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
   const { t, lang } = useLanguage();
-  const [search, setSearch] = useState("");
-  const [activeTag, setActiveTag] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
-  const [filterExpanded, setFilterExpanded] = useState(false);
 
   useEffect(() => {
     if (newRecipeKey > 0) setEditingRecipe(newRecipeTemplate());
@@ -71,14 +68,12 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   const activeRecipes = recipes.filter((r) => !r.archived);
   const archivedRecipes = recipes.filter((r) => r.archived);
 
-  const allTags = [...new Set(activeRecipes.flatMap((r) => r.tags))].sort();
-
   const filtered = activeRecipes.filter((r) => {
-    const q = search.toLowerCase();
-    const matchSearch = r.name.toLowerCase().includes(q) ||
-      getRecipeName(r, lang).toLowerCase().includes(q);
-    const matchTag = !activeTag || r.tags.includes(activeTag);
-    return matchSearch && matchTag;
+    const q = searchQuery.toLowerCase();
+    if (!q) return true;
+    return r.name.toLowerCase().includes(q) ||
+      getRecipeName(r, lang).toLowerCase().includes(q) ||
+      r.tags.some((tag) => tag.toLowerCase().includes(q) || translateTag(tag, lang).toLowerCase().includes(q));
   }).sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
 
   const confirmRecipe = recipes.find((r) => r.id === confirmId);
@@ -129,41 +124,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      {searchOpen && (
-        <div className="library-search-panel">
-          <div className="search-wrapper">
-            <input
-              className="search-input"
-              type="text"
-              placeholder={t("searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-            {activeTag && (
-              <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
-                {translateTag(activeTag, lang)} ×
-              </button>
-            )}
-          </div>
-          <div className="filter-dropdown filter-dropdown--panel">
-            <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
-              {t("filterAll")}
-            </button>
-            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
-              <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
-                {translateTag(tag, lang)}
-              </button>
-            ))}
-            {!filterExpanded && allTags.length > 9 && (
-              <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
-                +{allTags.length - 9} meer
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {showArchived ? (
         <div className="recipe-grid">
@@ -299,7 +259,7 @@ function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, e
   return (
     <div className={`recipe-card${dimmed ? " recipe-card--archived" : ""}${editMode ? " recipe-card--edit-mode" : ""}`}>
       {editMode && (
-        <button className="rc-minus-btn" onClick={(e) => { e.stopPropagation(); onDelete(e); }}>−</button>
+        <button className="rc-minus-btn" onClick={(e) => { e.stopPropagation(); onDelete(e); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#c0392b" fillOpacity="0.5" stroke="none"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg></button>
       )}
       <div className="rc-card-body" onClick={(e) => { if (editMode) onEdit(e); else onToggle(); }}>
         <div className="rc-header">
@@ -314,13 +274,6 @@ function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, e
               {recipe.favourite ? "★" : "☆"}
             </button>
           )}
-        </div>
-        <div className="rc-footer">
-          <div className="rc-tags">
-            {recipe.tags.map((tag) => (
-              <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
-            ))}
-          </div>
         </div>
       </div>
     </div>

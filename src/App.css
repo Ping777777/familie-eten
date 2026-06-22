@@ -134,7 +134,7 @@
   width: 44px;
   height: 44px;
   border-radius: 22px;
-  background: rgba(0, 0, 0, 0.07);
+  background: none;
   border: none;
   color: var(--text);
   display: flex;
@@ -145,7 +145,7 @@
   flex-shrink: 0;
 }
 .header-dots-btn:active { opacity: 0.6; }
-.dark .header-dots-btn { background: rgba(255, 255, 255, 0.1); color: white; }
+.dark .header-dots-btn { background: none; color: white; }
 .header-dots-btn--back { background: none; }
 .dark .header-dots-btn--back { background: none; }
 
@@ -169,6 +169,27 @@
   background: rgba(0, 0, 0, 0.07);
 }
 .dark .header-pill-group { background: rgba(255, 255, 255, 0.1); }
+.header-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  height: 44px;
+  padding: 0 6px 0 14px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.07);
+}
+.dark .header-search-bar { background: rgba(255, 255, 255, 0.1); }
+.header-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.88rem;
+  min-width: 0;
+}
+.header-search-input::placeholder { color: var(--text-muted); }
 
 .header-pill-btn {
   width: 38px;
@@ -760,27 +781,23 @@
 /* ── Recipe card edit mode (iOS-style red minus) ── */
 .recipe-card--edit-mode {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   cursor: default;
 }
 .rc-minus-btn {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  background: #ef4444;
+  width: 18px;
+  height: 18px;
+  background: none;
   border: none;
-  border-radius: 50%;
-  color: white;
-  font-size: 1.4rem;
-  line-height: 1;
+  padding: 0;
+  line-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  margin-top: 14px;
   -webkit-tap-highlight-color: transparent;
-  padding-bottom: 2px;
 }
 .rc-card-body { flex: 1; min-width: 0; cursor: pointer; }
 
@@ -889,28 +906,30 @@
 .tag-filter.active { background: #025c51; border-color: #025c51; color: white; }
 .tag-filter-more { border-style: dashed; color: var(--text-muted); }
 
-.recipe-grid { display: flex; flex-direction: column; gap: 10px; }
+.recipe-grid { display: flex; flex-direction: column; gap: 0; }
 
 .recipe-card {
-  background: var(--surface2);
-  border-radius: 16px;
-  padding: 16px 16px 14px;
+  background: none;
+  border-bottom: 1px solid var(--border, #333);
+  border-radius: 0;
+  padding: 14px 16px;
   cursor: pointer;
   transition: background 0.12s;
   -webkit-tap-highlight-color: transparent;
   position: relative;
 }
-.recipe-card:hover { background: var(--surface2); filter: brightness(1.04); }
+.recipe-card:last-child { border-bottom: none; }
+.recipe-card:hover { background: var(--surface2); }
 
 /* Apple Health–style card layout */
 .rc-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding-right: 28px;
 }
-.rc-emoji { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+.rc-emoji { font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
 .rc-title {
   flex: 1;
   font-size: 0.95rem;
@@ -2934,7 +2953,7 @@
 /* Text colors */
 .dark h1, .dark h2, .dark h3, .dark h4 { color: var(--text); }
 .dark .recipe-info h3, .dark .recipe-meta { color: var(--text); }
-.dark .recipe-card { background: var(--surface2); }
+.dark .recipe-card { background: none; }
 .dark .recipe-card--archived { opacity: 0.45; }
 .dark .week-planner h2,
 .dark .recipe-library h2,
