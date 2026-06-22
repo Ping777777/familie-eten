@@ -98,11 +98,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
     setEditingRecipe(null);
   };
 
-  const handleRestore = (e, recipe) => {
-    e.stopPropagation();
-    onUpdate({ ...recipe, archived: false });
-  };
-
   if (viewRecipe) {
     return (
       <LibraryRecipeDetail
@@ -151,8 +146,11 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               {t("filterAll")}
             </button>
             {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
-              <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
+              <button
+                key={tag}
+                className={`tag-filter ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
                 {translateTag(tag, lang)}
               </button>
             ))}
