@@ -574,15 +574,15 @@
 
 .clear-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
   color: #aaa;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0;
+  line-height: 0;
+  padding: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 .clear-btn:hover { color: #fc7600; }
 
