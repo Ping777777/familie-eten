@@ -1508,12 +1508,12 @@
   cursor: pointer;
   transition: opacity 0.15s;
 }
-.ingredient-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.ingredient-item:hover { background: var(--surface2); }
 .ingredient-item.done { opacity: 0.5; }
 
 .check-box { font-size: 1.4rem; color: #025c51; line-height: 1; }
 .ingredient-details { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
-.ingredient-name { font-weight: 700; color: #222; font-size: var(--font-label); text-transform: uppercase; letter-spacing: 0.07em; }
+.ingredient-name { font-size: 0.9rem; color: #333; }
 .ingredient-amounts { color: #025c51; font-size: var(--font-label); font-weight: 600; }
 .ingredient-meals { color: #aaa; font-size: var(--font-xs); }
 .picnic-association-block {
@@ -1843,10 +1843,7 @@
 .staples-edit-btn.active { background: #fc7600; color: white; border-color: #fc7600; }
 
 .staples-category {
-  background: var(--surface2);
-  border-radius: 16px;
-  padding: 16px 16px 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .staples-category-title {
@@ -1864,25 +1861,27 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
 }
 
 .staples-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 7px;
+  gap: 14px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: opacity 0.15s;
 }
-.staples-item:hover:not(.editing) { background: transparent; }
+.staples-item:hover:not(.editing) { background: var(--surface2); }
 .staples-item.editing { cursor: default; background: transparent; }
 .staples-item.editing:hover { background: transparent; }
 
 .staples-item-name {
   font-size: 0.9rem;
   color: #333;
+  text-transform: lowercase;
   flex: 1;
 }
 
