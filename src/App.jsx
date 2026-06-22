@@ -121,7 +121,7 @@ function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLo
                 >
                   <span>{MEMBER_EMOJI[name]}</span>
                   <span>{name}</span>
-                  {on && <span className="member-toggle-check">✓</span>}
+                  {on && <span className="member-toggle-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>}
                 </button>
               );
             })}
@@ -238,6 +238,18 @@ export default function App() {
   const [tab, setTab] = useState("planner");
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [recipeSearchOpen, setRecipeSearchOpen] = useState(false);
+  const [libraryViewRecipe, setLibraryViewRecipe] = useState(null);
+  const [libraryEditKey, setLibraryEditKey] = useState(0);
+  const [recipeEditListMode, setRecipeEditListMode] = useState(false);
+  const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
+  const [recipeAddKey, setRecipeAddKey] = useState(0);
+  const [showArchived, setShowArchived] = useState(false);
+  const recipeDotsRef = useRef(null);
+  const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
+  const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
+  const [shoppingListTab, setShoppingListTab] = useState("maaltijden");
+  const [staplesEditMode, setStaplesEditMode] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -245,6 +257,17 @@ export default function App() {
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (recipeDotsRef.current && !recipeDotsRef.current.contains(e.target)) {
+        setRecipeDotsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const [visibleMembers, setVisibleMembers] = useState(() => {
     try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
     catch { return FAMILY; }
@@ -833,7 +856,9 @@ export default function App() {
     return (
       <div className={`app login-screen${darkMode ? " dark" : ""}`}>
         <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
-        <button className="hamburger-btn hamburger-btn--login" onClick={() => setMenuOpen(true)}>☰</button>
+        <button className="header-dots-btn header-dots-btn--login" onClick={() => setMenuOpen(true)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
         <main className="login-card">
           <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
           <p className="subtitle">{t("loginSubtitle")}</p>
@@ -880,25 +905,116 @@ export default function App() {
     <div className={`app${darkMode ? " dark" : ""}`}>
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
       <header className="app-header">
-        <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>☰</button>
-        <div className="header-left">
-          <img src="/logo.png" alt="Familie Eten" className="app-header-logo" />
-        </div>
-        <nav className="tabs">
-          {[
-            { key: "planner", label: t("tabPlanner") },
-            { key: "shopping", label: t("tabShopping") },
-            { key: "recipes", label: t("tabRecipes") },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              className={`tab-btn ${tab === key ? "active" : ""}`}
-              onClick={() => setTab(key)}
-            >
-              {label}
+        {tab === "recipes" && (libraryViewRecipe || showArchived) ? (
+          <button className="header-dots-btn header-dots-btn--back" onClick={() => { setLibraryViewRecipe(null); if (!libraryViewRecipe) setShowArchived(false); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        ) : (
+          <button className="header-dots-btn" onClick={() => setMenuOpen(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+          </button>
+        )}
+        {tab === "recipes" && libraryViewRecipe && (
+          <span className="header-recipe-title">{libraryViewRecipe.name}</span>
+        )}
+        {tab === "recipes" && !libraryViewRecipe && showArchived && (
+          <span className="header-recipe-title">Archief</span>
+        )}
+        {tab === "planner" && (
+          <div className="header-pill-group">
+            <button className="header-pill-btn" title={t("search")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
-          ))}
-        </nav>
+            <button className="header-pill-btn" onClick={() => handleWeekChange(0)} title={t("today")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
+          </div>
+        )}
+        {tab === "shopping" && (
+          <div className="header-pill-group">
+            <button className="header-pill-btn" title={t("search")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            {shoppingListTab === "staples" && (
+              <button className="header-pill-btn" onClick={() => setStaplesEditMode((e) => !e)} title={staplesEditMode ? t("doneEditing") : t("editMode")}>
+                {staplesEditMode
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                }
+              </button>
+            )}
+            <button className="header-pill-btn" onClick={() => setShoppingPicnicSendKey((k) => k + 1)} title={t("sendPicnic")}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>
+            </button>
+            {picnicUser && (
+              <button className="header-pill-btn" onClick={() => setShoppingPicnicCartKey((k) => k + 1)} title={t("picnicViewCart")}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              </button>
+            )}
+          </div>
+        )}
+        {tab === "recipes" && (
+          libraryViewRecipe ? (
+            libraryViewRecipe.archived ? (
+              <div className="header-pill-group">
+                <button className="header-pill-btn" title="Herstellen" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: false }); setLibraryViewRecipe(null); }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
+                </button>
+                <button className="header-pill-btn" title="Verwijder" onClick={() => { if (window.confirm(`"${libraryViewRecipe.name}" permanent verwijderen?`)) { deleteRecipe(libraryViewRecipe.id); setLibraryViewRecipe(null); } }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            ) : (
+              <div className="header-pill-group">
+                <button className="header-pill-btn" title="Bewerk recept" onClick={() => setLibraryEditKey((k) => k + 1)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+                <button className="header-pill-btn" title="Archiveer" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: true }); setLibraryViewRecipe(null); }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                </button>
+              </div>
+            )
+          ) : showArchived ? (
+            recipeEditListMode ? (
+              <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
+            ) : (
+              <div ref={recipeDotsRef} style={{ position: "relative" }}>
+                <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+                {recipeDotsOpen && (
+                  <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
+                  </div>
+                )}
+              </div>
+            )
+          ) : (
+            <div className="header-pill-group">
+              <button className="header-pill-btn" onClick={() => setRecipeSearchOpen((o) => !o)}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button className="header-pill-btn header-pill-btn--add" onClick={() => setRecipeAddKey((k) => k + 1)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              {recipeEditListMode ? (
+                <button className="header-done-btn" onClick={() => setRecipeEditListMode(false)}>Klaar</button>
+              ) : (
+                <div ref={recipeDotsRef} style={{ position: "relative" }}>
+                  <button className="header-pill-btn" onClick={() => setRecipeDotsOpen((o) => !o)}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                  </button>
+                  {recipeDotsOpen && (
+                    <div className="header-recipe-menu" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => { setRecipeEditListMode(true); setRecipeDotsOpen(false); }}>Bewerk lijst</button>
+                      <button onClick={() => { setShowArchived(true); setRecipeDotsOpen(false); }}>Archief</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        )}
       </header>
 
 
@@ -926,6 +1042,13 @@ export default function App() {
             onUpdate={updateRecipe}
             saveFailed={recipesSaveFailed}
             onDismissSaveFailed={reloadRecipes}
+            searchOpen={recipeSearchOpen}
+            editListMode={recipeEditListMode}
+            showArchived={showArchived}
+            newRecipeKey={recipeAddKey}
+            viewRecipe={libraryViewRecipe}
+            onViewRecipe={setLibraryViewRecipe}
+            editViewedKey={libraryEditKey}
           />
         )}
         {tab === "shopping" && (
@@ -942,9 +1065,41 @@ export default function App() {
             picnicAssocSaveFailed={picnicAssocSaveFailed}
             onReloadPicnicAssociations={reloadPicnicAssociations}
             onPicnicSessionExpired={handlePicnicSessionExpired}
+            picnicSendKey={shoppingPicnicSendKey}
+            picnicCartKey={shoppingPicnicCartKey}
+            activeListTab={shoppingListTab}
+            onActiveListTabChange={setShoppingListTab}
+            staplesEditMode={staplesEditMode}
+            onStaplesEditModeChange={setStaplesEditMode}
           />
         )}
       </main>
+
+      <nav className="bottom-nav">
+        {[
+          {
+            key: "planner", label: t("navPlanner"),
+            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+          },
+          {
+            key: "shopping", label: t("navShopping"),
+            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+          },
+          {
+            key: "recipes", label: t("navRecipes"),
+            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+          },
+        ].map(({ key, label, icon }) => (
+          <button
+            key={key}
+            className={`bottom-nav-btn${tab === key ? " active" : ""}`}
+            onClick={() => setTab(key)}
+          >
+            <span className="bottom-nav-icon">{icon}</span>
+            <span className="bottom-nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
 
       {recipeView && (
         <RecipeDetail

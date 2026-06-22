@@ -42,17 +42,20 @@ export default function ShoppingList({
   picnicAssocSaveFailed = false,
   onReloadPicnicAssociations,
   onPicnicSessionExpired,
+  picnicSendKey = 0,
+  picnicCartKey = 0,
+  activeListTab = "maaltijden",
+  onActiveListTabChange,
+  staplesEditMode = false,
+  onStaplesEditModeChange,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
-  const [copied, setCopied] = useState(false);
   const [overrides, setOverrides] = useState(loadOverrides);
-  const [staplesEditMode, setStaplesEditMode] = useState(false);
   const [nameEdits, setNameEdits] = useState({});
-  const [activeListTab, setActiveListTab] = useState("maaltijden");
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
@@ -61,6 +64,10 @@ export default function ShoppingList({
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
+
+  useEffect(() => {
+    if (!staplesEditMode) setNameEdits({});
+  }, [staplesEditMode]);
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -156,31 +163,6 @@ export default function ShoppingList({
   const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
   const clearAllChecks = () => setChecked({});
   const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
-
-  const copyList = () => {
-    const lines = [t("copyTitle"), ""];
-    if (freshItems.length > 0) {
-      if (staples.length > 0) lines.push(t("copyMeals"));
-      freshItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
-    }
-    if (pantryItems.length > 0) {
-      lines.push("", t("copyPantry"));
-      pantryItems.forEach((i) => lines.push(`• ${i.name} — ${i.amounts.join(", ")}`));
-    }
-    if (staples.length > 0) {
-      lines.push("", t("copyStaples"));
-      STAPLE_CATEGORIES.forEach((cat) => {
-        const catItems = staples.filter((s) => s.category === cat);
-        if (catItems.length === 0) return;
-        lines.push(`${t(CAT_KEY[cat])}:`);
-        catItems.forEach((s) => lines.push(`• ${translateStapleName(s.name, lang)}`));
-      });
-    }
-    navigator.clipboard.writeText(lines.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  };
 
   const addStaple = (category, name) => {
     const nextId = staples.reduce((maxId, staple) => {
@@ -315,6 +297,14 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     }
   };
 
+  useEffect(() => {
+    if (picnicSendKey > 0) sendToPicnic();
+  }, [picnicSendKey]);
+
+  useEffect(() => {
+    if (picnicCartKey > 0) openPicnicCart();
+  }, [picnicCartKey]);
+
   const refreshPicnicCart = async () => {
     if (!picnicUser) return;
     try {
@@ -351,94 +341,86 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
   const tabBar = (
     <div className="shopping-tabs">
-      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => setActiveListTab("maaltijden")}>{t("shoppingList")}</button>
-      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => setActiveListTab("kast")}>{t("pantrySection").replace("🗄 ", "")}</button>
-      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => setActiveListTab("staples")}>{t("staples")}</button>
+      <button className={`shopping-tab${activeListTab === "maaltijden" ? " active" : ""}`} onClick={() => onActiveListTabChange("maaltijden")}>Lijst</button>
+      <button className={`shopping-tab${activeListTab === "kast" ? " active" : ""}`} onClick={() => onActiveListTabChange("kast")}>Kast</button>
+      <button className={`shopping-tab${activeListTab === "staples" ? " active" : ""}`} onClick={() => onActiveListTabChange("staples")}>Vast</button>
     </div>
+  );
+
+  const picnicSendPanel = (
+    <>
+      {(picnicSend.result || picnicSend.error) && (
+        <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
+          <span>
+            {picnicSend.error
+              ? picnicSend.error
+              : picnicSend.result.added === 0
+                ? t("picnicSendNoneAdded")
+                : picnicSend.result.skipped > 0
+                  ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
+                  : t("picnicSendSuccess", { added: picnicSend.result.added })}
+          </span>
+          <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}>×</button>
+        </div>
+      )}
+
+      {picnicCart.open && (
+        <div className="picnic-cart-panel">
+          <div className="picnic-cart-header">
+            <strong>{t("picnicCartTitle")}</strong>
+            <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}>×</button>
+          </div>
+          {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
+          {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
+          {!picnicCart.loading && !picnicCart.error && picnicCart.items.length === 0 && (
+            <p className="picnic-cart-feedback">{t("picnicCartEmpty")}</p>
+          )}
+          {picnicCart.items.length > 0 && (
+            <>
+              <ul className="picnic-cart-list">
+                {picnicCart.items.map((item) => (
+                  <PicnicCartItem
+                    key={item.id}
+                    item={item}
+                    picnicUser={picnicUser}
+                    linkedRecipes={picnicCartAssociations[item.id] ?? []}
+                    picnicCartUpdating={picnicCartUpdating}
+                    updateCartItemQuantity={updateCartItemQuantity}
+                    lang={lang}
+                  />
+                ))}
+              </ul>
+              {typeof picnicCart.totalPrice === "number" && (
+                <p className="picnic-cart-total">
+                  {t("picnicCartTotal", {
+                    price: new Intl.NumberFormat(
+                      lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
+                      { style: "currency", currency: "EUR" }
+                    ).format(picnicCart.totalPrice / 100),
+                  })}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 
   return (
     <div className="shopping-list">
       {activeListTab === "maaltijden" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            {checkedItemCount > 0 && (
-              <div className="shopping-meta">
-                <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
-              </div>
-            )}
           </div>
-
-          <div className="shopping-actions">
-            <button className="btn-copy" onClick={copyList}>
-              {copied ? t("copied") : t("copyList")}
-            </button>
-            <button className="btn-picnic" onClick={sendToPicnic} disabled={picnicSend.busy}>
-              {picnicSend.busy ? t("picnicSending") : t("sendPicnic")}
-            </button>
-            {picnicUser && (
-              <button className="btn-picnic-view" onClick={openPicnicCart}>
-                {t("picnicViewCart")}
-              </button>
-            )}
-          </div>
-
-          {(picnicSend.result || picnicSend.error) && (
-            <div className={`picnic-banner${picnicSend.error ? " picnic-banner--error" : ""}`}>
-              <span>
-                {picnicSend.error
-                  ? picnicSend.error
-                  : picnicSend.result.added === 0
-                    ? t("picnicSendNoneAdded")
-                    : picnicSend.result.skipped > 0
-                      ? t("picnicSendSuccessWithSkipped", { added: picnicSend.result.added, skipped: picnicSend.result.skipped })
-                      : t("picnicSendSuccess", { added: picnicSend.result.added })}
-              </span>
-              <button className="picnic-close" onClick={() => setPicnicSend({ busy: false, result: null, error: "" })}>×</button>
+          {checkedItemCount > 0 && (
+            <div className="shopping-meta">
+              <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
             </div>
           )}
 
-          {picnicCart.open && (
-            <div className="picnic-cart-panel">
-              <div className="picnic-cart-header">
-                <strong>{t("picnicCartTitle")}</strong>
-                <button className="picnic-close" onClick={() => setPicnicCart({ open: false, loading: false, items: [], totalPrice: null, error: "" })}>×</button>
-              </div>
-              {picnicCart.loading && <p className="picnic-cart-feedback">{t("picnicCartLoading")}</p>}
-              {picnicCart.error && <p className="picnic-cart-feedback picnic-cart-feedback--error">{picnicCart.error}</p>}
-              {!picnicCart.loading && !picnicCart.error && picnicCart.items.length === 0 && (
-                <p className="picnic-cart-feedback">{t("picnicCartEmpty")}</p>
-              )}
-              {picnicCart.items.length > 0 && (
-                <>
-                  <ul className="picnic-cart-list">
-                    {picnicCart.items.map((item) => (
-                      <PicnicCartItem
-                        key={item.id}
-                        item={item}
-                        picnicUser={picnicUser}
-                        linkedRecipes={picnicCartAssociations[item.id] ?? []}
-                        picnicCartUpdating={picnicCartUpdating}
-                        updateCartItemQuantity={updateCartItemQuantity}
-                        lang={lang}
-                      />
-                    ))}
-                  </ul>
-                  {typeof picnicCart.totalPrice === "number" && (
-                    <p className="picnic-cart-total">
-                      {t("picnicCartTotal", {
-                        price: new Intl.NumberFormat(
-                          lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL",
-                          { style: "currency", currency: "EUR" }
-                        ).format(picnicCart.totalPrice / 100),
-                      })}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          {picnicSendPanel}
 
           {picnicAssocSaveFailed && (
             <div className="save-failed-banner" role="alert">
@@ -494,7 +476,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 <ul className="ingredient-list">
                   {checkedStaples.map((s) => (
                     <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                      <span className="check-box">☑</span>
+                      <span className="check-box">●</span>
                       <div className="ingredient-details">
                         <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                         <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
@@ -545,26 +527,20 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
       {activeListTab === "staples" && (
         <>
-          <div className="shopping-header">
+          <div className="shopping-top-bar">
             {tabBar}
-            <div className="shopping-meta">
-              <span>{t("staplesMeta", { n: staples.length })}</span>
+            <div className="shopping-icon-actions">
               {stapleCheckedCount > 0 && (
-                <button className="clear-checks-btn" onClick={clearStapleChecks}>{t("uncheckAll")}</button>
+                <button className="shopping-icon-btn" onClick={clearStapleChecks} title={t("uncheckAll")}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
+                </button>
               )}
-              <button
-                className={`staples-edit-btn${staplesEditMode ? " active" : ""}`}
-                onClick={() => {
-                  if (staplesEditMode) setNameEdits({});
-                  setStaplesEditMode((e) => !e);
-                }}
-              >
-                {staplesEditMode ? t("doneEditing") : t("editMode")}
-              </button>
             </div>
           </div>
 
-          {staples.length > 0 && (
+          {picnicSendPanel}
+
+          {stapleCheckedCount > 0 && staples.length > 0 && (
             <>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${(stapleCheckedCount / staples.length) * 100}%` }} />
@@ -579,7 +555,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               <ul className="ingredient-list">
                 {checkedStaples.map((s) => (
                   <li key={s.id} className="ingredient-item done" onClick={() => toggleStaple(s.id)}>
-                    <span className="check-box">☑</span>
+                    <span className="check-box">●</span>
                     <div className="ingredient-details">
                       <span className="ingredient-name">{translateStapleName(s.name, lang)}</span>
                       <span className="ingredient-amounts staple-category-badge">{t(CAT_KEY[s.category] ?? s.category)}</span>
@@ -615,7 +591,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                       className={`staples-item${staplesEditMode ? " editing" : ""}`}
                       onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
                     >
-                      {!staplesEditMode && <span className="check-box">☐</span>}
+                      {!staplesEditMode && <span className="check-box">○</span>}
                       {staplesEditMode ? (
                         <input
                           className="staples-rename-input"
@@ -660,6 +636,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               <span>{t("pantryCount", { n: uncheckedPantry.length })}</span>
             </div>
           </div>
+
+          {picnicSendPanel}
+
           <p className="pantry-hint">{t("pantryHint")}</p>
           {pantryItems.length === 0 ? (
             <div className="meal-empty-notice"><p>{t("noMealsPlanned")}</p></div>
@@ -706,7 +685,7 @@ function IngredientList({
     <ul className="ingredient-list">
       {items.map((item) => (
         <li key={item.id} className={`ingredient-item${done ? " done" : ""}`} onClick={() => onCheck(item.id)}>
-          <span className="check-box">{done ? "☑" : "☐"}</span>
+          <span className="check-box">{done ? "●" : "○"}</span>
           <div className="ingredient-details">
             <span className="ingredient-name">{item.name}</span>
             <span className="ingredient-amounts">{item.amounts.join(", ")}</span>

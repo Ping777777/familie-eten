@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { tagClass } from "../utils/tagColors";
 import { useLanguage } from "../useLanguage";
 import { getRecipeName, getIngredientName, getInstructions, translateTag, translateUnit } from "../utils/recipeTranslation";
@@ -52,28 +52,21 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
-  const [expanded, setExpanded] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [filterExpanded, setFilterExpanded] = useState(false);
-  const controlsRef = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
-        setFilterOpen(false);
-        setFilterExpanded(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (newRecipeKey > 0) setEditingRecipe(newRecipeTemplate());
+  }, [newRecipeKey]);
+
+  useEffect(() => {
+    if (editViewedKey > 0 && viewRecipe) setEditingRecipe(viewRecipe);
+  }, [editViewedKey]);
 
   const activeRecipes = recipes.filter((r) => !r.archived);
   const archivedRecipes = recipes.filter((r) => r.archived);
@@ -86,7 +79,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
       getRecipeName(r, lang).toLowerCase().includes(q);
     const matchTag = !activeTag || r.tags.includes(activeTag);
     return matchSearch && matchTag;
-  });
+  }).sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
 
   const confirmRecipe = recipes.find((r) => r.id === confirmId);
 
@@ -95,11 +88,9 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
     e.stopPropagation();
     onDelete(confirmId);
     setConfirmId(null);
-    if (expanded === confirmId) setExpanded(null);
   };
   const handleCancel = (e) => { e.stopPropagation(); setConfirmId(null); };
 
-  const handleEditClick = (e, recipe) => { e.stopPropagation(); setEditingRecipe(recipe); };
   const handleSaveEdit = (updated) => {
     const isNew = !recipes.some((r) => r.id === updated.id);
     if (isNew) onAdd(updated);
@@ -107,15 +98,19 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
     setEditingRecipe(null);
   };
 
-  const handleArchive = (e, recipe) => {
-    e.stopPropagation();
-    onUpdate({ ...recipe, archived: true });
-    if (expanded === recipe.id) setExpanded(null);
-  };
-  const handleRestore = (e, recipe) => {
-    e.stopPropagation();
-    onUpdate({ ...recipe, archived: false });
-  };
+  if (viewRecipe) {
+    return (
+      <LibraryRecipeDetail
+        recipe={recipes.find((r) => r.id === viewRecipe.id) ?? viewRecipe}
+        lang={lang}
+        t={t}
+        editingRecipe={editingRecipe}
+        onEdit={() => setEditingRecipe(viewRecipe)}
+        onSaveEdit={handleSaveEdit}
+        onCloseEdit={() => setEditingRecipe(null)}
+      />
+    );
+  }
 
   return (
     <div className="recipe-library">
@@ -129,34 +124,25 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      <div className="library-header">
-        <div className="library-controls" ref={controlsRef}>
-        <div className="search-wrapper">
-          <input
-            className="search-input"
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onFocus={() => setFilterOpen(true)}
-          />
-          {activeTag && (
-            <button
-              className="active-tag-chip"
-              onClick={() => setActiveTag(null)}
-              title={t("filterAll")}
-            >
-              {translateTag(activeTag, lang)} ×
-            </button>
-          )}
-        </div>
-
-        {filterOpen && (
-          <div className="filter-dropdown">
-            <button
-              className={`tag-filter ${!activeTag ? "active" : ""}`}
-              onClick={() => { setActiveTag(null); }}
-            >
+      {searchOpen && (
+        <div className="library-search-panel">
+          <div className="search-wrapper">
+            <input
+              className="search-input"
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+            />
+            {activeTag && (
+              <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
+                {translateTag(activeTag, lang)} ×
+              </button>
+            )}
+          </div>
+          <div className="filter-dropdown filter-dropdown--panel">
+            <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
               {t("filterAll")}
             </button>
             {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
@@ -169,65 +155,46 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               </button>
             ))}
             {!filterExpanded && allTags.length > 9 && (
-              <button
-                className="tag-filter tag-filter-more"
-                onClick={() => setFilterExpanded(true)}
-              >
+              <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
                 +{allTags.length - 9} meer
               </button>
             )}
           </div>
-        )}
         </div>
-        <button className="btn-add-recipe" onClick={() => setEditingRecipe(newRecipeTemplate())}>
-          {t("newRecipe")}
-        </button>
-      </div>
+      )}
 
-      <div className="recipe-grid">
-        {filtered.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe}
-            expanded={expanded === recipe.id}
-            onToggle={() => setExpanded(expanded === recipe.id ? null : recipe.id)}
-            onEdit={(e) => handleEditClick(e, recipe)}
-            onArchive={(e) => handleArchive(e, recipe)}
-            onDelete={(e) => handleDeleteClick(e, recipe.id)}
-            archiveBtn={{ label: "📦", title: t("toArchive") }}
-          />
-        ))}
-        {filtered.length === 0 && (
-          <p className="no-results">{t("noRecipesFound")}</p>
-        )}
-      </div>
-
-      {archivedRecipes.length > 0 && (
-        <div className="archive-section">
-          <button className="archive-toggle" onClick={() => setArchiveOpen((o) => !o)}>
-            <span>{t("archiveLabel")}</span>
-            <span className="archive-count">{t("archiveCount", { n: archivedRecipes.length })}</span>
-            <span className="archive-chevron">{archiveOpen ? "▲" : "▼"}</span>
-          </button>
-          {archiveOpen && (
-            <div className="archive-body">
-              <p className="archive-hint">{t("archiveHint")}</p>
-              <div className="recipe-grid">
-                {archivedRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    expanded={expanded === recipe.id}
-                    onToggle={() => setExpanded(expanded === recipe.id ? null : recipe.id)}
-                    onEdit={(e) => handleEditClick(e, recipe)}
-                    onArchive={(e) => handleRestore(e, recipe)}
-                    onDelete={(e) => handleDeleteClick(e, recipe.id)}
-                    archiveBtn={{ label: "🔄", title: t("restore") }}
-                    dimmed
-                  />
-                ))}
-              </div>
-            </div>
+      {showArchived ? (
+        <div className="recipe-grid">
+          {archivedRecipes.length === 0 && (
+            <p className="no-results">Geen gearchiveerde recepten</p>
+          )}
+          {archivedRecipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onToggle={() => onViewRecipe(recipe)}
+              onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
+              onDelete={(e) => handleDeleteClick(e, recipe.id)}
+              dimmed
+              editMode={editListMode}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="recipe-grid">
+          {filtered.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onToggle={() => onViewRecipe(recipe)}
+              onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
+              onDelete={() => onUpdate({ ...recipe, archived: true })}
+              onFavourite={() => onUpdate({ ...recipe, favourite: !recipe.favourite })}
+              editMode={editListMode}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <p className="no-results">{t("noRecipesFound")}</p>
           )}
         </div>
       )}
@@ -258,60 +225,103 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   );
 }
 
-function RecipeCard({ recipe, expanded, onToggle, onEdit, onArchive, onDelete, archiveBtn, dimmed }) {
-  const { t, lang } = useLanguage();
+function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onCloseEdit }) {
+  const [doneSteps, setDoneSteps] = useState({});
+  const steps = getInstructions(recipe, lang);
+  const doneCount = Object.values(doneSteps).filter(Boolean).length;
+  const toggleStep = (idx) => setDoneSteps((prev) => ({ ...prev, [idx]: !prev[idx] }));
+
   return (
-    <div
-      className={`recipe-card ${expanded ? "expanded" : ""} ${dimmed ? "recipe-card--archived" : ""}`}
-      onClick={onToggle}
-    >
-      <div className="recipe-card-top">
-        <span className="recipe-big-emoji">{recipe.emoji}</span>
-        <div className="recipe-info">
-          <h3>{getRecipeName(recipe, lang)}</h3>
-          <div className="recipe-meta">⏱ {recipe.cookTime} · {t("perServings", { n: recipe.servings })}</div>
-          <div className="recipe-tags">
+    <div className="lib-detail">
+      <div className="lib-detail-hero">
+        <span className="lib-detail-emoji">{recipe.emoji}</span>
+        <div className="lib-detail-meta">
+          {recipe.cookTime && <span>⏱ {recipe.cookTime}</span>}
+          {recipe.cookTime && <span className="lib-detail-dot">·</span>}
+          <span>👥 {recipe.servings} pers.</span>
+          {recipe.addedBy && <><span className="lib-detail-dot">·</span><span>✍ {recipe.addedBy}</span></>}
+        </div>
+        {recipe.tags.length > 0 && (
+          <div className="lib-detail-tags">
             {recipe.tags.map((tag) => <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>)}
           </div>
-        </div>
-        <div className="card-actions">
-          <button className="card-action-btn" title={archiveBtn.title} onClick={onArchive}>
-            {archiveBtn.label}
-          </button>
-          <button className="card-action-btn" title={t("editRecipeBtn")} onClick={onEdit}>
-            ✏️
-          </button>
-          <button className="card-action-btn" title={t("deleteRecipeBtn")} onClick={onDelete}>
-            🗑️
-          </button>
-        </div>
+        )}
       </div>
 
-      {expanded && (
-        <div className="recipe-expanded-body">
-          <div className="recipe-ingredients">
-            <h4>{t("expandedIngredients", { n: recipe.servings })}</h4>
-            <ul>
-              {recipe.ingredients.map((ing, i) => (
-                <li key={i}>
-                  <span className="ing-amount">{ing.amount} {translateUnit(ing.unit, lang)}</span>
-                  <span className="ing-name">{getIngredientName(recipe, i, lang)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {recipe.instructions?.length > 0 && (
-            <div className="recipe-instructions">
-              <h4>{t("sectionInstructions")}</h4>
-              <ol>
-                {getInstructions(recipe, lang).map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ol>
+      <div className="lib-detail-body">
+        <section className="lib-detail-section">
+          <h2 className="lib-detail-section-title">{t("sectionIngredients")}</h2>
+          <ul className="lib-detail-ing-list">
+            {recipe.ingredients.map((ing, i) => (
+              <li key={i} className="lib-detail-ing-row">
+                {(ing.amount || ing.unit) && <span className="lib-detail-ing-amount">{ing.amount}{ing.unit ? ` ${translateUnit(ing.unit, lang)}` : ""}</span>}
+                <span className="lib-detail-ing-name">{getIngredientName(recipe, i, lang)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {steps.length > 0 && (
+          <section className="lib-detail-section">
+            <div className="lib-detail-steps-header">
+              <h2 className="lib-detail-section-title">{t("sectionInstructions")}</h2>
+              <span className={`lib-detail-progress${doneCount === steps.length ? " lib-detail-progress--done" : ""}`}>
+                {doneCount === steps.length ? t("allDone") : `${doneCount}/${steps.length}`}
+              </span>
             </div>
+            <ol className="lib-detail-steps">
+              {steps.map((step, idx) => {
+                const done = !!doneSteps[idx];
+                return (
+                  <li key={idx} className={`lib-detail-step${done ? " lib-detail-step--done" : ""}`} onClick={() => toggleStep(idx)}>
+                    <div className="lib-detail-step-badge">
+                      {done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> : idx + 1}
+                    </div>
+                    <p className="lib-detail-step-text">{step}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+      </div>
+
+      {editingRecipe && (
+        <EditRecipeModal recipe={editingRecipe} isNew={false} onSave={onSaveEdit} onClose={onCloseEdit} />
+      )}
+    </div>
+  );
+}
+
+function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, editMode }) {
+  const { lang } = useLanguage();
+  return (
+    <div className={`recipe-card${dimmed ? " recipe-card--archived" : ""}${editMode ? " recipe-card--edit-mode" : ""}`}>
+      {editMode && (
+        <button className="rc-minus-btn" onClick={(e) => { e.stopPropagation(); onDelete(e); }}>−</button>
+      )}
+      <div className="rc-card-body" onClick={(e) => { if (editMode) onEdit(e); else onToggle(); }}>
+        <div className="rc-header">
+          <span className="rc-emoji">{recipe.emoji}</span>
+          <span className="rc-title">{getRecipeName(recipe, lang)}</span>
+          {!dimmed && onFavourite && (
+            <button
+              className={`rc-fav-btn${recipe.favourite ? " rc-fav-btn--on" : ""}`}
+              onClick={(e) => { e.stopPropagation(); onFavourite(); }}
+              title={recipe.favourite ? "Verwijder favoriet" : "Favoriet"}
+            >
+              {recipe.favourite ? "★" : "☆"}
+            </button>
           )}
         </div>
-      )}
+        <div className="rc-footer">
+          <div className="rc-tags">
+            {recipe.tags.map((tag) => (
+              <span key={tag} className={`tag ${tagClass(tag)}`}>{translateTag(tag, lang)}</span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
