@@ -521,21 +521,25 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 <ul className="staples-list">
                   {catItems.map((item) => {
                     const isChecked = checked[`s:${item.id}`];
+                    if (staplesEditMode) {
+                      return (
+                        <li key={item.id} className="staples-item editing" onClick={() => removeStaple(item.id)}>
+                          <span className="check-box dismiss-circle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#c0392b" fillOpacity="0.5" stroke="none"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                          </span>
+                          <div className="ingredient-details">
+                            <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
+                          </div>
+                        </li>
+                      );
+                    }
                     return (
                     <li
                       key={item.id}
-                      className={`staples-item${staplesEditMode ? " editing" : ""}${isChecked ? " done" : ""}`}
-                      onClick={staplesEditMode ? undefined : () => toggleStaple(item.id)}
+                      className={`staples-item${isChecked ? " done" : ""}`}
+                      onClick={() => toggleStaple(item.id)}
                     >
-                      {!staplesEditMode && <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>}
-                      {staplesEditMode ? (
-                        <input
-                          className="staples-rename-input"
-                          value={nameEdits[item.id] ?? item.name}
-                          onChange={(e) => setNameEdits((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          onBlur={() => saveRename(item)}
-                        />
-                      ) : (
+                      <span className={`check-box${isChecked ? " checked" : ""}`}>{isChecked ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
                        <div className="ingredient-details">
                          <span className="staples-item-name">{translateStapleName(item.name, lang)}</span>
                          <StaplePicnicAssociation
@@ -550,10 +554,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                            onSelectPicnicAssociation={handleSelectPicnicAssociation}
                          />
                        </div>
-                      )}
-                      {staplesEditMode && (
-                        <button className="staples-remove-btn" onClick={() => removeStaple(item.id)} title={t("removeItem")}>×</button>
-                      )}
                     </li>
                     );
                   })}
