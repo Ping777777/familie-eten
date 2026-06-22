@@ -414,9 +414,19 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {checkedItemCount > 0 && (
-            <div className="shopping-meta">
-              <button className="clear-checks-btn" onClick={clearAllChecks}>{t("uncheckAll")}</button>
+          {freshItems.length > 0 && (
+            <div className="pantry-actions">
+              <button className="pantry-action-btn" onClick={() => {
+                const allChecked = freshItems.every((item) => checked[item.id]);
+                freshItems.forEach((item) => {
+                  if (allChecked ? checked[item.id] : !checked[item.id]) toggleCheck(item.id);
+                });
+              }}>
+                {freshItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
+              </button>
+              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("kast")}>
+                Naar kast
+              </button>
             </div>
           )}
 
@@ -507,8 +517,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           ) : (
             <>
               <IngredientList
-                items={uncheckedFresh}
+                items={freshItems}
                 onCheck={toggleCheck}
+                checkedIds={checked}
                 onTogglePantry={toggleOverride}
                 isPantry={false}
                 picnicUser={picnicUser}
@@ -719,11 +730,6 @@ function IngredientList({
               onSelect={onSelectPicnicAssociation}
             />
           </div>
-          {!isDone && !isPantry && (
-            <button className="pantry-move-btn" title={t("toPantry")} onClick={(e) => onTogglePantry(e, item.id)}>
-              🗄
-            </button>
-          )}
         </li>
         );
       })}
