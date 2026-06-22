@@ -52,9 +52,8 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchOpen, editListMode, newRecipeKey }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, search = "", editListMode, newRecipeKey }) {
   const { t, lang } = useLanguage();
-  const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [expanded, setExpanded] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
@@ -120,41 +119,6 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         </div>
       )}
 
-      {searchOpen && (
-        <div className="library-search-panel">
-          <div className="search-wrapper">
-            <input
-              className="search-input"
-              type="text"
-              placeholder={t("searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-            {activeTag && (
-              <button className="active-tag-chip" onClick={() => setActiveTag(null)} title={t("filterAll")}>
-                {translateTag(activeTag, lang)} ×
-              </button>
-            )}
-          </div>
-          <div className="filter-dropdown filter-dropdown--panel">
-            <button className={`tag-filter ${!activeTag ? "active" : ""}`} onClick={() => setActiveTag(null)}>
-              {t("filterAll")}
-            </button>
-            {(filterExpanded ? allTags : allTags.slice(0, 9)).map((tag) => (
-              <button key={tag} className={`tag-filter ${activeTag === tag ? "active" : ""}`}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
-                {translateTag(tag, lang)}
-              </button>
-            ))}
-            {!filterExpanded && allTags.length > 9 && (
-              <button className="tag-filter tag-filter-more" onClick={() => setFilterExpanded(true)}>
-                +{allTags.length - 9} meer
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="recipe-grid">
         {filtered.map((recipe) => (

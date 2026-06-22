@@ -153,6 +153,58 @@
 }
 .dark .header-pill-group { background: rgba(255, 255, 255, 0.1); }
 
+.header-search-expand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.07);
+}
+.dark .header-search-expand { background: rgba(255, 255, 255, 0.1); }
+.header-search-icon { color: var(--text-muted); flex-shrink: 0; }
+.header-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-family: inherit;
+  min-width: 0;
+}
+.header-search-input::placeholder { color: var(--text-muted); }
+.header-search-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: none;
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-search-cancel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .header-pill-btn {
   width: 38px;
   height: 38px;
@@ -813,6 +865,47 @@
   transition: border-color 0.2s;
 }
 .search-input:focus { border-color: #025c51; }
+
+.wa-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border-radius: 20px;
+  padding: 0 14px;
+  height: 36px;
+}
+.wa-search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.wa-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-family: inherit;
+}
+.wa-search-input::placeholder { color: var(--text-muted); }
+.wa-search-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: none;
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
 
 .active-tag-chip {
   background: #025c51;
