@@ -48,9 +48,12 @@ export default function ShoppingList({
   onActiveListTabChange,
   staplesEditMode = false,
   onStaplesEditModeChange,
+  shoppingEditMode = false,
+  onShoppingEditModeChange,
 }) {
   const { t, lang } = useLanguage();
   const [checked, setChecked] = useState({});
+  const [dismissed, setDismissed] = useState({});
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
@@ -144,6 +147,8 @@ export default function ShoppingList({
 
   const toggleCheck = (key) =>
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleDismiss = (key) =>
+    setDismissed((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
   const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
@@ -347,8 +352,10 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
     </div>
   );
 
-  const totalAll = items.length;
-  const checkedAll = mealCheckedCount;
+  const activeFresh = freshItems.filter((i) => !dismissed[i.id]);
+  const activePantry = pantryItems.filter((i) => !dismissed[i.id]);
+  const totalAll = activeFresh.length + activePantry.length;
+  const checkedAll = [...activeFresh, ...activePantry].filter((i) => checked[i.id]).length;
 
   return (
     <div className="shopping-list">
@@ -363,7 +370,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {freshItems.length > 0 && (
+          {freshItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
               <button className="pantry-action-btn" onClick={() => {
                 const allChecked = freshItems.every((item) => checked[item.id]);
@@ -372,9 +379,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 });
               }}>
                 {freshItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("kast")}>
-                Naar kast
               </button>
             </div>
           )}
@@ -470,6 +474,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 checkedIds={checked}
                 onTogglePantry={toggleOverride}
                 isPantry={false}
+                editMode={shoppingEditMode}
+                dismissedIds={dismissed}
+                onToggleDismiss={toggleDismiss}
                 picnicUser={picnicUser}
                 picnicAssociations={picnicAssociations}
                 picnicPicker={picnicPicker}
@@ -499,9 +506,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 });
               }}>
                 {staples.every((s) => checked[`s:${s.id}`]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
-                Naar lijst
               </button>
             </div>
           )}
@@ -566,7 +570,7 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
           <div className="shopping-top-bar">
             {tabBar}
           </div>
-          {pantryItems.length > 0 && (
+          {pantryItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
               <button className="pantry-action-btn" onClick={() => {
                 const allChecked = pantryItems.every((item) => checked[item.id]);
@@ -575,9 +579,6 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
                 });
               }}>
                 {pantryItems.every((item) => checked[item.id]) ? "Deselecteer alles" : "Selecteer alles"}
-              </button>
-              <button className="pantry-action-btn" onClick={() => onActiveListTabChange("maaltijden")}>
-                Naar lijst
               </button>
             </div>
           )}
@@ -593,6 +594,9 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
               checkedIds={checked}
               onTogglePantry={toggleOverride}
               isPantry={true}
+              editMode={shoppingEditMode}
+              dismissedIds={dismissed}
+              onToggleDismiss={toggleDismiss}
               picnicUser={picnicUser}
               picnicAssociations={picnicAssociations}
               picnicPicker={picnicPicker}
@@ -616,6 +620,9 @@ function IngredientList({
   isPantry,
   done = false,
   checkedIds,
+  editMode = false,
+  dismissedIds = {},
+  onToggleDismiss,
   picnicUser,
   picnicAssociations,
   picnicPicker,
@@ -635,12 +642,32 @@ function IngredientList({
   });
   return (
     <>
-      {Object.entries(grouped).map(([meal, groupItems]) => (
+      {Object.entries(grouped).map(([meal, groupItems]) => {
+        const visibleItems = editMode ? groupItems : groupItems.filter((item) => !dismissedIds[item.id]);
+        if (visibleItems.length === 0) return null;
+        return (
         <div key={meal} className="staples-category">
           {meal !== "_" && <h4 className="staples-category-title">{meal}</h4>}
           <ul className="ingredient-list">
-            {groupItems.map((item) => {
+            {visibleItems.map((item) => {
               const isDone = checkedIds ? checkedIds[item.id] : done;
+              const isDismissed = !!dismissedIds[item.id];
+              if (editMode) {
+                return (
+                  <li key={item.id} className={`ingredient-item${isDismissed ? " dismissed" : ""}`} onClick={() => onToggleDismiss(item.id)}>
+                    <span className="check-box dismiss-circle">
+                      {isDismissed
+                        ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="none" stroke="#888" strokeWidth="1.5"/><line x1="8" y1="12" x2="16" y2="12" stroke="#888" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="8" x2="12" y2="16" stroke="#888" strokeWidth="2" strokeLinecap="round"/></svg>
+                        : <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#c0392b" fillOpacity="0.5" stroke="none"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                      }
+                    </span>
+                    <div className="ingredient-details">
+                      <span className="ingredient-name">{item.name}</span>
+                      <span className="ingredient-amounts">{item.amounts.join(", ")}</span>
+                    </div>
+                  </li>
+                );
+              }
               return (
               <li key={item.id} className={`ingredient-item${isDone ? " done" : ""}`} onClick={() => onCheck(item.id)}>
                 <span className={`check-box${isDone ? " checked" : ""}`}>{isDone ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="11" fill="#2a9d8f" stroke="none"/><polyline points="20 6 9 17 4 12" stroke="white"/></svg> : "○"}</span>
@@ -665,7 +692,8 @@ function IngredientList({
             })}
           </ul>
         </div>
-      ))}
+        );
+      })}
     </>
   );
 }

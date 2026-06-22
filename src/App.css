@@ -1421,6 +1421,8 @@
 }
 .ingredient-item:hover { background: var(--surface2); }
 .ingredient-item.done, .staples-item.done { opacity: 0.5; }
+.ingredient-item.dismissed { opacity: 0.4; }
+.ingredient-item.dismissed .ingredient-name { text-decoration: line-through; color: var(--text-muted); }
 
 .check-box { font-size: 1.4rem; color: var(--text-muted); line-height: 1; }
 .check-box.checked { color: #2a9d8f; }
