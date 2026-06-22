@@ -1718,7 +1718,7 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.staples-edit-btn:hover { background: #d0efed; }
+.staples-edit-btn:hover { background: transparent; }
 .staples-edit-btn.active { background: #fc7600; color: white; border-color: #fc7600; }
 
 .staples-category {
@@ -1754,7 +1754,7 @@
   cursor: pointer;
   transition: background 0.12s;
 }
-.staples-item:hover:not(.editing) { background: #f0faf9; }
+.staples-item:hover:not(.editing) { background: transparent; }
 .staples-item.editing { cursor: default; background: transparent; }
 .staples-item.editing:hover { background: transparent; }
 
