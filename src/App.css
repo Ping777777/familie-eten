@@ -503,6 +503,16 @@
   gap: 6px;
   margin-bottom: 6px;
 }
+.grid-row--empty { margin-bottom: 2px; }
+.grid-row--empty .meal-cell {
+  min-height: 0;
+  padding: 6px;
+  border-radius: 10px;
+  opacity: 0.5;
+}
+.grid-row--empty .meal-cell .add-hint { font-size: 0.9rem; }
+.grid-row--empty .day-letter { gap: 0; }
+.grid-row--empty .day-num { font-size: 0.85rem; }
 
 .day-letter {
   display: flex;

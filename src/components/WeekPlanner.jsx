@@ -121,8 +121,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         {days.map((day, idx) => {
           const cellDate = new Date(monday);
           cellDate.setDate(monday.getDate() + idx);
+          const dayHasMeals = family.some((m) => weekPlan?.[day]?.[m]);
           return (
-          <div key={day} className="grid-row" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
+          <div key={day} className={`grid-row${dayHasMeals ? "" : " grid-row--empty"}`} style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
             <div className="day-letter">
               <span className="day-abbr">{tDay(day).slice(0, 2)}</span>
               <span className="day-num">{cellDate.getDate()}</span>
