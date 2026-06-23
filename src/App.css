@@ -503,16 +503,8 @@
   gap: 6px;
   margin-bottom: 6px;
 }
-.grid-row--empty { margin-bottom: 2px; }
-.grid-row--empty .meal-cell {
-  min-height: 0;
-  padding: 6px;
-  border-radius: 10px;
-  opacity: 0.5;
-}
+.grid-row--empty { opacity: 0.45; }
 .grid-row--empty .meal-cell .add-hint { font-size: 0.9rem; }
-.grid-row--empty .day-letter { gap: 0; }
-.grid-row--empty .day-num { font-size: 0.85rem; }
 
 .day-letter {
   display: flex;
@@ -539,9 +531,9 @@
 .meal-cell {
   position: relative;
   background: var(--surface);
-  border-radius: 14px;
-  padding: 10px 6px;
-  min-height: 72px;
+  border-radius: 10px;
+  padding: 6px;
+  min-height: 0;
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -2088,7 +2080,7 @@
     grid-template-columns: 28px repeat(4, 1fr);
   }
   .member-header { font-size: 0.72rem; padding: 0 3px 2px; }
-  .meal-cell { min-height: 64px; padding: 8px 4px; }
+  .meal-cell { padding: 5px 3px; }
   .meal-name { font-size: 0.72rem; }
 }
 
