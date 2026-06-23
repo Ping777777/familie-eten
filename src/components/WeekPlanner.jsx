@@ -142,7 +142,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   onClick={() => {
                     if (recipe && recipe.id > 0) {
                       onViewRecipe(recipe.id, day, member);
-                    } else {
+                    } else if (!dayHasMeals) {
                       setSelecting({ day, member });
                     }
                   }}
@@ -157,7 +157,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       <span className="meal-emoji">{recipe.emoji}</span>
                     </>
                   ) : (
-                    <span className="add-hint">+</span>
+                    !dayHasMeals && <span className="add-hint">+</span>
                   )}
                 </div>
               );
