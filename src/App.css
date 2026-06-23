@@ -1636,7 +1636,7 @@
 }
 .picnic-association-label {
   display: block;
-  color: #16a34a;
+  color: #fc7600;
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -1648,8 +1648,8 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  border: 1.5px solid #16a34a;
-  color: #16a34a;
+  border: 1.5px solid #fc7600;
+  color: #fc7600;
   font-size: 0.65rem;
   font-style: italic;
   font-weight: 700;
@@ -3136,9 +3136,9 @@
 .dark .ing-name { color: var(--text); }
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .staples-item-name { color: var(--text); }
-.dark .picnic-association-label { color: #86efac; }
+.dark .picnic-association-label { color: #fc7600; }
 .dark .picnic-association-label.empty { color: var(--text-muted); }
-.dark .picnic-info-icon { color: #86efac; border-color: #86efac; }
+.dark .picnic-info-icon { color: #fc7600; border-color: #fc7600; }
 .dark .picnic-info-btn { background: #1f3b2d; border-color: #2f855a; color: #bbf7d0; }
 .dark .picnic-info-btn:hover { border-color: #86efac; background: #2d5a3d; }
 .dark .picnic-association-popover {
