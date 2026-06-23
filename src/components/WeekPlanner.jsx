@@ -184,10 +184,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               </div>
               {meals.map(({ member, recipe }) => (
                 <div key={member} className="summary-meal" onClick={() => recipe.id > 0 ? onViewRecipe(recipe.id, day, member) : null}>
-                  <span className="summary-dot" style={{ background: MEMBER_COLORS[member] }} />
+                  <span className="summary-initial" style={{ background: MEMBER_COLORS[member] }}>{member[0]}</span>
                   <span className="summary-emoji">{recipe.emoji}</span>
                   <span className="summary-name">{getRecipeName(recipe, lang)}</span>
-                  <span className="summary-member">{member}</span>
                 </div>
               ))}
             </div>
