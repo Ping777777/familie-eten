@@ -52,16 +52,11 @@
 }
 
 .app-logo-img {
-  height: 90px;
-  width: auto;
-  margin-bottom: 4px;
-}
-
-.app-logo-img {
-  height: 200px;
-  width: auto;
+  width: 100%;
+  height: auto;
   display: block;
   margin: 0 auto 8px;
+  border-radius: 10px;
 }
 
 .app-header-logo {
