@@ -1777,6 +1777,7 @@
   transition: opacity 0.15s;
 }
 .ingredient-item:hover .pantry-move-btn { opacity: 1; }
+.ingredient-item.edit-mode .pantry-move-btn { opacity: 1; color: var(--text-muted); }
 
 /* Pantry collapsible section */
 .pantry-section {
