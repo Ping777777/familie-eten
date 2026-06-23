@@ -99,10 +99,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         <div className="variety-warnings">
           {warnings.map((w) => (
             <div key={w.key} className="variety-warning">
-              <span className="warning-icon">⚠️</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span>
-                <strong>{t("varietyWarning", { label: t("filter_" + w.key) })}</strong> ({w.count}×) —{" "}
-                {t("varietyHint", { day: tDay(w.swapDay) })}
+                {t("varietyWarning", { label: t("filter_" + w.key) })} ({w.count}×) — {t("varietyHint", { day: tDay(w.swapDay) })}
               </span>
             </div>
           ))}
@@ -122,8 +121,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         {days.map((day, idx) => {
           const cellDate = new Date(monday);
           cellDate.setDate(monday.getDate() + idx);
+          const dayHasMeals = family.some((m) => weekPlan?.[day]?.[m]);
           return (
-          <div key={day} className="grid-row" style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
+          <div key={day} className={`grid-row${dayHasMeals ? "" : " grid-row--empty"}`} style={{ gridTemplateColumns: `40px repeat(${family.length}, 1fr)` }}>
             <div className="day-letter">
               <span className="day-abbr">{tDay(day).slice(0, 2)}</span>
               <span className="day-num">{cellDate.getDate()}</span>
@@ -142,7 +142,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                   onClick={() => {
                     if (recipe && recipe.id > 0) {
                       onViewRecipe(recipe.id, day, member);
-                    } else {
+                    } else if (!dayHasMeals) {
                       setSelecting({ day, member });
                     }
                   }}
@@ -154,18 +154,41 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
                       ><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                      <div className="meal-tag">
-                        <span>{recipe.emoji}</span>
-                        <span className="meal-name">{getRecipeName(recipe, lang)}</span>
-                      </div>
+                      <span className="meal-emoji">{recipe.emoji}</span>
                     </>
                   ) : (
-                    <span className="add-hint">+</span>
+                    !dayHasMeals && <span className="add-hint">+</span>
                   )}
                 </div>
               );
             })}
           </div>
+          );
+        })}
+      </div>
+
+      <div className="week-summary">
+        {days.map((day, idx) => {
+          const meals = Object.entries(weekPlan?.[day] ?? {})
+            .filter(([member]) => family.includes(member))
+            .map(([member, id]) => ({ member, recipe: id ? getRecipe(id) : null }))
+            .filter((m) => m.recipe);
+          if (!meals.length) return null;
+          const cellDate = new Date(monday);
+          cellDate.setDate(monday.getDate() + idx);
+          return (
+            <div key={day} className="summary-day">
+              <div className="summary-day-label">
+                <span className="summary-day-name">{tDay(day)}</span>
+                <span className="summary-day-date">{cellDate.getDate()}</span>
+              </div>
+              {meals.map(({ member, recipe }) => (
+                <div key={member} className="summary-meal" onClick={() => recipe.id > 0 ? onViewRecipe(recipe.id, day, member) : null}>
+                  <span className="summary-initial" style={{ background: MEMBER_COLORS[member] }}>{member[0]}</span>
+                  <span className="summary-name">{getRecipeName(recipe, lang)}</span>
+                </div>
+              ))}
+            </div>
           );
         })}
       </div>

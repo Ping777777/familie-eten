@@ -426,16 +426,15 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
 
   return (
     <div className="shopping-list">
-      {totalAll > 0 && (
-        <div className="progress-bar">
-          <div className={`progress-fill${checkedAll === totalAll ? " complete" : ""}`} style={{ width: `${(checkedAll / totalAll) * 100}%` }} />
-        </div>
-      )}
-
       {activeListTab === "maaltijden" && (
         <>
           <div className="shopping-top-bar">
             {tabBar}
+            {totalAll > 0 && (
+              <div className="progress-bar">
+                <div className={`progress-fill${checkedAll === totalAll ? " complete" : ""}`} style={{ width: `${(checkedAll / totalAll) * 100}%` }} />
+              </div>
+            )}
           </div>
           {freshItems.length > 0 && !shoppingEditMode && (
             <div className="pantry-actions">
@@ -507,6 +506,11 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <>
           <div className="shopping-top-bar">
             {tabBar}
+            {totalAll > 0 && (
+              <div className="progress-bar">
+                <div className={`progress-fill${checkedAll === totalAll ? " complete" : ""}`} style={{ width: `${(checkedAll / totalAll) * 100}%` }} />
+              </div>
+            )}
           </div>
 
           {staples.length > 0 && !staplesEditMode && (
@@ -581,6 +585,11 @@ if (response.status === 401) { setPicnicCart({ open: false, loading: false, item
         <>
           <div className="shopping-top-bar">
             {tabBar}
+            {totalAll > 0 && (
+              <div className="progress-bar">
+                <div className={`progress-fill${checkedAll === totalAll ? " complete" : ""}`} style={{ width: `${(checkedAll / totalAll) * 100}%` }} />
+              </div>
+            )}
           </div>
           {picnicSendPanel}
 
@@ -1189,6 +1198,7 @@ function PicnicAssociation({
           >
             <span className="picnic-association-label">
               {t("picnicAssociationLabel")}: {summary}
+              {item.amounts?.length > 0 && <span className="picnic-needed"> — {t("picnicNeeded")}: {item.amounts.join(" + ")}</span>}
             </span>
             <span className="picnic-info-icon" aria-hidden="true">i</span>
           </button>
