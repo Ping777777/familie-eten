@@ -172,6 +172,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
       <div className="week-summary">
         {days.map((day, idx) => {
           const meals = Object.entries(weekPlan?.[day] ?? {})
+            .filter(([member]) => family.includes(member))
             .map(([member, id]) => ({ member, recipe: id ? getRecipe(id) : null }))
             .filter((m) => m.recipe);
           if (!meals.length) return null;
