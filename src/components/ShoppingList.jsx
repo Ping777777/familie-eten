@@ -1272,7 +1272,7 @@ function AddStapleRow({ onAdd, placeholder }) {
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
       />
-      <button className="staples-add-btn" onClick={submit} disabled={!name.trim()}>+</button>
+      <button type="button" className="staples-add-btn" onMouseDown={(e) => e.preventDefault()} onClick={submit} disabled={!name.trim()}>+</button>
     </div>
   );
 }
