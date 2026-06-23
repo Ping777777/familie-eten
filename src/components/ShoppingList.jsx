@@ -1198,6 +1198,7 @@ function PicnicAssociation({
           >
             <span className="picnic-association-label">
               {t("picnicAssociationLabel")}: {summary}
+              {item.amounts?.length > 0 && <span className="picnic-needed"> — {t("picnicNeeded")}: {item.amounts.join(" + ")}</span>}
             </span>
             <span className="picnic-info-icon" aria-hidden="true">i</span>
           </button>
