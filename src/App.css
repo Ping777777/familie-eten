@@ -641,7 +641,7 @@
   font-weight: 700;
   color: #fff;
 }
-.summary-emoji { font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+.meal-emoji { font-size: 1.2rem; line-height: 1; }
 .summary-name {
   font-size: var(--font-sm);
   font-weight: 500;

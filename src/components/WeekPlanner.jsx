@@ -154,7 +154,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                         onClick={(e) => { e.stopPropagation(); onClear(day, member); }}
                         title={t("removeMeal")}
                       ><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                      <span className="meal-name">{getRecipeName(recipe, lang)}</span>
+                      <span className="meal-emoji">{recipe.emoji}</span>
                     </>
                   ) : (
                     <span className="add-hint">+</span>
@@ -185,7 +185,6 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               {meals.map(({ member, recipe }) => (
                 <div key={member} className="summary-meal" onClick={() => recipe.id > 0 ? onViewRecipe(recipe.id, day, member) : null}>
                   <span className="summary-initial" style={{ background: MEMBER_COLORS[member] }}>{member[0]}</span>
-                  <span className="summary-emoji">{recipe.emoji}</span>
                   <span className="summary-name">{getRecipeName(recipe, lang)}</span>
                 </div>
               ))}
