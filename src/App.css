@@ -580,16 +580,29 @@
 
 .clear-btn {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -6px;
+  right: -6px;
   background: none;
   border: none;
-  color: #aaa;
+  color: #fff;
   cursor: pointer;
   line-height: 0;
-  padding: 6px;
+  padding: 10px;
   -webkit-tap-highlight-color: transparent;
+  z-index: 2;
 }
+.clear-btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border-radius: 50%;
+}
+.clear-btn svg { width: 12px; height: 12px; position: relative; }
 .clear-btn:hover { color: #fc7600; }
 
 /* Week summary (below grid) */
@@ -1263,12 +1276,18 @@
 .shopping-top-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding-bottom: 12px;
   position: sticky;
   top: calc(56px + env(safe-area-inset-top, 0px));
   z-index: 9;
   background: var(--bg);
+}
+
+.shopping-top-bar .progress-bar {
+  width: 100%;
+  margin-bottom: -4px;
 }
 
 .shopping-top-bar .shopping-tabs {
