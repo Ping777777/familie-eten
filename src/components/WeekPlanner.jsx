@@ -99,10 +99,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         <div className="variety-warnings">
           {warnings.map((w) => (
             <div key={w.key} className="variety-warning">
-              <span className="warning-icon">⚠️</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span>
-                <strong>{t("varietyWarning", { label: t("filter_" + w.key) })}</strong> ({w.count}×) —{" "}
-                {t("varietyHint", { day: tDay(w.swapDay) })}
+                {t("varietyWarning", { label: t("filter_" + w.key) })} ({w.count}×) — {t("varietyHint", { day: tDay(w.swapDay) })}
               </span>
             </div>
           ))}
@@ -166,6 +165,33 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               );
             })}
           </div>
+          );
+        })}
+      </div>
+
+      <div className="week-summary">
+        {days.map((day, idx) => {
+          const meals = Object.entries(weekPlan?.[day] ?? {})
+            .map(([member, id]) => ({ member, recipe: id ? getRecipe(id) : null }))
+            .filter((m) => m.recipe);
+          if (!meals.length) return null;
+          const cellDate = new Date(monday);
+          cellDate.setDate(monday.getDate() + idx);
+          return (
+            <div key={day} className="summary-day">
+              <div className="summary-day-label">
+                <span className="summary-day-name">{tDay(day)}</span>
+                <span className="summary-day-date">{cellDate.getDate()}</span>
+              </div>
+              {meals.map(({ member, recipe }) => (
+                <div key={member} className="summary-meal" onClick={() => recipe.id > 0 ? onViewRecipe(recipe.id, day, member) : null}>
+                  <span className="summary-dot" style={{ background: MEMBER_COLORS[member] }} />
+                  <span className="summary-emoji">{recipe.emoji}</span>
+                  <span className="summary-name">{getRecipeName(recipe, lang)}</span>
+                  <span className="summary-member">{member}</span>
+                </div>
+              ))}
+            </div>
           );
         })}
       </div>

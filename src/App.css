@@ -349,13 +349,21 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  min-height: 0;
 }
 
 /* Week navigator */
+.week-planner {
+  display: flex;
+  flex-direction: column;
+  height: calc(100svh - 56px - 62px - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
 .week-nav {
   display: flex;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 6px;
+  padding-left: 6px;
 }
 .week-month-label {
   font-weight: 700;
@@ -368,21 +376,20 @@
 .variety-warnings {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 4px;
+  margin-bottom: 6px;
 }
 .variety-warning {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: #fffbea;
-  border: 1px solid #f6d860;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  color: #7a5c00;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  opacity: 0.6;
 }
-.warning-icon { flex-shrink: 0; }
 
 /* Save conflict banner */
 .save-failed-banner {
@@ -476,25 +483,25 @@
 .grid-header {
   display: grid;
   grid-template-columns: 40px repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .corner-cell { }
 
 .member-header {
-  padding: 0 4px 10px;
+  padding: 0 4px 4px;
   text-align: center;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   color: var(--text);
 }
 
 .grid-row {
   display: grid;
   grid-template-columns: 40px repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .day-letter {
@@ -522,9 +529,9 @@
 .meal-cell {
   position: relative;
   background: var(--surface);
-  border-radius: 18px;
-  padding: 16px 10px;
-  min-height: 88px;
+  border-radius: 14px;
+  padding: 10px 6px;
+  min-height: 72px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -582,6 +589,65 @@
   -webkit-tap-highlight-color: transparent;
 }
 .clear-btn:hover { color: #fc7600; }
+
+/* Week summary (below grid) */
+.week-summary {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.summary-day { margin-bottom: 8px; }
+.summary-day-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 4px;
+  margin-bottom: 4px;
+}
+.summary-day-name {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
+}
+.summary-day-date {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+.summary-meal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.summary-meal:active { background: var(--surface2); }
+.summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.summary-emoji { font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+.summary-name {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summary-member {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
 
 /* Picker overlay */
 .recipe-picker-overlay {
@@ -2012,8 +2078,8 @@
   .grid-header, .grid-row {
     grid-template-columns: 28px repeat(4, 1fr);
   }
-  .member-header { font-size: 0.72rem; padding: 8px 3px; }
-  .meal-cell { min-height: 76px; padding: 10px 4px; }
+  .member-header { font-size: 0.72rem; padding: 0 3px 2px; }
+  .meal-cell { min-height: 64px; padding: 8px 4px; }
   .meal-name { font-size: 0.72rem; }
 }
 
