@@ -109,7 +109,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 8px;
-  position: relative;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
   flex-shrink: 0;
 }
 
@@ -1189,7 +1191,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  padding-bottom: 12px;
+  position: sticky;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  z-index: 9;
+  background: var(--bg);
 }
 
 .shopping-top-bar .shopping-tabs {
