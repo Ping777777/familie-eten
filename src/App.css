@@ -1869,6 +1869,7 @@
   transition: opacity 0.15s;
 }
 .ingredient-item:hover .pantry-move-btn { opacity: 1; }
+.ingredient-item.edit-mode .pantry-move-btn { opacity: 1; color: var(--text-muted); }
 
 /* Pantry collapsible section */
 .pantry-section {
@@ -2833,6 +2834,7 @@
   transform: translateX(-100%);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .side-menu--open { transform: translateX(0); }
 
