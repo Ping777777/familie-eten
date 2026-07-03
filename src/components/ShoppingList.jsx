@@ -4,15 +4,9 @@ import { useLanguage } from "../useLanguage";
 import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipeTranslation";
 import { translateStapleName } from "../data/stapleTranslations";
 
-const LS_OVERRIDES = "familie-eten:pantryOverrides";
 const CHECKS_KEY = "familie-eten:checks";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 const CAT_KEY = { Ontbijt: "catBreakfast", Lunch: "catLunch", Tussendoor: "catSnacks", Overig: "catOther" };
-
-const loadOverrides = () => {
-  try { return new Set(JSON.parse(localStorage.getItem(LS_OVERRIDES)) ?? []); }
-  catch { return new Set(); }
-};
 
 // One shopping list, one set of checkmarks — persisted so a refresh
 // doesn't lose progress mid-shop.
@@ -46,6 +40,8 @@ export default function ShoppingList({
   days,
   staples = [],
   onUpdateStaples,
+  overrides = new Set(),
+  onToggleOverride,
   picnicUser,
   picnicAssociations = {},
   onUpdatePicnicAssociation,
@@ -77,15 +73,10 @@ export default function ShoppingList({
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
-  const [overrides, setOverrides] = useState(loadOverrides);
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
   const picnicSearchSeqRef = useRef(0);
-
-  useEffect(() => {
-    localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
-  }, [overrides]);
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -141,12 +132,7 @@ export default function ShoppingList({
 
   const toggleOverride = (e, name) => {
     e.stopPropagation();
-    const key = name.toLowerCase();
-    setOverrides((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
+    onToggleOverride?.(name);
   };
 
   const searchFilter = (i) => {
