@@ -1203,8 +1203,8 @@ function PicnicAssociation({
             title={summary}
           >
             <span className="picnic-association-label">
-              {t("picnicAssociationLabel")}: {summary}
-              {item.amounts?.length > 0 && <span className="picnic-needed"> — {t("picnicNeeded")}: {item.amounts.join(" + ")}</span>}
+              <span className="picnic-accent">{t("picnicAssociationLabel")}</span>: {summary}
+              {item.amounts?.length > 0 && <span className="picnic-accent"> — {t("picnicNeeded")}: {item.amounts.join(" + ")}</span>}
             </span>
             <span className="picnic-info-icon" aria-hidden="true">i</span>
           </button>

@@ -1663,11 +1663,12 @@
 }
 .picnic-association-label {
   display: block;
-  color: #fc7600;
+  color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 600;
 }
 .picnic-association-label.empty { color: #94a3b8; }
+.picnic-accent { color: #fc7600; }
 .picnic-info-icon {
   display: inline-flex;
   align-items: center;
@@ -3084,10 +3085,10 @@
 .side-menu-picnic-input:focus { outline: none; border-color: #025c51; }
 .side-menu-picnic-error {
   font-size: 0.8rem;
-  color: #991b1b;
+  color: #fc7600;
   margin: 0;
 }
-.dark .side-menu-picnic-error { color: #fca5a5; }
+.dark .side-menu-picnic-error { color: #fc7600; }
 .side-menu-picnic-2fa-hint {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -3100,24 +3101,24 @@
 }
 .side-menu-picnic-btn {
   flex: 1;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: none;
-  background: #025c51;
+  background: #2a9d8f;
   color: white;
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.13s;
 }
-.side-menu-picnic-btn:hover { background: #014a41; }
+.side-menu-picnic-btn:hover { background: #238577; }
 .side-menu-picnic-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .side-menu-picnic-cancel {
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1.5px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
+  background: var(--surface);
+  color: var(--text);
   font-size: 0.88rem;
   cursor: pointer;
   transition: background 0.13s;
@@ -3165,7 +3166,7 @@
 .dark .ing-name { color: var(--text); }
 .dark .shopping-list h2 { color: var(--text-muted); }
 .dark .staples-item-name { color: var(--text); }
-.dark .picnic-association-label { color: #fc7600; }
+.dark .picnic-association-label { color: var(--text-muted); }
 .dark .picnic-association-label.empty { color: var(--text-muted); }
 .dark .picnic-info-icon { color: #fc7600; border-color: #fc7600; }
 .dark .picnic-info-btn { background: #1f3b2d; border-color: #2f855a; color: #bbf7d0; }
