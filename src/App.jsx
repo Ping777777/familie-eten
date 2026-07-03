@@ -1,9 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { recipes as defaultRecipes } from "./data/recipes";
-
-// Bump this string whenever recipe content (translations, instructions, ingredients) changes.
-// The migration will push the updated data to the blob on the next app load.
-const RECIPE_BUNDLE_VERSION = "2026-06-12";
 import { defaultStaples } from "./data/defaultStaples";
 import RecipeLibrary from "./components/RecipeLibrary";
 import WeekPlanner from "./components/WeekPlanner";
@@ -226,6 +221,51 @@ const emptyWeek = () =>
     return acc;
   }, {});
 
+// Validates and merges imported recipes into the existing list.
+// - each entry must be an object with a non-empty string `name`
+// - `ingredients`, if present, must be an array of objects with a string `name`
+// - exact duplicates (same name, case-insensitive) are skipped
+// - ids that are missing or already used by a different recipe are reassigned
+function mergeImportedRecipes(raw, existing) {
+  const entries = Array.isArray(raw) ? raw : [raw];
+  const existingNames = new Set(existing.map((r) => (r.name || "").toLowerCase()));
+  const takenIds = new Set(existing.map((r) => r.id));
+  let nextId = existing.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0);
+
+  const merged = [...existing];
+  let imported = 0;
+  let duplicates = 0;
+  let invalid = 0;
+
+  for (const entry of entries) {
+    const nameValid = entry && typeof entry === "object" && typeof entry.name === "string" && entry.name.trim().length > 0;
+    const ingredientsValid = !entry?.ingredients || (
+      Array.isArray(entry.ingredients) &&
+      entry.ingredients.every((i) => i && typeof i === "object" && typeof i.name === "string")
+    );
+    if (!nameValid || !ingredientsValid) {
+      invalid++;
+      continue;
+    }
+    const nameLower = entry.name.toLowerCase();
+    if (existingNames.has(nameLower)) {
+      duplicates++;
+      continue;
+    }
+    let id = entry.id;
+    if (typeof id !== "number" || takenIds.has(id)) {
+      nextId += 1;
+      id = nextId;
+    }
+    takenIds.add(id);
+    existingNames.add(nameLower);
+    merged.push({ ...entry, id });
+    imported++;
+  }
+
+  return { merged, imported, duplicates, invalid };
+}
+
 export default function App() {
   const { t } = useLanguage();
   const [tab, setTab] = useState("planner");
@@ -242,6 +282,7 @@ export default function App() {
   const [recipeEditListMode, setRecipeEditListMode] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
   const [showArchived, setShowArchived] = useState(false);
+  const recipeImportInputRef = useRef(null);
   const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
   const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
   const [shoppingListTab, setShoppingListTab] = useState("maaltijden");
@@ -344,7 +385,7 @@ export default function App() {
   const activeWeekKeyRef = useRef(activeWeekKey);
 
   // Recipe state
-  const [recipeList, setRecipeList] = useState(defaultRecipes);
+  const [recipeList, setRecipeList] = useState([]);
   const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
   const recipesEtagRef = useRef(null);
@@ -526,80 +567,19 @@ export default function App() {
     fetch("/api/recipes", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 404) {
-          // No blob yet — seed it with bundled recipes
+          // No blob yet
           recipesEtagRef.current = null;
-          setRecipeList(defaultRecipes);
-          saveRecipesToBlob(defaultRecipes);
+          setRecipeList([]);
           return;
         }
         if (!response.ok) throw new Error("Failed to load recipes");
         const data = await response.json();
-        // One-time migration: if blob still has bag/zakje units, overwrite with fixed bundled data
-        const BAD_UNITS = ["zakje", "zakjes", "zak", "bag", "doosjes"];
-        const needsMigration = (data.recipes ?? []).some((r) =>
-          r.ingredients?.some((i) => BAD_UNITS.includes((i.unit ?? "").toLowerCase()))
-        );
-        if (needsMigration) {
-          recipesEtagRef.current = null; // unconditional overwrite — skip ETag check
-          setRecipeList(defaultRecipes);
-          saveRecipesToBlob(defaultRecipes);
-          return;
-        }
-        // Migration: sync recipe content from bundle to blob when version changes
-        const applyMigration = (blobRecipes) => {
-          const patched = blobRecipes.map((blobR) => {
-            const def = defaultRecipes.find((d) => d.id === blobR.id);
-            if (!def) return blobR;
-            const needsSync = blobR._bundleVersion !== RECIPE_BUNDLE_VERSION;
-            let updated = blobR;
-            if (needsSync || (def.instructions?.length > 0 && !(blobR.instructions?.length > 0))) {
-              updated = { ...updated, instructions: def.instructions };
-            }
-            if (needsSync || (def.translations && !blobR.translations)) {
-              updated = { ...updated, translations: def.translations };
-            }
-            if (needsSync) {
-              updated = { ...updated, _bundleVersion: RECIPE_BUNDLE_VERSION };
-            }
-            return updated;
-          });
-          const ids = new Set(blobRecipes.map((r) => r.id));
-          const newOnes = defaultRecipes.filter((r) => !ids.has(r.id));
-          return [...patched, ...newOnes];
-        };
-
-        const migrated = applyMigration(data.recipes ?? []);
-        const needsMigrate = migrated.some(
-          (r, i) => r !== (data.recipes ?? [])[i]
-        ) || migrated.length !== (data.recipes ?? []).length;
-
-        if (needsMigrate) {
-          recipesEtagRef.current = data.etag ?? null;
-          setRecipeList(migrated);
-          // Migration save: unconditional write (etag: null) so ETag mismatches can't block it
-          (async () => {
-            try {
-              const r = await fetch("/api/recipes", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ recipes: migrated, etag: null }),
-              });
-              if (r.ok) {
-                const d = await r.json().catch(() => ({}));
-                recipesEtagRef.current = d.etag ?? null;
-              }
-            } catch {
-              // silent — migration will retry on next load
-            }
-          })();
-          return;
-        }
         recipesEtagRef.current = data.etag ?? null;
-        setRecipeList(data.recipes ?? defaultRecipes);
+        setRecipeList(data.recipes ?? []);
       })
       .catch(() => {
-        // Network error — fall back to bundled recipes silently
-        setRecipeList(defaultRecipes);
+        // Network error — fall back to empty list silently
+        setRecipeList([]);
       })
       .finally(() => { setRecipesLoaded(true); });
   }, [currentUser]);
@@ -664,6 +644,42 @@ export default function App() {
     const next = [...recipeList, newRecipe];
     setRecipeList(next);
     saveRecipesToBlob(next);
+  };
+
+  const importRecipes = (raw) => {
+    const { merged, imported, duplicates, invalid } = mergeImportedRecipes(raw, recipeList);
+    if (imported > 0) {
+      setRecipeList(merged);
+      saveRecipesToBlob(merged);
+    }
+    // ponytail: alert() as a quick outcome message; upgrade to the app's toast/banner
+    // pattern (e.g. recipesSaveFailed-style banner) if imports become a frequent flow.
+    const parts = [`${imported} recepten geïmporteerd`];
+    if (duplicates > 0) parts.push(`${duplicates} overgeslagen (duplicaat)`);
+    if (invalid > 0) parts.push(`${invalid} ongeldig`);
+    alert(parts.join(", "));
+  };
+
+  const downloadRecipes = () => {
+    const blob = new Blob([JSON.stringify(recipeList, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `familie-eten-recepten-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRecipeImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const raw = JSON.parse(await file.text());
+      importRecipes(raw);
+    } catch {
+      alert("Kon bestand niet lezen — ongeldige JSON.");
+    }
   };
 
   const reloadRecipes = () => {
@@ -837,7 +853,7 @@ export default function App() {
     weekPlanBaseRef.current = emptyWeek();
     weekPlanEtagRef.current = null;
     setRecipesLoaded(true);
-    setRecipeList(defaultRecipes);
+    setRecipeList([]);
     recipesEtagRef.current = null;
     setRecipesSaveFailed(false);
     setStaplesLoaded(true);
@@ -1059,6 +1075,19 @@ export default function App() {
                 <button className="header-pill-btn" onClick={() => setShowArchived(true)} title="Archief">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
                 </button>
+                <button className="header-pill-btn" onClick={downloadRecipes} title={t("downloadRecipes")}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button className="header-pill-btn" onClick={() => recipeImportInputRef.current?.click()} title={t("uploadRecipes")}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </button>
+                <input
+                  ref={recipeImportInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  style={{ display: "none" }}
+                  onChange={handleRecipeImportFile}
+                />
               </div>
             )
           )
