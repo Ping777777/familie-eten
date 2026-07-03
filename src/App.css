@@ -362,6 +362,7 @@
 .week-nav {
   display: flex;
   align-items: center;
+  gap: 10px;
   margin-bottom: 6px;
   padding-left: 6px;
 }
@@ -371,6 +372,24 @@
   text-transform: capitalize;
   color: var(--text);
 }
+.week-nav-arrow {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
+}
+.week-nav-arrow:active { opacity: 0.6; }
+.dark .week-nav-arrow { color: white; }
 
 /* Variety warnings */
 .variety-warnings {
