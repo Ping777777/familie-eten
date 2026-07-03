@@ -25,3 +25,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Claude Code agent worktrees (session-local)
+.claude/worktrees/
