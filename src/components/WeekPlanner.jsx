@@ -137,7 +137,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
               return (
                 <div
                   key={member}
-                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"}`}
+                  className={`meal-cell ${isSelecting ? "selecting" : ""} ${recipe ? "filled" : "empty"} ${!recipe && dayHasMeals ? "locked" : ""}`}
                   style={{ borderColor: isSelecting ? MEMBER_COLORS[member] : undefined }}
                   onClick={() => {
                     if (recipe && recipe.id > 0) {
