@@ -20,9 +20,8 @@ const LANGUAGES = [
 ];
 
 const MEMBER_COLORS = { Neil: "#2a9d8f", Larisa: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
-const MEMBER_EMOJI  = { Neil: "👱🏼‍♂️", Larisa: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember, tab, onTabChange }) {
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
@@ -241,10 +240,8 @@ export default function App() {
   const [libraryViewRecipe, setLibraryViewRecipe] = useState(null);
   const [libraryEditKey, setLibraryEditKey] = useState(0);
   const [recipeEditListMode, setRecipeEditListMode] = useState(false);
-  const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
   const [showArchived, setShowArchived] = useState(false);
-  const recipeDotsRef = useRef(null);
   const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
   const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
   const [shoppingListTab, setShoppingListTab] = useState("maaltijden");
@@ -256,16 +253,6 @@ export default function App() {
     const handleChange = (e) => setDarkMode(e.matches);
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (recipeDotsRef.current && !recipeDotsRef.current.contains(e.target)) {
-        setRecipeDotsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const [visibleMembers, setVisibleMembers] = useState(() => {

@@ -47,9 +47,7 @@ export default function ShoppingList({
   activeListTab = "maaltijden",
   onActiveListTabChange,
   staplesEditMode = false,
-  onStaplesEditModeChange,
   shoppingEditMode = false,
-  onShoppingEditModeChange,
   searchQuery = "",
 }) {
   const { t, lang } = useLanguage();
@@ -59,7 +57,6 @@ export default function ShoppingList({
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [overrides, setOverrides] = useState(loadOverrides);
-  const [nameEdits, setNameEdits] = useState({});
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
@@ -68,10 +65,6 @@ export default function ShoppingList({
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
-
-  useEffect(() => {
-    if (!staplesEditMode) setNameEdits({});
-  }, [staplesEditMode]);
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -158,9 +151,7 @@ export default function ShoppingList({
     setDismissed((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
-  const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
   const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
-  const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
   const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
@@ -168,12 +159,6 @@ export default function ShoppingList({
   const checkedItemsForPicnic = [...checkedMealItems, ...checkedStaplePicnicItems];
   const missingPicnicChoiceItems = checkedItemsForPicnic.filter((item) => !getAssociation(picnicAssociations, item.id));
 
-  const mealCheckedCount   = checkedMealItems.length;
-  const stapleCheckedCount = checkedStaples.length;
-  const checkedItemCount = mealCheckedCount + stapleCheckedCount;
-
-  const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
-  const clearAllChecks = () => setChecked({});
   const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
 
   const addStaple = (category, name) => {
@@ -186,16 +171,6 @@ export default function ShoppingList({
 
   const removeStaple = (id) =>
     onUpdateStaples(staples.filter((s) => s.id !== id));
-
-  const saveRename = (item) => {
-    const next = nameEdits[item.id];
-    if (next !== undefined) {
-      const trimmed = next.trim();
-      if (trimmed && trimmed !== item.name)
-        onUpdateStaples(staples.map((s) => s.id === item.id ? { ...s, name: trimmed } : s));
-      setNameEdits((prev) => { const n = { ...prev }; delete n[item.id]; return n; });
-    }
-  };
 
   const searchPicnic = async (itemId, query) => {
     const trimmed = query.trim();
