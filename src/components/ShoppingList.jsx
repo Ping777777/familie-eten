@@ -635,7 +635,6 @@ function IngredientList({
   onPicnicSearch,
   onSelectPicnicAssociation,
 }) {
-  const { t } = useLanguage();
   if (items.length === 0) return null;
   const grouped = {};
   items.forEach((item) => {
