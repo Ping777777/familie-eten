@@ -120,13 +120,32 @@ export async function picnicVerify(code) {
   if (d.user) localStorage.setItem(PICNIC_KEY, JSON.stringify(d.user));
   return d;
 }
-export async function loadAssociations() {
-  try {
-    const r = await fetch("/api/picnic-associations", { cache: "no-store" });
-    if (!r.ok) return {};
-    const d = await r.json();
-    return d.associations ?? {};
-  } catch { return {}; }
+export async function picnicSearch(query) {
+  const r = await fetch("/api/picnic-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { const e = new Error("auth"); e.auth = true; throw e; }
+  if (!r.ok) throw new Error(d.message || String(r.status));
+  return d.results ?? [];
+}
+export async function getPicnicCart() {
+  const r = await fetch("/api/picnic-cart", { cache: "no-store" });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { const e = new Error("auth"); e.auth = true; throw e; }
+  if (!r.ok) throw new Error(d.message || String(r.status));
+  return d;
+}
+export async function patchPicnicCart(productId, count) {
+  const r = await fetch("/api/picnic-cart", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId, count }),
+  });
+  if (!r.ok) throw new Error(String(r.status));
+  return r.json().catch(() => ({}));
 }
 export async function sendToPicnicCart(productIds) {
   const r = await fetch("/api/picnic-cart", {

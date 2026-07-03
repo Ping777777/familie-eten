@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getIsoWeekKey } from "./week";
 import { LangProvider, useLang } from "./lib/i18n";
 import { DAYS, FAMILY } from "./lib/food";
-import { AUTH_KEY, PICNIC_KEY, login, useBlob, useWeekPlan, picnicLogin, picnicVerify, loadAssociations } from "./lib/api";
+import { AUTH_KEY, PICNIC_KEY, login, useBlob, useWeekPlan, picnicLogin, picnicVerify } from "./lib/api";
 import { TabBar, Sheet, List, Row, Icons, Toast } from "./ios/ui";
 import WeekScreen from "./screens/Week";
 import RecipesScreen from "./screens/Recipes";
@@ -38,8 +38,8 @@ function Root() {
   const [picnicUser, setPicnicUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem(PICNIC_KEY)) ?? null; } catch { return null; }
   });
-  const [associations, setAssociations] = useState({});
-  useEffect(() => { if (user) loadAssociations().then(setAssociations); }, [user]);
+  const [associations, saveAssociations] = useBlob(user, "/api/picnic-associations", "associations", {});
+  const onPicnicExpired = () => { localStorage.removeItem(PICNIC_KEY); setPicnicUser(null); };
 
   if (!user) return <Login onDone={setUser} />;
 
@@ -74,7 +74,8 @@ function Root() {
           plan={plan} recipes={recipes}
           staples={staples} saveStaples={saveStaples}
           overrides={overrides} toggleOverride={toggleOverride}
-          picnicUser={picnicUser} associations={associations}
+          picnicUser={picnicUser} associations={associations} saveAssociations={saveAssociations}
+          onPicnicExpired={onPicnicExpired}
           toast={toast}
         />
       )}

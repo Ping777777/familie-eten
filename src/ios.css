@@ -473,3 +473,25 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .empty .big { font-size: 44px; margin-bottom: 10px; }
 .pad-h { padding: 0 2px; }
 .mt8 { margin-top: 8px; } .mt14 { margin-top: 14px; } .mt20 { margin-top: 20px; }
+
+/* ── Picnic ── */
+.assoc-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1.5px solid var(--orange);
+  color: var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.assoc-dot:active { transform: scale(0.88); }
+.assoc-dot.on { background: var(--orange); color: #fff; }
+.stepper { display: flex; align-items: center; gap: 2px; }
+.stepper button {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--fill-2); color: var(--tint);
+  font-size: 17px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+}
+.stepper button:disabled { opacity: 0.4; }
+.stepper .n { min-width: 22px; text-align: center; font-weight: 600; font-size: 15px; color: var(--label); }
+.stepper .p { min-width: 58px; text-align: right; font-size: 14px; color: var(--label-2); }

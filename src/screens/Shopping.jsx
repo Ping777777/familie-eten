@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useLang, ingredientName, recipeName, trUnit } from "../lib/i18n";
 import { DAYS, FAMILY, aisleFor, AISLE_ORDER, pantryByDefault } from "../lib/food";
 import { sendToPicnicCart } from "../lib/api";
-import { Screen, List, Row, SwipeRow, Icons } from "../ios/ui";
+import { Screen, NavBtn, List, Row, SwipeRow, Icons } from "../ios/ui";
+import { PicnicPicker, PicnicCart, assocFor } from "./Picnic";
 
 const CHECKS_KEY = "familie-eten:checks";
 const EXTRAS_KEY = "familie-eten:extras";
@@ -11,7 +12,7 @@ const loadJson = (key, fallback) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 };
 
-export default function ShoppingScreen({ plan, recipes, staples, saveStaples, overrides, toggleOverride, picnicUser, associations, toast }) {
+export default function ShoppingScreen({ plan, recipes, staples, saveStaples, overrides, toggleOverride, picnicUser, associations, saveAssociations, onPicnicExpired, toast }) {
   const { t, lang } = useLang();
   const [checks, setChecksState] = useState(() => loadJson(CHECKS_KEY, { checked: {}, dismissed: {} }));
   // ponytail: ad-hoc items are device-local for now; upgrade path is a small
@@ -20,6 +21,8 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
   const [newItem, setNewItem] = useState("");
   const [editStaples, setEditStaples] = useState(false);
   const [sending, setSending] = useState(false);
+  const [picking, setPicking] = useState(null); // { key, name, searchName }
+  const [cartOpen, setCartOpen] = useState(false);
 
   const setChecks = (next) => { setChecksState(next); localStorage.setItem(CHECKS_KEY, JSON.stringify(next)); };
   const setExtras = (next) => { setExtrasState(next); localStorage.setItem(EXTRAS_KEY, JSON.stringify(next)); };
@@ -44,6 +47,13 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     }));
     return Object.values(map);
   }, [plan, recipes, lang]);
+
+  const mealsByIngredient = useMemo(() => {
+    const m = new Map();
+    items.forEach((i) => m.set(i.id, [...i.meals]));
+    staples.forEach((s) => m.set(s.name.toLowerCase(), [t.staples]));
+    return m;
+  }, [items, staples, t]);
 
   const isPantry = (id) => (overrides.has(id) ? !pantryByDefault(id) : pantryByDefault(id));
   const buyItems = items.filter((i) => !isPantry(i.id));
@@ -72,18 +82,11 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
   };
 
   const sendPicnic = async () => {
-    const assocFor = (id) => {
-      const lower = id.toLowerCase();
-      for (const v of Object.values(associations)) {
-        if (v?.ingredient?.toLowerCase() === lower) return v;
-      }
-      return associations[lower];
-    };
     const ids = [];
     let missing = 0;
     allRows.filter((id) => checked[id] && !id.startsWith("x:")).forEach((id) => {
       const key = id.startsWith("s:") ? staples.find((s) => `s:${s.id}` === id)?.name?.toLowerCase() : id;
-      const a = key && assocFor(key);
+      const a = key && assocFor(associations, key);
       if (a?.id) ids.push(String(a.id)); else missing++;
     });
     if (!ids.length) { toast(t.noAssociation(missing)); return; }
@@ -95,6 +98,17 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     setSending(false);
   };
 
+  const picnicTrail = (key, name) => {
+    if (!picnicUser || key.startsWith("x:")) return null;
+    const a = assocFor(associations, key);
+    return (
+      <button className={`assoc-dot${a ? " on" : ""}`} aria-label="Picnic"
+        onClick={(e) => { e.stopPropagation(); setPicking({ key, name, searchName: key }); }}>
+        {a ? <Icons.check size={11} weight={3.2} /> : <Icons.plus size={11} weight={3} />}
+      </button>
+    );
+  };
+
   const itemRow = (i, actions) => (
     <SwipeRow key={i.id} actions={actions}>
       <Row
@@ -102,6 +116,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
         title={i.name}
         sub={[i.amounts?.join(" + "), [...(i.meals ?? [])].join(", ")].filter(Boolean).join(" — ")}
         strike={!!checked[i.id]}
+        trail={picnicTrail(i.id, i.name)}
         onClick={() => toggle(i.id)}
       />
     </SwipeRow>
@@ -113,9 +128,14 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     <Screen
       title={t.shopping}
       sub={allRows.length ? `${doneCount}/${allRows.length} ${t.checkedOff}` : null}
-      right={doneCount > 0 && (
-        <button className="nav-txt-btn" onClick={() => setChecks({ ...checks, checked: {} })}>{t.clearChecked}</button>
-      )}
+      right={
+        <>
+          {doneCount > 0 && (
+            <button className="nav-txt-btn" onClick={() => setChecks({ ...checks, checked: {} })}>{t.clearChecked}</button>
+          )}
+          {picnicUser && <NavBtn icon={Icons.cart} onClick={() => setCartOpen(true)} label={t.picnicCart} />}
+        </>
+      }
     >
       <div className="search" style={{ marginTop: 8 }}>
         <Icons.plus size={17} weight={2.2} />
@@ -156,6 +176,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
                   title={s.name}
                   sub={s.category}
                   strike={!editStaples && !!checked[id]}
+                  trail={!editStaples ? picnicTrail(s.name.toLowerCase(), s.name) : null}
                   onClick={() => (editStaples ? saveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}
                 />
               </SwipeRow>
@@ -191,6 +212,15 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
           <Icons.cart size={18} weight={2.2} /> {t.sendPicnic} ({doneCount})
         </button>
       )}
+
+      {picking && (
+        <PicnicPicker item={picking}
+          associations={associations} saveAssociations={saveAssociations}
+          onClose={() => setPicking(null)} onExpired={onPicnicExpired} toast={toast} />
+      )}
+      <PicnicCart open={cartOpen} onClose={() => setCartOpen(false)}
+        associations={associations} mealsByIngredient={mealsByIngredient}
+        onExpired={onPicnicExpired} toast={toast} />
     </Screen>
   );
 }
