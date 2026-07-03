@@ -123,7 +123,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
       {showArchived ? (
         <div className="recipe-grid">
           {archivedRecipes.length === 0 && (
-            <p className="no-results">Geen gearchiveerde recepten</p>
+            <p className="no-results">{t("noArchivedRecipes")}</p>
           )}
           {archivedRecipes.map((recipe) => (
             <RecipeCard
@@ -132,6 +132,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               onToggle={() => onViewRecipe(recipe)}
               onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
               onDelete={(e) => handleDeleteClick(e, recipe.id)}
+              onRestore={() => onUpdate({ ...recipe, archived: false })}
               dimmed
               editMode={editListMode}
             />
@@ -249,8 +250,8 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
   );
 }
 
-function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, editMode }) {
-  const { lang } = useLanguage();
+function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, onRestore, dimmed, editMode }) {
+  const { t, lang } = useLanguage();
   return (
     <div className={`recipe-card${dimmed ? " recipe-card--archived" : ""}${editMode ? " recipe-card--edit-mode" : ""}`}>
       {editMode && (
@@ -267,6 +268,15 @@ function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, e
               title={recipe.favourite ? "Verwijder favoriet" : "Favoriet"}
             >
               {recipe.favourite ? "★" : "☆"}
+            </button>
+          )}
+          {dimmed && onRestore && (
+            <button
+              className="rc-fav-btn"
+              onClick={(e) => { e.stopPropagation(); onRestore(); }}
+              title={t("restoreRecipe")}
+            >
+              ↺
             </button>
           )}
         </div>
