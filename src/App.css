@@ -3067,17 +3067,17 @@
   height: 40px;
   padding: 0 16px;
   border-radius: 20px;
-  border: 1.5px solid #fc7600;
+  border: 1.5px solid #2a9d8f;
   background: transparent;
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #fc7600;
+  color: #2a9d8f;
   transition: background 0.13s;
 }
-.side-menu-picnic-login-btn:hover { background: rgba(252, 118, 0, 0.1); }
+.side-menu-picnic-login-btn:hover { background: rgba(255, 255, 255, 0.05); }
 
 /* ── Family member visibility toggles ── */
 .member-toggle-grid {
@@ -3138,45 +3138,55 @@
 }
 .side-menu-picnic-btn {
   flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: none;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1.5px solid #2a9d8f;
   background: #2a9d8f;
   color: white;
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: background 0.13s;
 }
 .side-menu-picnic-btn:hover { background: #238577; }
 .side-menu-picnic-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .side-menu-picnic-cancel {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.88rem;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1.5px solid #2a9d8f;
+  background: transparent;
+  color: #2a9d8f;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: background 0.13s;
 }
-.side-menu-picnic-cancel:hover { background: var(--surface2); }
+.side-menu-picnic-cancel:hover { background: rgba(255, 255, 255, 0.05); }
 .side-menu-picnic-logout {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #fc7600;
-  background: #fff3e6;
-  color: #fc7600;
-  font-size: 0.88rem;
-  font-weight: 500;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1.5px solid #2a9d8f;
+  background: transparent;
+  color: #2a9d8f;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  text-align: left;
   transition: background 0.13s;
 }
-.side-menu-picnic-logout:hover { background: #ffe0c0; }
-.dark .side-menu-picnic-logout { background: #3a1f00; border-color: #fc7600; color: #fc7600; }
-.dark .side-menu-picnic-logout:hover { background: #4f2a00; }
+.side-menu-picnic-logout:hover { background: rgba(255, 255, 255, 0.05); }
 
 /* ── Dark mode overrides ── */
 .dark .app-main { background: var(--bg); }
