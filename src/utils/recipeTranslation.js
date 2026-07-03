@@ -27,6 +27,7 @@ const TAG_MAP = {
     zuivelvrij: "dairy-free", noten: "nuts", pittig: "spicy",
     zoet: "sweet", zuur: "sour", romig: "creamy", licht: "light",
     stevig: "hearty", zomers: "summery", winters: "wintery",
+    curry: "curry", bowl: "bowl", wraps: "wraps",
   },
   ru: {
     vlees: "мясо", vis: "рыба", kip: "курица", vegetarisch: "вегетарианское",
@@ -40,6 +41,7 @@ const TAG_MAP = {
     zuivelvrij: "без молока", noten: "орехи", pittig: "острое",
     zoet: "сладкое", zuur: "кислое", romig: "сливочное", licht: "лёгкое",
     stevig: "сытное", zomers: "летнее", winters: "зимнее",
+    curry: "карри", bowl: "боул", wraps: "роллы",
   },
 };
 
@@ -57,8 +59,13 @@ const UNIT_MAP = {
     pakje: "packet", pakjes: "packets",
     potje: "jar", potjes: "jars",
     kuipje: "tub", kuipjes: "tubs",
-    kroppen: "heads", teen: "clove", bol: "bulb",
-    bos: "bunch", plak: "slice",
+    kroppen: "heads", teen: "clove", tenen: "cloves", bol: "bulb",
+    bos: "bunch", bosje: "bunch", bosjes: "bunches",
+    plak: "slice", plakje: "slice", plakjes: "slices",
+    zakje: "sachet", zakjes: "sachets",
+    pak: "pack", pakken: "packs",
+    blikken: "cans", blokje: "cube", blokjes: "cubes",
+    stengel: "stalk", stengels: "stalks",
   },
   ru: {
     el: "ст.л.", tl: "ч.л.",
@@ -68,8 +75,13 @@ const UNIT_MAP = {
     pakje: "пакет", pakjes: "пакетов",
     potje: "баночка", potjes: "банок",
     kuipje: "стаканчик", kuipjes: "стаканчиков",
-    kroppen: "кочана", teen: "зубчик", bol: "головка",
-    bos: "пучок", plak: "ломтик",
+    kroppen: "кочана", teen: "зубчик", tenen: "зубчика", bol: "головка",
+    bos: "пучок", bosje: "пучок", bosjes: "пучка",
+    plak: "ломтик", plakje: "ломтик", plakjes: "ломтика",
+    zakje: "пакетик", zakjes: "пакетика",
+    pak: "упаковка", pakken: "упаковки",
+    blikken: "банки", blokje: "кубик", blokjes: "кубика",
+    stengel: "стебель", stengels: "стебля",
   },
 };
 
