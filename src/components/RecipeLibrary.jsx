@@ -52,7 +52,7 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchQuery = "", editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey, days, plannedDays, onPlanRecipe }) {
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchQuery = "", editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey, days, plannedDays, lockedDays, onPlanRecipe }) {
   const { t, tDay, lang } = useLanguage();
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -106,6 +106,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         onCloseEdit={() => setEditingRecipe(null)}
         days={days}
         plannedDays={plannedDays}
+        lockedDays={lockedDays}
         onPlanRecipe={onPlanRecipe}
       />
     );
@@ -186,7 +187,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   );
 }
 
-function LibraryRecipeDetail({ recipe, lang, t, tDay, editingRecipe, onSaveEdit, onCloseEdit, days, plannedDays, onPlanRecipe }) {
+function LibraryRecipeDetail({ recipe, lang, t, tDay, editingRecipe, onSaveEdit, onCloseEdit, days, plannedDays, lockedDays, onPlanRecipe }) {
   const [doneSteps, setDoneSteps] = useState({});
   const steps = getInstructions(recipe, lang);
   const doneCount = Object.values(doneSteps).filter(Boolean).length;
@@ -214,11 +215,15 @@ function LibraryRecipeDetail({ recipe, lang, t, tDay, editingRecipe, onSaveEdit,
           <div className="lib-detail-day-chips">
             {days.map((day) => {
               const active = plannedDays?.includes(day);
+              // Same rule as the planner grid: a day claimed by another family
+              // member is locked — you can only unassign your own choice.
+              const locked = !active && lockedDays?.includes(day);
               return (
                 <button
                   key={day}
                   type="button"
                   className={`lib-detail-day-chip${active ? " lib-detail-day-chip--active" : ""}`}
+                  disabled={locked}
                   onClick={() => onPlanRecipe(day, active ? null : recipe.id)}
                 >
                   {tDay(day).slice(0, 2)}

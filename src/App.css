@@ -2533,6 +2533,8 @@
   transition: all 0.15s;
 }
 .lib-detail-day-chip:hover { border-color: #025c51; color: #025c51; }
+.lib-detail-day-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+.lib-detail-day-chip:disabled:hover { border-color: transparent; color: inherit; }
 .lib-detail-day-chip--active { background: #025c51; border-color: #025c51; color: white; }
 .lib-detail-body { padding: 0 20px 80px; }
 .lib-detail-section { padding: 20px 0 0; }
