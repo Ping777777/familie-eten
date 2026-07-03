@@ -213,7 +213,13 @@ const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterda
 const AUTH_USER_KEY = "familie-eten:user";
 const PICNIC_USER_KEY = "familie-eten:picnic-user";
 const PICNIC_ASSOC_KEY = "familie-eten:picnic-associations";
+const LS_OVERRIDES_KEY = "familie-eten:pantryOverrides";
 const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
+
+const loadOverridesFromStorage = () => {
+  try { return JSON.parse(localStorage.getItem(LS_OVERRIDES_KEY)) ?? []; }
+  catch { return []; }
+};
 
 const emptyWeek = () =>
   DAYS.reduce((acc, day) => {
@@ -397,6 +403,12 @@ export default function App() {
   const [staplesList, setStaplesList] = useState(defaultStaples);
   const [staplesLoaded, setStaplesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const staplesEtagRef = useRef(null);
+
+  // Pantry overrides state — starts from the localStorage cache so the UI is
+  // instantly right; the blob load (below) then wins once it arrives. Not part
+  // of the loading gate: not critical path, same as staples.
+  const [overrides, setOverrides] = useState(() => new Set(loadOverridesFromStorage()));
+  const overridesEtagRef = useRef(null);
   const [picnicAssociations, setPicnicAssociations] = useState({});
   const [picnicAssociationsLoaded, setPicnicAssociationsLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
   const [picnicAssocSaveFailed, setPicnicAssocSaveFailed] = useState(false);
@@ -407,6 +419,9 @@ export default function App() {
   useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
   useEffect(() => { activeWeekKeyRef.current = activeWeekKey; }, [activeWeekKey]);
   useEffect(() => { picnicAssociationsRef.current = picnicAssociations; }, [picnicAssociations]);
+  useEffect(() => {
+    localStorage.setItem(LS_OVERRIDES_KEY, JSON.stringify([...overrides]));
+  }, [overrides]);
 
   useEffect(() => {
     if (!plannerSearchQuery) return;
@@ -627,6 +642,51 @@ export default function App() {
       .finally(() => { setStaplesLoaded(true); });
   }, [currentUser]);
 
+  // ── Pantry overrides API ──────────────────────────────────────────────────
+  const saveOverridesToBlob = async (nextOverrides) => {
+    try {
+      const response = await fetch("/api/pantry-overrides", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ overrides: nextOverrides, etag: overridesEtagRef.current }),
+      });
+      if (response.status === 412) {
+        const data = await response.json().catch(() => ({}));
+        if (data.overrides && data.etag) {
+          overridesEtagRef.current = data.etag;
+          setOverrides(new Set(data.overrides));
+        }
+        return;
+      }
+      if (!response.ok) return;
+      const data = await response.json().catch(() => ({}));
+      overridesEtagRef.current = data.etag ?? null;
+    } catch {
+      // silent — pantry overrides are not critical path
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/pantry-overrides", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          overridesEtagRef.current = null;
+          // Organic migration: push this device's local overrides up so other
+          // devices pick them up on their next load.
+          saveOverridesToBlob(loadOverridesFromStorage());
+          return;
+        }
+        if (!response.ok) throw new Error("Failed to load pantry overrides");
+        const data = await response.json();
+        overridesEtagRef.current = data.etag ?? null;
+        setOverrides(new Set(data.overrides ?? []));
+      })
+      .catch(() => {
+        // silent — keep whatever localStorage gave us at mount
+      });
+  }, [currentUser]);
+
   // ── Recipe mutations ──────────────────────────────────────────────────────
   const deleteRecipe = (id) => {
     const next = recipeList.filter((r) => r.id !== id);
@@ -698,6 +758,18 @@ export default function App() {
   const updateStaples = (nextStaples) => {
     setStaplesList(nextStaples);
     saveStaplesToBlob(nextStaples);
+  };
+
+  const updateOverrides = (nextOverrides) => {
+    setOverrides(new Set(nextOverrides));
+    saveOverridesToBlob(nextOverrides);
+  };
+
+  const toggleOverride = (name) => {
+    const key = name.toLowerCase();
+    const next = new Set(overrides);
+    next.has(key) ? next.delete(key) : next.add(key);
+    updateOverrides([...next]);
   };
 
   const persistPicnicAssociations = async (nextAssociations, etag) => {
@@ -859,6 +931,7 @@ export default function App() {
     setStaplesLoaded(true);
     setStaplesList(defaultStaples);
     staplesEtagRef.current = null;
+    overridesEtagRef.current = null;
     setPicnicAssociationsLoaded(true);
     setPicnicAssociations({});
     setPicnicAssocSaveFailed(false);
@@ -1140,6 +1213,8 @@ export default function App() {
             days={DAYS}
             staples={staplesList}
             onUpdateStaples={updateStaples}
+            overrides={overrides}
+            onToggleOverride={toggleOverride}
             picnicUser={picnicUser}
             picnicAssociations={picnicAssociations}
             onUpdatePicnicAssociation={updatePicnicAssociation}
