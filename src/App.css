@@ -549,8 +549,8 @@
 /* Locked cell — day already claimed by another family member */
 .meal-cell.locked {
   background: #f2f2f2;
-  cursor: default;
-  border-color: transparent;
+  cursor: not-allowed;
+  border: 2px dashed #ddd;
 }
 .meal-cell.locked:hover { box-shadow: none; }
 
@@ -3261,7 +3261,7 @@
 .dark .detail-back:hover { background: #2a2b3a; }
 
 /* Planner grid */
-.dark .meal-cell.locked { background: var(--surface2); }
+.dark .meal-cell.locked { background: var(--surface2); border-color: var(--border); }
 
 
 
