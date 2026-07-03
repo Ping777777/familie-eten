@@ -52,8 +52,8 @@ function newRecipeTemplate() {
   };
 }
 
-export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchQuery = "", editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey }) {
-  const { t, lang } = useLanguage();
+export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, saveFailed, onDismissSaveFailed, searchQuery = "", editListMode, showArchived, newRecipeKey, viewRecipe, onViewRecipe, editViewedKey, days, plannedDays, lockedDays, onPlanRecipe }) {
+  const { t, tDay, lang } = useLanguage();
   const [confirmId, setConfirmId] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null);
 
@@ -99,10 +99,15 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
         recipe={recipes.find((r) => r.id === viewRecipe.id) ?? viewRecipe}
         lang={lang}
         t={t}
+        tDay={tDay}
         editingRecipe={editingRecipe}
         onEdit={() => setEditingRecipe(viewRecipe)}
         onSaveEdit={handleSaveEdit}
         onCloseEdit={() => setEditingRecipe(null)}
+        days={days}
+        plannedDays={plannedDays}
+        lockedDays={lockedDays}
+        onPlanRecipe={onPlanRecipe}
       />
     );
   }
@@ -123,7 +128,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
       {showArchived ? (
         <div className="recipe-grid">
           {archivedRecipes.length === 0 && (
-            <p className="no-results">Geen gearchiveerde recepten</p>
+            <p className="no-results">{t("noArchivedRecipes")}</p>
           )}
           {archivedRecipes.map((recipe) => (
             <RecipeCard
@@ -132,6 +137,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
               onToggle={() => onViewRecipe(recipe)}
               onEdit={(e) => { e.stopPropagation(); setEditingRecipe(recipe); }}
               onDelete={(e) => handleDeleteClick(e, recipe.id)}
+              onRestore={() => onUpdate({ ...recipe, archived: false })}
               dimmed
               editMode={editListMode}
             />
@@ -182,7 +188,7 @@ export default function RecipeLibrary({ recipes, onAdd, onDelete, onUpdate, save
   );
 }
 
-function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onCloseEdit }) {
+function LibraryRecipeDetail({ recipe, lang, t, tDay, editingRecipe, onSaveEdit, onCloseEdit, days, plannedDays, lockedDays, onPlanRecipe }) {
   const [doneSteps, setDoneSteps] = useState({});
   const steps = getInstructions(recipe, lang);
   const doneCount = Object.values(doneSteps).filter(Boolean).length;
@@ -203,6 +209,31 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
           </div>
         )}
       </div>
+
+      {days && onPlanRecipe && (
+        <section className="lib-detail-plan">
+          <h2 className="lib-detail-section-title">{t("planForDay")}</h2>
+          <div className="lib-detail-day-chips">
+            {days.map((day) => {
+              const active = plannedDays?.includes(day);
+              // Same rule as the planner grid: a day claimed by another family
+              // member is locked — you can only unassign your own choice.
+              const locked = !active && lockedDays?.includes(day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  className={`lib-detail-day-chip${active ? " lib-detail-day-chip--active" : ""}`}
+                  disabled={locked}
+                  onClick={() => onPlanRecipe(day, active ? null : recipe.id)}
+                >
+                  {tDay(day).slice(0, 2)}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <div className="lib-detail-body">
         <section className="lib-detail-section">
@@ -249,8 +280,8 @@ function LibraryRecipeDetail({ recipe, lang, t, editingRecipe, onSaveEdit, onClo
   );
 }
 
-function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, editMode }) {
-  const { lang } = useLanguage();
+function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, onRestore, dimmed, editMode }) {
+  const { t, lang } = useLanguage();
   return (
     <div className={`recipe-card${dimmed ? " recipe-card--archived" : ""}${editMode ? " recipe-card--edit-mode" : ""}`}>
       {editMode && (
@@ -267,6 +298,15 @@ function RecipeCard({ recipe, onToggle, onEdit, onDelete, onFavourite, dimmed, e
               title={recipe.favourite ? "Verwijder favoriet" : "Favoriet"}
             >
               {recipe.favourite ? "★" : "☆"}
+            </button>
+          )}
+          {dimmed && onRestore && (
+            <button
+              className="rc-fav-btn"
+              onClick={(e) => { e.stopPropagation(); onRestore(); }}
+              title={t("restoreRecipe")}
+            >
+              ↺
             </button>
           )}
         </div>

@@ -47,9 +47,7 @@ export default function ShoppingList({
   activeListTab = "maaltijden",
   onActiveListTabChange,
   staplesEditMode = false,
-  onStaplesEditModeChange,
   shoppingEditMode = false,
-  onShoppingEditModeChange,
   searchQuery = "",
 }) {
   const { t, lang } = useLanguage();
@@ -59,7 +57,6 @@ export default function ShoppingList({
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
   const [overrides, setOverrides] = useState(loadOverrides);
-  const [nameEdits, setNameEdits] = useState({});
   const [picnicPicker, setPicnicPicker] = useState(null);
   const [picnicSearch, setPicnicSearch] = useState({ loading: false, error: "", results: [] });
   const picnicPickerRef = useRef(null);
@@ -68,10 +65,6 @@ export default function ShoppingList({
   useEffect(() => {
     localStorage.setItem(LS_OVERRIDES, JSON.stringify([...overrides]));
   }, [overrides]);
-
-  useEffect(() => {
-    if (!staplesEditMode) setNameEdits({});
-  }, [staplesEditMode]);
 
   useEffect(() => {
     picnicPickerRef.current = picnicPicker;
@@ -158,9 +151,7 @@ export default function ShoppingList({
     setDismissed((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleStaple = (id) => toggleCheck(`s:${id}`);
 
-  const uncheckedFresh  = freshItems.filter((i) => !checked[i.id]);
   const checkedFresh    = freshItems.filter((i) =>  checked[i.id]);
-  const uncheckedPantry = pantryItems.filter((i) => !checked[i.id]);
   const checkedPantry   = pantryItems.filter((i) =>  checked[i.id]);
   const checkedMealItems = [...checkedFresh, ...checkedPantry];
   const checkedStaples  = staples.filter((s) =>  checked[`s:${s.id}`]);
@@ -168,12 +159,6 @@ export default function ShoppingList({
   const checkedItemsForPicnic = [...checkedMealItems, ...checkedStaplePicnicItems];
   const missingPicnicChoiceItems = checkedItemsForPicnic.filter((item) => !getAssociation(picnicAssociations, item.id));
 
-  const mealCheckedCount   = checkedMealItems.length;
-  const stapleCheckedCount = checkedStaples.length;
-  const checkedItemCount = mealCheckedCount + stapleCheckedCount;
-
-  const clearStapleChecks = () => setChecked((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith("s:"))));
-  const clearAllChecks = () => setChecked({});
   const updatePicnicPickerQuery = (value) => setPicnicPicker((prev) => prev ? { ...prev, query: value } : prev);
 
   const addStaple = (category, name) => {
@@ -186,16 +171,6 @@ export default function ShoppingList({
 
   const removeStaple = (id) =>
     onUpdateStaples(staples.filter((s) => s.id !== id));
-
-  const saveRename = (item) => {
-    const next = nameEdits[item.id];
-    if (next !== undefined) {
-      const trimmed = next.trim();
-      if (trimmed && trimmed !== item.name)
-        onUpdateStaples(staples.map((s) => s.id === item.id ? { ...s, name: trimmed } : s));
-      setNameEdits((prev) => { const n = { ...prev }; delete n[item.id]; return n; });
-    }
-  };
 
   const searchPicnic = async (itemId, query) => {
     const trimmed = query.trim();
@@ -846,8 +821,6 @@ function PicnicProductPopover({ product, picnicUser, open, className = "picnic-a
 function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, updateCartItemQuantity, lang }) {
   const { t } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const detailsTimeoutRef = useRef(null);
-  const detailsLongPressRef = useRef(false);
   const detailsRef = useRef(null);
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
@@ -857,10 +830,6 @@ function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, u
     [lang]
   );
   const product = useMemo(() => ({ ...item, displayPrice: item.price }), [item]);
-
-  useEffect(() => () => {
-    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
-  }, []);
 
   useEffect(() => {
     if (!detailsOpen) return undefined;
@@ -873,35 +842,6 @@ function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, u
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [detailsOpen]);
 
-  const clearDetailsTimeout = () => {
-    if (detailsTimeoutRef.current) {
-      clearTimeout(detailsTimeoutRef.current);
-      detailsTimeoutRef.current = null;
-    }
-  };
-
-  const openDetails = () => setDetailsOpen(true);
-
-  const closeDetails = () => {
-    clearDetailsTimeout();
-    detailsLongPressRef.current = false;
-    setDetailsOpen(false);
-  };
-
-  const handleTouchStart = () => {
-    detailsLongPressRef.current = false;
-    clearDetailsTimeout();
-    detailsTimeoutRef.current = setTimeout(() => {
-      detailsLongPressRef.current = true;
-      setDetailsOpen(true);
-      detailsTimeoutRef.current = null;
-    }, 450);
-  };
-
-  const handleTouchEnd = () => {
-    clearDetailsTimeout();
-  };
-
   const qty = item.count ?? 1;
   const isUnavailable = item.available === false;
   const hasPrice = typeof item.price === "number" && !isUnavailable;
@@ -910,12 +850,6 @@ function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, u
     <li
       ref={detailsRef}
       className={`picnic-cart-item${isUnavailable ? " picnic-cart-item--unavailable" : ""}`}
-      onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
-      onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={closeDetails}
-      onTouchMove={handleTouchEnd}
     >
       <div className="picnic-cart-item-info">
         <div className="picnic-cart-item-name-row">
@@ -924,8 +858,6 @@ function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, u
             type="button"
             className="picnic-info-btn"
             onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
-            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
-            onBlur={closeDetails}
             aria-label="Info"
           >i</button>
         </div>
@@ -987,8 +919,6 @@ function PicnicCartItem({ item, picnicUser, linkedRecipes, picnicCartUpdating, u
 function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
   const { t, lang } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const detailsTimeoutRef = useRef(null);
-  const detailsLongPressRef = useRef(false);
   const detailsRef = useRef(null);
   const priceFormatter = useMemo(
     () => new Intl.NumberFormat(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "nl-NL", {
@@ -997,10 +927,6 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
     }),
     [lang]
   );
-
-  useEffect(() => () => {
-    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
-  }, []);
 
   useEffect(() => {
     if (!detailsOpen) return undefined;
@@ -1013,47 +939,10 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [detailsOpen]);
 
-  const clearDetailsTimeout = () => {
-    if (detailsTimeoutRef.current) {
-      clearTimeout(detailsTimeoutRef.current);
-      detailsTimeoutRef.current = null;
-    }
-  };
-
-  const openDetails = () => {
-    setDetailsOpen(true);
-  };
-
-  const closeDetails = () => {
-    clearDetailsTimeout();
-    detailsLongPressRef.current = false;
-    setDetailsOpen(false);
-  };
-
-  const handleTouchStart = () => {
-    detailsLongPressRef.current = false;
-    clearDetailsTimeout();
-    detailsTimeoutRef.current = setTimeout(() => {
-      detailsLongPressRef.current = true;
-      setDetailsOpen(true);
-      detailsTimeoutRef.current = null;
-    }, 450);
-  };
-
-  const handleTouchEnd = () => {
-    clearDetailsTimeout();
-  };
-
   return (
     <li
       ref={detailsRef}
       className="picnic-search-result-item"
-      onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
-      onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={closeDetails}
-      onTouchMove={handleTouchEnd}
     >
       <button
         type="button"
@@ -1074,8 +963,6 @@ function PicnicSearchResult({ result, selected, picnicUser, onSelect }) {
         type="button"
         className="picnic-info-btn"
         onClick={(e) => { e.stopPropagation(); setDetailsOpen((o) => !o); }}
-        onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
-        onBlur={closeDetails}
         aria-label="Info"
       >i</button>
       <PicnicProductPopover
@@ -1102,8 +989,6 @@ function PicnicAssociation({
 }) {
   const { t, lang } = useLanguage();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const detailsTimeoutRef = useRef(null);
-  const detailsLongPressRef = useRef(false);
   const detailsRef = useRef(null);
 
   const priceFormatter = useMemo(
@@ -1125,10 +1010,6 @@ function PicnicAssociation({
     ].filter(Boolean).join(" · ")
     : t("picnicAssociationNone");
 
-  useEffect(() => () => {
-    if (detailsTimeoutRef.current) clearTimeout(detailsTimeoutRef.current);
-  }, []);
-
   useEffect(() => {
     if (!detailsOpen) return undefined;
     const handlePointerDown = (event) => {
@@ -1140,74 +1021,25 @@ function PicnicAssociation({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [detailsOpen]);
 
-  const clearDetailsTimeout = () => {
-    if (detailsTimeoutRef.current) {
-      clearTimeout(detailsTimeoutRef.current);
-      detailsTimeoutRef.current = null;
-    }
-  };
-
-  const openDetails = () => {
-    if (association) setDetailsOpen(true);
-  };
-
-  const closeDetails = () => {
-    clearDetailsTimeout();
-    detailsLongPressRef.current = false;
-    setDetailsOpen(false);
-  };
-
-  const handleTouchStart = () => {
-    if (!association) return;
-    detailsLongPressRef.current = false;
-    clearDetailsTimeout();
-    detailsTimeoutRef.current = setTimeout(() => {
-      detailsLongPressRef.current = true;
-      setDetailsOpen(true);
-      detailsTimeoutRef.current = null;
-    }, 450);
-  };
-
-  const handleTouchEnd = () => {
-    clearDetailsTimeout();
-  };
-
-  const handleTriggerClick = () => {
-    if (!association) return;
-    if (detailsLongPressRef.current) {
-      detailsLongPressRef.current = false;
-      return;
-    }
-    setDetailsOpen((open) => !open);
-  };
-
   return (
     <div className="picnic-association-block" onClick={(e) => e.stopPropagation()}>
       {association ? (
         <div
           ref={detailsRef}
           className={`picnic-association-summary${detailsOpen ? " open" : ""}`}
-          onPointerEnter={(e) => { if (e.pointerType === 'mouse') openDetails(); }}
-          onPointerLeave={(e) => { if (e.pointerType === 'mouse') closeDetails(); }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={closeDetails}
-          onTouchMove={handleTouchEnd}
         >
-          <button
-            type="button"
-            className="picnic-association-trigger"
-            onClick={handleTriggerClick}
-            onFocus={(e) => { if (e.target.matches(':focus-visible')) openDetails(); }}
-            onBlur={closeDetails}
-            title={summary}
-          >
+          <span className="picnic-association-trigger" title={summary}>
             <span className="picnic-association-label">
               <span className="picnic-accent">{t("picnicAssociationLabel")}</span>: {summary}
               {item.amounts?.length > 0 && <span className="picnic-accent"> — {t("picnicNeeded")}: {item.amounts.join(" + ")}</span>}
             </span>
-            <span className="picnic-info-icon" aria-hidden="true">i</span>
-          </button>
+            <button
+              type="button"
+              className="picnic-info-icon"
+              onClick={() => setDetailsOpen((open) => !open)}
+              aria-label="Info"
+            >i</button>
+          </span>
           <PicnicProductPopover product={association} picnicUser={picnicUser} open={detailsOpen} />
         </div>
       ) : (

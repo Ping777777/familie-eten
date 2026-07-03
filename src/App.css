@@ -362,6 +362,7 @@
 .week-nav {
   display: flex;
   align-items: center;
+  gap: 10px;
   margin-bottom: 6px;
   padding-left: 6px;
 }
@@ -371,6 +372,24 @@
   text-transform: capitalize;
   color: var(--text);
 }
+.week-nav-arrow {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
+}
+.week-nav-arrow:active { opacity: 0.6; }
+.dark .week-nav-arrow { color: white; }
 
 /* Variety warnings */
 .variety-warnings {
@@ -549,8 +568,8 @@
 /* Locked cell — day already claimed by another family member */
 .meal-cell.locked {
   background: #f2f2f2;
-  cursor: default;
-  border-color: transparent;
+  cursor: not-allowed;
+  border: 2px dashed #ddd;
 }
 .meal-cell.locked:hover { box-shadow: none; }
 
@@ -713,10 +732,11 @@
 
 .picker-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   padding: 10px 16px;
   border-bottom: 1px solid #eee;
+  overflow-x: auto;
 }
 .picker-filter-btn {
   background: #f5f5f5;
@@ -728,6 +748,7 @@
   cursor: pointer;
   transition: border-color 0.13s, background 0.13s, color 0.13s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .picker-filter-btn:hover { border-color: #025c51; color: #025c51; }
 .picker-filter-btn.active { background: #025c51; border-color: #025c51; color: #fff; }
@@ -1652,11 +1673,6 @@
 }
 .picnic-association-trigger {
   max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: help;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1675,15 +1691,17 @@
   justify-content: center;
   width: 15px;
   height: 15px;
+  padding: 0;
   border-radius: 50%;
   border: 1.5px solid #fc7600;
+  background: transparent;
   color: #fc7600;
   font-size: 0.65rem;
   font-style: italic;
   font-weight: 700;
   flex-shrink: 0;
   line-height: 1;
-  cursor: help;
+  cursor: pointer;
 }
 .picnic-info-btn {
   flex-shrink: 0;
@@ -2516,6 +2534,26 @@
 }
 .lib-detail-dot { opacity: 0.4; }
 .lib-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.lib-detail-plan { padding: 16px 20px 0; }
+.lib-detail-day-chips { display: flex; gap: 6px; }
+.lib-detail-day-chip {
+  flex: 1;
+  background: var(--surface2);
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 8px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lib-detail-day-chip:hover { border-color: #025c51; color: #025c51; }
+.lib-detail-day-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+.lib-detail-day-chip:disabled:hover { border-color: transparent; color: inherit; }
+.lib-detail-day-chip--active { background: #025c51; border-color: #025c51; color: white; }
 .lib-detail-body { padding: 0 20px 80px; }
 .lib-detail-section { padding: 20px 0 0; }
 .lib-detail-section-title {
@@ -3254,6 +3292,9 @@
 .dark .detail-ing-row { border-bottom-color: var(--border-light); }
 .dark .detail-section-title { border-bottom-color: #1a5a52; }
 .dark .picker-header { border-bottom-color: var(--border); }
+.dark .picker-filters { border-bottom-color: var(--border); }
+.dark .picker-filter-btn { background: var(--surface2); border-color: var(--border); color: var(--text); }
+.dark .picker-filter-btn.active { background: #025c51; border-color: #025c51; color: white; }
 .dark .pantry-section { border-color: var(--border); }
 .dark .shopping-tabs { border-bottom-color: var(--border); }
 .dark .detail-topbar { background: var(--surface); border-bottom-color: var(--border); }
@@ -3261,7 +3302,7 @@
 .dark .detail-back:hover { background: #2a2b3a; }
 
 /* Planner grid */
-.dark .meal-cell.locked { background: var(--surface2); }
+.dark .meal-cell.locked { background: var(--surface2); border-color: var(--border); }
 
 
 
@@ -3311,6 +3352,8 @@
 /* Tag filters */
 .dark .tag-filter { background: var(--surface2); border-color: var(--border); color: var(--text); }
 .dark .tag-filter.active { background: #025c51; border-color: #025c51; color: white; }
+.dark .lib-detail-day-chip { background: var(--surface2); border-color: var(--border); color: var(--text); }
+.dark .lib-detail-day-chip--active { background: #025c51; border-color: #025c51; color: white; }
 .dark .filter-dropdown { background: var(--surface); border-color: var(--border); }
 .dark .filter-icon-btn { background: var(--surface2); border-color: var(--border); color: var(--text-muted); }
 .dark .filter-icon-btn:hover, .dark .filter-icon-btn.open { border-color: #4dbfb5; color: #4dbfb5; }
