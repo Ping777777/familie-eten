@@ -5,12 +5,22 @@ import { getIngredientName, getRecipeName, translateUnit } from "../utils/recipe
 import { translateStapleName } from "../data/stapleTranslations";
 
 const LS_OVERRIDES = "familie-eten:pantryOverrides";
+const CHECKS_KEY = "familie-eten:checks";
 const STAPLE_CATEGORIES = ["Ontbijt", "Lunch", "Tussendoor", "Overig"];
 const CAT_KEY = { Ontbijt: "catBreakfast", Lunch: "catLunch", Tussendoor: "catSnacks", Overig: "catOther" };
 
 const loadOverrides = () => {
   try { return new Set(JSON.parse(localStorage.getItem(LS_OVERRIDES)) ?? []); }
   catch { return new Set(); }
+};
+
+// One shopping list, one set of checkmarks — persisted so a refresh
+// doesn't lose progress mid-shop.
+const loadChecks = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CHECKS_KEY));
+    return { checked: parsed?.checked ?? {}, dismissed: parsed?.dismissed ?? {} };
+  } catch { return { checked: {}, dismissed: {} }; }
 };
 
 // Case-insensitive lookup by the ingredient field stored in each association value.
@@ -51,8 +61,19 @@ export default function ShoppingList({
   searchQuery = "",
 }) {
   const { t, lang } = useLanguage();
-  const [checked, setChecked] = useState({});
-  const [dismissed, setDismissed] = useState({});
+  const [checks, setChecks] = useState(loadChecks);
+  const checked = checks.checked;
+  const dismissed = checks.dismissed;
+  const updateChecks = (updater) =>
+    setChecks((prev) => {
+      const next = updater(prev);
+      localStorage.setItem(CHECKS_KEY, JSON.stringify(next));
+      return next;
+    });
+  const setChecked = (u) =>
+    updateChecks((p) => ({ ...p, checked: typeof u === "function" ? u(p.checked) : u }));
+  const setDismissed = (u) =>
+    updateChecks((p) => ({ ...p, dismissed: typeof u === "function" ? u(p.dismissed) : u }));
   const [picnicSend, setPicnicSend] = useState({ busy: false, result: null, error: "" });
   const [picnicCart, setPicnicCart] = useState({ open: false, loading: false, items: [], totalPrice: null, error: "" });
   const [picnicCartUpdating, setPicnicCartUpdating] = useState({});
