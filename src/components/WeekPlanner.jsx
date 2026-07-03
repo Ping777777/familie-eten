@@ -42,6 +42,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const [selecting, setSelecting] = useState(null);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerSearchOpen, setPickerSearchOpen] = useState(false);
+  const [pickerFilter, setPickerFilter] = useState(null);
 
   const months = t("months");
   const monday = getMondayOfWeek(weekOffset);
@@ -58,7 +59,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   const handleSelect = (recipeId) => {
     if (!selecting) return;
     onAssign(selecting.day, selecting.member, recipeId);
-    setSelecting(null); setPickerSearchOpen(false); setPickerSearch("");
+    setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); setPickerFilter(null);
   };
 
   const warnings = useMemo(
@@ -201,9 +202,13 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
         const visibleRecipes = recipes
           .filter((r) => !r.archived)
           .filter((r) => !q || getRecipeName(r, lang).toLowerCase().includes(q) || r.tags.some((t) => t.toLowerCase().includes(q)))
+          .filter((r) => matchesFilter(r, pickerFilter))
           .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
+        const visibleSpecialMeals = pickerFilter
+          ? []
+          : SPECIAL_MEALS.filter((s) => !q || s.name.toLowerCase().includes(q));
         return (
-          <div className="recipe-picker-overlay" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); }}>
+          <div className="recipe-picker-overlay" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); setPickerFilter(null); }}>
             <div className="recipe-picker" onClick={(e) => e.stopPropagation()}>
               <div className="picker-header">
                 {pickerSearchOpen ? (
@@ -231,7 +236,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                       <button className="header-pill-btn" onClick={() => setPickerSearchOpen(true)} title={t("search")}>
                         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                       </button>
-                      <button className="header-pill-btn" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); }} title={t("close")}>
+                      <button className="header-pill-btn" onClick={() => { setSelecting(null); setPickerSearchOpen(false); setPickerSearch(""); setPickerFilter(null); }} title={t("close")}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
                     </div>
@@ -239,8 +244,19 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                 )}
               </div>
 
+              <div className="picker-filters">
+                <button className={`picker-filter-btn${pickerFilter === null ? " active" : ""}`} onClick={() => setPickerFilter(null)}>
+                  {t("filterAll")}
+                </button>
+                {PICKER_FILTERS.map(({ key, emoji }) => (
+                  <button key={key} className={`picker-filter-btn${pickerFilter === key ? " active" : ""}`} onClick={() => setPickerFilter(key)}>
+                    {emoji} {t("filter_" + key)}
+                  </button>
+                ))}
+              </div>
+
               <div className="picker-grid">
-                {SPECIAL_MEALS.filter((s) => !q || s.name.toLowerCase().includes(q)).map((s) => {
+                {visibleSpecialMeals.map((s) => {
                   const isCurrent = s.id === currentId;
                   return (
                     <button key={s.id} className={`picker-card${isCurrent ? " picker-card--current" : ""}`} onClick={() => handleSelect(s.id)}>
@@ -261,7 +277,7 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
                     </button>
                   );
                 })}
-                {visibleRecipes.length === 0 && SPECIAL_MEALS.filter((s) => !q || s.name.toLowerCase().includes(q)).length === 0 && (
+                {visibleRecipes.length === 0 && visibleSpecialMeals.length === 0 && (
                   <p className="picker-empty">{t("noRecipesCategory")}</p>
                 )}
               </div>
