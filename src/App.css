@@ -732,11 +732,10 @@
 
 .picker-filters {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 10px 16px;
   border-bottom: 1px solid #eee;
-  overflow-x: auto;
 }
 .picker-filter-btn {
   background: #f5f5f5;
