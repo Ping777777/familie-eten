@@ -5,6 +5,7 @@ import WeekPlanner from "./components/WeekPlanner";
 import ShoppingList from "./components/ShoppingList";
 import RecipeDetail from "./components/RecipeDetail";
 import { getIsoWeekKey, getMondayOfWeek } from "./week";
+import { getRecipeName } from "./utils/recipeTranslation";
 import { useLanguage } from "./useLanguage";
 import "./App.css";
 
@@ -273,7 +274,7 @@ function mergeImportedRecipes(raw, existing) {
 }
 
 export default function App() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState("planner");
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -1006,7 +1007,7 @@ export default function App() {
           </button>
         )}
         {tab === "recipes" && libraryViewRecipe && (
-          <span className="header-recipe-title">{libraryViewRecipe.name}</span>
+          <span className="header-recipe-title">{getRecipeName(libraryViewRecipe, lang)}</span>
         )}
         {tab === "recipes" && !libraryViewRecipe && showArchived && (
           <span className="header-recipe-title">Archief</span>
@@ -1092,7 +1093,7 @@ export default function App() {
                 <button className="header-pill-btn" title="Herstellen" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: false }); setLibraryViewRecipe(null); }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
                 </button>
-                <button className="header-pill-btn" title="Verwijder" onClick={() => { if (window.confirm(`"${libraryViewRecipe.name}" permanent verwijderen?`)) { deleteRecipe(libraryViewRecipe.id); setLibraryViewRecipe(null); } }}>
+                <button className="header-pill-btn" title="Verwijder" onClick={() => { if (window.confirm(`"${getRecipeName(libraryViewRecipe, lang)}" permanent verwijderen?`)) { deleteRecipe(libraryViewRecipe.id); setLibraryViewRecipe(null); } }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                 </button>
               </div>
