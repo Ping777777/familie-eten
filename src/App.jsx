@@ -20,9 +20,8 @@ const LANGUAGES = [
 ];
 
 const MEMBER_COLORS = { Neil: "#2a9d8f", Larisa: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
-const MEMBER_EMOJI  = { Neil: "👱🏼‍♂️", Larisa: "👩🏽", Inga: "👧🏽", Kevin: "👦🏼" };
 
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember, tab, onTabChange }) {
+function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
   const [picnicFormOpen, setPicnicFormOpen] = useState(false);
@@ -241,7 +240,6 @@ export default function App() {
   const [libraryViewRecipe, setLibraryViewRecipe] = useState(null);
   const [libraryEditKey, setLibraryEditKey] = useState(0);
   const [recipeEditListMode, setRecipeEditListMode] = useState(false);
-  const [recipeDotsOpen, setRecipeDotsOpen] = useState(false);
   const [recipeAddKey, setRecipeAddKey] = useState(0);
   const [showArchived, setShowArchived] = useState(false);
   const recipeDotsRef = useRef(null);
@@ -261,7 +259,7 @@ export default function App() {
   useEffect(() => {
     const handler = (e) => {
       if (recipeDotsRef.current && !recipeDotsRef.current.contains(e.target)) {
-        setRecipeDotsOpen(false);
+        // ponytail: no-op; recipeDotsOpen state removed but handler kept for future use
       }
     };
     document.addEventListener("mousedown", handler);

@@ -1,8 +1,8 @@
 import { useState, useMemo, useRef } from "react";
 import { getMondayOfWeek } from "../week";
-import { tagClass, PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
+import { PICKER_FILTERS, matchesFilter } from "../utils/tagColors";
 import { useLanguage } from "../useLanguage";
-import { getRecipeName, translateTag } from "../utils/recipeTranslation";
+import { getRecipeName } from "../utils/recipeTranslation";
 
 const MEMBER_COLORS = {
   Neil: "#2a9d8f",
