@@ -48,6 +48,7 @@ export const translations = {
     filter_vegetarisch: "Vegetarisch",
 
     backToPlanner: "← Terug naar planner",
+    planForDay: "Plan voor dag",
     sectionIngredients: "Ingrediënten",
     sectionInstructions: "Bereidingswijze",
     allDone: "✅ Klaar!",
@@ -230,6 +231,7 @@ export const translations = {
     filter_vegetarisch: "Vegetarian",
 
     backToPlanner: "← Back to planner",
+    planForDay: "Plan for a day",
     sectionIngredients: "Ingredients",
     sectionInstructions: "Instructions",
     allDone: "✅ Done!",
@@ -412,6 +414,7 @@ export const translations = {
     filter_vegetarisch: "Вегетарианское",
 
     backToPlanner: "← Назад к планировщику",
+    planForDay: "Запланировать на день",
     sectionIngredients: "Ингредиенты",
     sectionInstructions: "Инструкции",
     allDone: "✅ Готово!",
