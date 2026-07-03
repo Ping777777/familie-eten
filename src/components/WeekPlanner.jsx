@@ -78,7 +78,9 @@ export default function WeekPlanner({ days, family, weekPlan, weekOffset, onWeek
   return (
     <div className="week-planner" ref={swipeRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="week-nav">
+        <button className="week-nav-arrow" aria-label={t("prevWeek")} onClick={() => onWeekChange(weekOffset - 1)}>‹</button>
         <span className="week-month-label">{months[monday.getMonth()]}</span>
+        <button className="week-nav-arrow" aria-label={t("nextWeek")} onClick={() => onWeekChange(weekOffset + 1)}>›</button>
       </div>
 
       {saveFailed && (
