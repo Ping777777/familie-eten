@@ -1110,6 +1110,9 @@ export default function App() {
             viewRecipe={libraryViewRecipe}
             onViewRecipe={setLibraryViewRecipe}
             editViewedKey={libraryEditKey}
+            days={DAYS}
+            plannedDays={libraryViewRecipe ? DAYS.filter((day) => selectedWeekPlanData[day]?.[currentUser] === libraryViewRecipe.id) : []}
+            onPlanRecipe={(day, recipeId) => updateSelectedWeekPlan(day, currentUser, recipeId)}
           />
         )}
         {tab === "shopping" && (
