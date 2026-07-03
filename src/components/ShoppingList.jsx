@@ -18,13 +18,15 @@ const loadChecks = () => {
 };
 
 // Case-insensitive lookup by the ingredient field stored in each association value.
+// Falls back to the object key — associations are stored keyed by ingredient id,
+// and older entries may lack the ingredient field (issue #45).
 const getAssociation = (associations, itemId) => {
   if (!associations || !itemId) return undefined;
   const lower = itemId.toLowerCase();
   for (const [, v] of Object.entries(associations)) {
     if (v?.ingredient?.toLowerCase() === lower) return v;
   }
-  return undefined;
+  return associations[lower];
 };
 
 const getStaplePicnicItem = (staple) => ({
