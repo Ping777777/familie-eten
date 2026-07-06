@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getIsoWeekKey } from "./week";
 import { LangProvider, useLang } from "./lib/i18n";
 import { DAYS, FAMILY } from "./lib/food";
@@ -15,6 +15,24 @@ const emptyWeek = () =>
 function Root() {
   const { t, lang, setLang } = useLang();
   const [user, setUser] = useState(() => localStorage.getItem(AUTH_KEY));
+
+  // iOS pans the whole web view up when the on-screen keyboard opens and
+  // doesn't always pan back on dismiss, leaving position:fixed chrome (tab
+  // bar, action bar) stranded mid-screen. Re-pin the viewport whenever the
+  // keyboard closes / the visual viewport settles.
+  useEffect(() => {
+    const repin = () => {
+      const el = document.activeElement;
+      if (!el || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) window.scrollTo(0, 0);
+    };
+    const onFocusOut = () => setTimeout(repin, 50);
+    window.visualViewport?.addEventListener("resize", repin);
+    window.addEventListener("focusout", onFocusOut);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", repin);
+      window.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
   const [tab, setTab] = useState("week");
   const [weekOffset, setWeekOffset] = useState(0);
   const [openRecipeId, setOpenRecipeId] = useState(null);
