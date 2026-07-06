@@ -25,6 +25,9 @@
   --sheet-bg: rgba(248, 248, 250, 0.92);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --kb: env(safe-area-inset-bottom, 0px);
+  /* readable copies for the ViewportDiag debug readout */
+  --diag-sat: env(safe-area-inset-top, 0px);
+  --diag-sab: env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme: dark) {
   :root {
