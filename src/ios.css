@@ -445,8 +445,8 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
   text-align: center;
 }
 .login-mark {
-  width: 72px; height: 72px;
-  border-radius: 18px;
+  width: 58px; height: 58px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
   margin-bottom: 20px;
 }
