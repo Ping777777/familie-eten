@@ -146,9 +146,10 @@ export function SwipeRow({ actions = [], children }) {
     const mx = e.touches[0].clientX - start.current.x;
     const my = e.touches[0].clientY - start.current.y;
     if (!drag) {
-      // Ignore small jitter so a plain tap never engages the swipe reveal.
-      if (Math.abs(mx) < 15 && Math.abs(my) < 15) return;
-      if (Math.abs(my) > Math.abs(mx)) { start.current = null; return; }
+      // A vertical drift means the finger is scrolling — bail so the list scrolls.
+      if (Math.abs(my) > 10 && Math.abs(my) >= Math.abs(mx)) { start.current = null; return; }
+      // Only engage on a deliberate, clearly-horizontal swipe.
+      if (Math.abs(mx) < 24 || Math.abs(mx) < Math.abs(my) * 1.5) return;
       setDrag(true);
     }
     setDx(Math.min(0, Math.max(-width - 30, start.current.dx + mx)));
