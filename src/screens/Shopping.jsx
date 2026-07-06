@@ -164,10 +164,9 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
         </div>
       )}
 
-      {buyIds.length > 0 && <div className="mt14">{renderSelectAll(buyIds)}</div>}
-
-      {AISLE_ORDER.filter((a) => groups[a]?.length).map((aisle) => (
+      {AISLE_ORDER.filter((a) => groups[a]?.length).map((aisle, idx) => (
         <List key={aisle} header={t[`aisle_${aisle}`]}>
+          {idx === 0 && renderSelectAll(buyIds)}
           {groups[aisle].map((i) =>
             i.extra
               ? itemRow(i, [{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => setExtras(extras.filter((e) => e.id !== i.extra)) }])
@@ -178,9 +177,9 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
 
       {staples.length > 0 && (
         <>
-          {renderSelectAll(stapleIds)}
           <List header={t.staples}
             headerAction={<button onClick={() => setEditStaples(!editStaples)}>{editStaples ? t.done : t.edit}</button>}>
+            {!editStaples && renderSelectAll(stapleIds)}
             {staples.map((s) => {
               const id = `s:${s.id}`;
               return (
@@ -221,8 +220,8 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
 
       {pantryItems.length > 0 && (
         <>
-          {renderSelectAll(pantryIds)}
           <List header={t.pantry} footer={`← ${t.toList}: ${t.swipeHint}`}>
+            {renderSelectAll(pantryIds)}
             {pantryItems.map((i) => (
               <SwipeRow key={i.id} actions={[{ label: t.toList, color: "teal", icon: Icons.cart, onClick: () => toggleOverride(i.id) }]}>
                 <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>

@@ -558,16 +558,31 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .popover-desc { font-size: 13px; color: var(--label-2); margin-top: 6px; line-height: 1.4; }
 
 /* ── select-all row ── */
+/* First row inside a group card (iOS Mail-style "Select All"). */
 .select-all-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 16px;
+  position: relative;
+  text-align: left;
   background: var(--bg-elev);
   color: var(--tint);
   font-size: 15px; font-weight: 600;
+  transition: background 0.15s;
+}
+.select-all-row:active { background: var(--fill-2); }
+.select-all-row::after {
+  content: "";
+  position: absolute;
+  left: 16px; right: 0; bottom: 0;
+  height: 0.5px;
+  background: var(--separator);
 }
 .select-all-row .circ {
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 24px; height: 24px; border-radius: 50%;
   border: 1.5px solid var(--tint);
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   color: #fff;
 }
