@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'apple-touch-icon.png', 'favicon.svg'],
+      includeAssets: ['logo.png', 'apple-touch-icon.png', 'login-mark.png', 'favicon.svg'],
       manifest: {
         name: 'Familie Eten',
         short_name: 'FamEten',
@@ -20,13 +20,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'apple-touch-icon.png',
+            src: 'login-mark.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'apple-touch-icon.png',
+            src: 'login-mark.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
