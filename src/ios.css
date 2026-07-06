@@ -46,7 +46,14 @@
   }
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  /* Native-app feel: no text selection / long-press callout on UI chrome.
+     A stray text selection was also driving swipe rows open on touch. */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
 html { height: 100%; height: 100dvh; }
 body {
   height: 100%; height: 100dvh;
@@ -61,7 +68,8 @@ body {
 }
 #root { height: 100%; height: 100dvh; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-input, textarea, select { font: inherit; color: inherit; }
+/* Editable fields still need normal text selection. */
+input, textarea, select { font: inherit; color: inherit; -webkit-user-select: auto; user-select: auto; }
 
 /* ── type scale ── */
 .t-large { font-size: 34px; font-weight: 700; letter-spacing: 0.37px; line-height: 1.2; }
@@ -372,7 +380,8 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 @keyframes pushin { from { transform: translateX(100%); } }
 
 /* ── swipe rows ── */
-.swipe-wrap { position: relative; overflow: hidden; background: var(--bg-elev); }
+/* pan-y: let the browser own vertical scroll, hand horizontal gestures to JS. */
+.swipe-wrap { position: relative; overflow: hidden; background: var(--bg-elev); touch-action: pan-y; }
 .swipe-actions {
   position: absolute; top: 0; bottom: 0; right: 0;
   display: flex;
