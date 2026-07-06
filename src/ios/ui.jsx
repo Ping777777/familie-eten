@@ -136,6 +136,9 @@ export function SwipeRow({ actions = [], children }) {
   const start = useRef(null);
   const width = actions.length * 76;
   const onTouchStart = (e) => {
+    // Don't track swipes that start on a button or other control inside the
+    // row (e.g. a Picnic action) — those are meant to be tapped, not dragged.
+    if (e.target.closest("button, a, input, textarea, select")) { start.current = null; return; }
     start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx };
   };
   const onTouchMove = (e) => {
@@ -143,9 +146,8 @@ export function SwipeRow({ actions = [], children }) {
     const mx = e.touches[0].clientX - start.current.x;
     const my = e.touches[0].clientY - start.current.y;
     if (!drag) {
-      // Ignore small jitter so tapping a button inside the row (e.g. a
-      // Picnic action) never engages the swipe reveal.
-      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      // Ignore small jitter so a plain tap never engages the swipe reveal.
+      if (Math.abs(mx) < 15 && Math.abs(my) < 15) return;
       if (Math.abs(my) > Math.abs(mx)) { start.current = null; return; }
       setDrag(true);
     }
