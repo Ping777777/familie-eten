@@ -107,13 +107,15 @@ function Login({ onDone }) {
   };
   return (
     <form className="login" onSubmit={submit}>
-      <img src="/logo.png" alt="familie eten" />
-      <h1 className="t-large" style={{ marginTop: 28 }}>{t.welcome}</h1>
-      <div className="t-sub muted" style={{ marginTop: 4 }}>{t.loginHint}</div>
-      <div className="field-lb">{t.username}</div>
-      <input className="field" autoCapitalize="none" value={u} onChange={(e) => setU(e.target.value)} />
-      <div className="field-lb">{t.password}</div>
-      <input className="field" type="password" value={p} onChange={(e) => setP(e.target.value)} />
+      <img src="/apple-touch-icon.png" alt="" className="login-mark" />
+      <h1 className="t-large">{t.welcome}</h1>
+      <div className="t-sub muted mt4">{t.loginHint}</div>
+      <div className="login-card">
+        <div className="field-lb">{t.username}</div>
+        <input className="field" autoCapitalize="none" value={u} onChange={(e) => setU(e.target.value)} />
+        <div className="field-lb">{t.password}</div>
+        <input className="field" type="password" value={p} onChange={(e) => setP(e.target.value)} />
+      </div>
       {err && <div className="t-foot" style={{ color: "var(--red)", marginTop: 10 }}>{t.wrongLogin}</div>}
       <button className="btn mt20" disabled={busy || !u || !p}>{t.login}</button>
     </form>
