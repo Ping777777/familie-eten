@@ -126,7 +126,7 @@ export function PicnicPicker({ item, associations, saveAssociations, onClose, on
             lead={<span className="assoc-dot on" />}
             title={current.name}
             sub={[current.unitQuantity, eur(current.displayPrice ?? current.display_price)].filter(Boolean).join(" · ")}
-            trail={<button className="nav-txt-btn" style={{ color: "var(--red)", padding: 0, fontSize: 15 }} onClick={unlink}>{t.remove}</button>}
+            trail={<button className="nav-txt-btn" style={{ color: "var(--red)", padding: 0, fontSize: "0.8824rem" }} onClick={unlink}>{t.remove}</button>}
           />
         </List>
       )}
