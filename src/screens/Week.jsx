@@ -108,7 +108,6 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
                 <Row key={day} lead={lead}
                   title={recipeName(info.meal, lang) ?? info.meal.name}
                   sub={info.member}
-                  trail={<><span style={{ fontSize: 22 }}>{info.meal.emoji}</span><Avatar name={info.member} colors={MEMBER_COLORS} /></>}
                   onClick={() => (info.meal.id > 0 ? onOpenRecipe(info.meal.id, day) : setPicking({ day }))}
                   chevron={info.meal.id > 0}
                 />
