@@ -136,6 +136,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
   const empty = items.length === 0 && extras.length === 0;
 
   return (
+    <>
     <Screen
       title={t.shopping}
       sub={allRows.length ? `${doneCount}/${allRows.length} ${t.checkedOff}` : null}
@@ -243,11 +244,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
         </>
       )}
 
-      {picnicUser && doneCount > 0 && (
-        <button className="btn orange mt20" disabled={sending} onClick={sendPicnic}>
-          <Icons.cart size={18} weight={2.2} /> {t.sendPicnic} ({doneCount})
-        </button>
-      )}
+      {picnicUser && doneCount > 0 && <div style={{ height: 74 }} />}
 
       {picking && (
         <PicnicPicker item={picking}
@@ -258,6 +255,13 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
         associations={associations} mealsByIngredient={mealsByIngredient}
         onExpired={onPicnicExpired} toast={toast} />
     </Screen>
+
+    {picnicUser && doneCount > 0 && (
+      <button className="action-bar" disabled={sending} onClick={sendPicnic}>
+        <Icons.cart size={18} weight={2.2} /> {t.sendPicnic} ({doneCount})
+      </button>
+    )}
+    </>
   );
 }
 

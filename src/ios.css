@@ -539,3 +539,23 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
   color: #fff;
 }
 .select-all-row.on .circ { background: var(--tint); }
+
+/* ── floating action bar (pinned above tab bar) ── */
+.action-bar {
+  position: fixed;
+  left: 16px; right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 66px);
+  z-index: 25;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 50px;
+  border-radius: 16px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 17px; font-weight: 600;
+  box-shadow: var(--shadow);
+  animation: barup 0.35s cubic-bezier(0.32, 1.6, 0.55, 1);
+  transition: transform 0.2s, opacity 0.15s;
+}
+.action-bar:active { transform: scale(0.97); }
+.action-bar:disabled { opacity: 0.6; }
+@keyframes barup { from { transform: translateY(28px); opacity: 0; } }
