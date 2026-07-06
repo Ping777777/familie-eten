@@ -1,1274 +1,199 @@
-import { useState, useEffect, useRef } from "react";
-import { defaultStaples } from "./data/defaultStaples";
-import RecipeLibrary from "./components/RecipeLibrary";
-import WeekPlanner from "./components/WeekPlanner";
-import ShoppingList from "./components/ShoppingList";
-import RecipeDetail from "./components/RecipeDetail";
-import { getIsoWeekKey, getMondayOfWeek } from "./week";
-import { getRecipeName } from "./utils/recipeTranslation";
-import { useLanguage } from "./useLanguage";
-import "./App.css";
-
-const LANGUAGES = [
-  { code: "nl", img: "https://flagcdn.com/w40/nl.png", label: "Nederlands" },
-  { code: "en", img: "https://flagcdn.com/w40/gb.png", label: "English" },
-  { code: "ru", img: "https://flagcdn.com/w40/ru.png", label: "Русский" },
-];
-
-const MEMBER_COLORS = { Neil: "#2a9d8f", Larisa: "#fc7600", Inga: "#5cb85c", Kevin: "#e8c247" };
-
-function SideMenu({ open, onClose, onLogout, currentUser, picnicUser, onPicnicLogin, onPicnicVerify2FA, onPicnicLogout, visibleMembers, onToggleMember }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const { lang, setLang, t } = useLanguage();
-  const [picnicFormOpen, setPicnicFormOpen] = useState(false);
-  const [picnicForm, setPicnicForm] = useState({ username: "", password: "" });
-  const [picnicError, setPicnicError] = useState("");
-  const [picnicBusy, setPicnicBusy] = useState(false);
-  const [picnicOtp, setPicnicOtp] = useState({ open: false, code: "" });
-
-  const handlePicnicSubmit = async (e) => {
-    e.preventDefault();
-    setPicnicError("");
-    setPicnicBusy(true);
-    try {
-      const result = await onPicnicLogin(picnicForm.username, picnicForm.password);
-      if (result?.requiresTwoFactor) {
-        setPicnicOtp({ open: true, code: "" });
-      } else {
-        setPicnicForm({ username: "", password: "" });
-        setPicnicFormOpen(false);
-      }
-    } catch (err) {
-      setPicnicError(err?.message || t("picnicLoginFailed"));
-    } finally {
-      setPicnicBusy(false);
-    }
-  };
-
-  const handlePicnicOtpSubmit = async (e) => {
-    e.preventDefault();
-    setPicnicError("");
-    setPicnicBusy(true);
-    try {
-      await onPicnicVerify2FA(picnicOtp.code);
-      setPicnicForm({ username: "", password: "" });
-      setPicnicFormOpen(false);
-      setPicnicOtp({ open: false, code: "" });
-    } catch (err) {
-      setPicnicError(err?.message || t("picnic2faFailed"));
-    } finally {
-      setPicnicBusy(false);
-    }
-  };
-
-  const resetPicnicForm = () => {
-    setPicnicFormOpen(false);
-    setPicnicOtp({ open: false, code: "" });
-    setPicnicError("");
-    setPicnicForm({ username: "", password: "" });
-  };
-
-  return (
-    <>
-      {open && <div className="menu-overlay" onClick={onClose} />}
-      <aside className={`side-menu${open ? " side-menu--open" : ""}`} onClick={(e) => e.stopPropagation()}>
-        {settingsOpen ? (
-          <>
-            <div className="side-menu-top">
-              <button className="side-menu-back" onClick={() => setSettingsOpen(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <button className="side-menu-close" onClick={() => { setSettingsOpen(false); onClose(); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-
-            <div className="side-menu-section">
-              <p className="side-menu-label">{t("languageSection")}</p>
-              <div className="side-menu-flag-group">
-                {LANGUAGES.map(({ code, img, label }) => (
-                  <button key={code} className={`side-menu-flag-btn${lang === code ? " active" : ""}`} onClick={() => setLang(code)} title={label}>
-                    <img src={img} alt={label} className="side-menu-flag-img" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="side-menu-section">
-              <p className="side-menu-label">{t("familySection")}</p>
-              <div className="member-toggle-grid">
-                {FAMILY.map((name) => {
-                  const on = visibleMembers.includes(name);
-                  return (
-                    <button
-                      key={name}
-                      className={`member-toggle-btn${on ? " member-toggle-btn--on" : ""}`}
-                      style={on ? { borderColor: MEMBER_COLORS[name], color: MEMBER_COLORS[name] } : {}}
-                      onClick={() => onToggleMember(name)}
-                      disabled={on && visibleMembers.length === 1}
-                    >
-                      <span>{name}</span>
-                      {on && <span className="member-toggle-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-          </>
-        ) : (
-          <>
-            <div className="side-menu-top">
-              <button className="side-menu-dots" onClick={() => setSettingsOpen(true)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-              </button>
-              <button className="side-menu-close" onClick={onClose}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-
-            <div className="side-menu-section">
-              {picnicUser ? (
-                <>
-                  <div className="side-menu-picnic-user">
-                    <span className="side-menu-user-label">{t("picnicLoggedInAs")}</span>
-                    <strong className="side-menu-user-name">{picnicUser.name}</strong>
-                  </div>
-                  <button className="side-menu-picnic-logout" onClick={() => { onPicnicLogout(); }}>
-                    {t("picnicLogout")}
-                  </button>
-                </>
-              ) : picnicOtp.open ? (
-                <form className="side-menu-picnic-form" onSubmit={handlePicnicOtpSubmit}>
-                  <p className="side-menu-picnic-2fa-hint">{t("picnic2faHint")}</p>
-                  <input
-                    className="side-menu-picnic-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    placeholder={t("picnic2faPlaceholder")} aria-label={t("picnic2faPlaceholder")}
-                    value={picnicOtp.code}
-                    onChange={(e) => setPicnicOtp((p) => ({ ...p, code: e.target.value }))}
-                    required
-                  />
-                  {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
-                  <div className="side-menu-picnic-actions">
-                    <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
-                      {picnicBusy ? t("picnic2faBusy") : t("picnic2faBtn")}
-                    </button>
-                    <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
-                      {t("cancel")}
-                    </button>
-                  </div>
-                </form>
-              ) : picnicFormOpen ? (
-                <form className="side-menu-picnic-form" onSubmit={handlePicnicSubmit}>
-                  <input
-                    className="side-menu-picnic-input"
-                    type="email"
-                    placeholder={t("picnicLoginUsername")} aria-label={t("picnicLoginUsername")}
-                    value={picnicForm.username}
-                    onChange={(e) => setPicnicForm((p) => ({ ...p, username: e.target.value }))}
-                    autoComplete="email"
-                    required
-                  />
-                  <input
-                    className="side-menu-picnic-input"
-                    type="password"
-                    placeholder={t("picnicLoginPassword")} aria-label={t("picnicLoginPassword")}
-                    value={picnicForm.password}
-                    onChange={(e) => setPicnicForm((p) => ({ ...p, password: e.target.value }))}
-                    autoComplete="current-password"
-                    required
-                  />
-                  {picnicError && <p className="side-menu-picnic-error">{picnicError}</p>}
-                  <div className="side-menu-picnic-actions">
-                    <button type="submit" className="side-menu-picnic-btn" disabled={picnicBusy}>
-                      {picnicBusy ? t("picnicLoginBusy") : t("picnicLoginBtn")}
-                    </button>
-                    <button type="button" className="side-menu-picnic-cancel" onClick={resetPicnicForm}>
-                      {t("cancel")}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <button className="side-menu-picnic-login-btn" onClick={() => setPicnicFormOpen(true)}>
-                  {t("picnicLogin")}
-                </button>
-              )}
-            </div>
-
-            {currentUser && (
-              <div className="side-menu-footer">
-                <button className="side-menu-logout" onClick={() => { onLogout(); onClose(); }}>
-                  {t("logout")}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </aside>
-    </>
-  );
-}
-
-const FAMILY = ["Neil", "Larisa", "Inga", "Kevin"];
-const VISIBLE_MEMBERS_KEY = "familie-eten:visible-members";
-const DAYS = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
-const AUTH_USER_KEY = "familie-eten:user";
-const PICNIC_USER_KEY = "familie-eten:picnic-user";
-const PICNIC_ASSOC_KEY = "familie-eten:picnic-associations";
-const LS_OVERRIDES_KEY = "familie-eten:pantryOverrides";
-const MAX_WEEK_PLAN_WRITE_RETRIES = 3;
-
-const loadOverridesFromStorage = () => {
-  try { return JSON.parse(localStorage.getItem(LS_OVERRIDES_KEY)) ?? []; }
-  catch { return []; }
-};
+import { useMemo, useState } from "react";
+import { getIsoWeekKey } from "./week";
+import { LangProvider, useLang } from "./lib/i18n";
+import { DAYS, FAMILY } from "./lib/food";
+import { AUTH_KEY, PICNIC_KEY, login, useBlob, useWeekPlan, picnicLogin, picnicVerify } from "./lib/api";
+import { TabBar, Sheet, List, Row, Icons, Toast } from "./ios/ui";
+import WeekScreen from "./screens/Week";
+import RecipesScreen from "./screens/Recipes";
+import ShoppingScreen from "./screens/Shopping";
+import "./ios.css";
 
 const emptyWeek = () =>
-  DAYS.reduce((acc, day) => {
-    acc[day] = FAMILY.reduce((a, m) => { a[m] = null; return a; }, {});
-    return acc;
-  }, {});
+  DAYS.reduce((acc, d) => { acc[d] = FAMILY.reduce((a, m) => { a[m] = null; return a; }, {}); return acc; }, {});
 
-// Validates and merges imported recipes into the existing list.
-// - each entry must be an object with a non-empty string `name`
-// - `ingredients`, if present, must be an array of objects with a string `name`
-// - exact duplicates (same name, case-insensitive) are skipped
-// - ids that are missing or already used by a different recipe are reassigned
-function mergeImportedRecipes(raw, existing) {
-  const entries = Array.isArray(raw) ? raw : [raw];
-  const existingNames = new Set(existing.map((r) => (r.name || "").toLowerCase()));
-  const takenIds = new Set(existing.map((r) => r.id));
-  let nextId = existing.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0);
-
-  const merged = [...existing];
-  let imported = 0;
-  let duplicates = 0;
-  let invalid = 0;
-
-  for (const entry of entries) {
-    const nameValid = entry && typeof entry === "object" && typeof entry.name === "string" && entry.name.trim().length > 0;
-    const ingredientsValid = !entry?.ingredients || (
-      Array.isArray(entry.ingredients) &&
-      entry.ingredients.every((i) => i && typeof i === "object" && typeof i.name === "string")
-    );
-    if (!nameValid || !ingredientsValid) {
-      invalid++;
-      continue;
-    }
-    const nameLower = entry.name.toLowerCase();
-    if (existingNames.has(nameLower)) {
-      duplicates++;
-      continue;
-    }
-    let id = entry.id;
-    if (typeof id !== "number" || takenIds.has(id)) {
-      nextId += 1;
-      id = nextId;
-    }
-    takenIds.add(id);
-    existingNames.add(nameLower);
-    merged.push({ ...entry, id });
-    imported++;
-  }
-
-  return { merged, imported, duplicates, invalid };
-}
-
-export default function App() {
-  const { t, lang } = useLanguage();
-  const [tab, setTab] = useState("planner");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
-  const [recipeSearchOpen, setRecipeSearchOpen] = useState(false);
-  const [recipeSearchQuery, setRecipeSearchQuery] = useState("");
-  const [plannerSearchOpen, setPlannerSearchOpen] = useState(false);
-  const [plannerSearchQuery, setPlannerSearchQuery] = useState("");
-  const [shoppingSearchOpen, setShoppingSearchOpen] = useState(false);
-  const [shoppingSearchQuery, setShoppingSearchQuery] = useState("");
-  const [libraryViewRecipe, setLibraryViewRecipe] = useState(null);
-  const [libraryEditKey, setLibraryEditKey] = useState(0);
-  const [recipeEditListMode, setRecipeEditListMode] = useState(false);
-  const [recipeAddKey, setRecipeAddKey] = useState(0);
-  const [showArchived, setShowArchived] = useState(false);
-  const recipeImportInputRef = useRef(null);
-  const [shoppingPicnicSendKey, setShoppingPicnicSendKey] = useState(0);
-  const [shoppingPicnicCartKey, setShoppingPicnicCartKey] = useState(0);
-  const [shoppingListTab, setShoppingListTab] = useState("maaltijden");
-  const [staplesEditMode, setStaplesEditMode] = useState(false);
-  const [shoppingEditMode, setShoppingEditMode] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e) => setDarkMode(e.matches);
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
-  }, []);
-
-  const [visibleMembers, setVisibleMembers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(VISIBLE_MEMBERS_KEY)) ?? FAMILY; }
-    catch { return FAMILY; }
-  });
-  const toggleMember = (name) => {
-    setVisibleMembers(prev => {
-      if (prev.includes(name)) {
-        if (prev.length === 1) return prev;
-        const next = prev.filter(m => m !== name);
-        localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
-        return next;
-      }
-      const next = FAMILY.filter(m => prev.includes(m) || m === name);
-      localStorage.setItem(VISIBLE_MEMBERS_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
-
+function Root() {
+  const { t, lang, setLang } = useLang();
+  const [user, setUser] = useState(() => localStorage.getItem(AUTH_KEY));
+  const [tab, setTab] = useState("week");
   const [weekOffset, setWeekOffset] = useState(0);
-  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem(AUTH_USER_KEY));
-  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
-  const [loginError, setLoginError] = useState("");
-  const [loginBusy, setLoginBusy] = useState(false);
+  const [openRecipeId, setOpenRecipeId] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const toast = (m) => { setToastMsg(m); setTimeout(() => setToastMsg(""), 3200); };
 
-  // Picnic state — persisted in localStorage so it survives page refreshes
-  const [picnicUser, setPicnicUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(PICNIC_USER_KEY)) ?? null; }
-    catch { return null; }
-  });
-
-  const handlePicnicLogin = async (username, password) => {
-    const response = await fetch("/api/picnic-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data?.message || t("picnicLoginFailed"));
-    }
-    if (data.requiresTwoFactor) {
-      return { requiresTwoFactor: true };
-    }
-    const user = { name: data.name };
-    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
-    setPicnicUser(user);
-    return { requiresTwoFactor: false };
-  };
-
-  const handlePicnicVerify2FA = async (code) => {
-    const response = await fetch("/api/picnic-2fa", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data?.message || t("picnic2faFailed"));
-    }
-    const user = { name: data.name };
-    localStorage.setItem(PICNIC_USER_KEY, JSON.stringify(user));
-    setPicnicUser(user);
-  };
-
-  const handlePicnicLogout = async () => {
-    const response = await fetch("/api/picnic-login", { method: "DELETE" }).catch(() => null);
-    if (!response?.ok) return;
-    localStorage.removeItem(PICNIC_USER_KEY);
-    setPicnicUser(null);
-  };
-
-  const handlePicnicSessionExpired = () => {
-    localStorage.removeItem(PICNIC_USER_KEY);
-    setPicnicUser(null);
-  };
-
-  // Week plan state
-  const [selectedWeekPlan, setSelectedWeekPlan] = useState(() => emptyWeek());
-  const [weekPlanLoaded, setWeekPlanLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
-  const [weekPlanSaveFailed, setWeekPlanSaveFailed] = useState(false);
-  const selectedWeekPlanRef = useRef(selectedWeekPlan);
-  const weekPlanMutationQueueRef = useRef(Promise.resolve());
-  const weekPlanBaseRef = useRef(selectedWeekPlan);
-  const weekPlanEtagRef = useRef(null);
-  const weekPlanWriteSeqRef = useRef(0);
-  const activeWeekKey = getIsoWeekKey(weekOffset);
-  const activeWeekKeyRef = useRef(activeWeekKey);
-
-  // Recipe state
-  const [recipeList, setRecipeList] = useState([]);
-  const [recipesLoaded, setRecipesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
-  const [recipesSaveFailed, setRecipesSaveFailed] = useState(false);
-  const recipesEtagRef = useRef(null);
-
-  // Recipe detail view
-  const [recipeView, setRecipeView] = useState(null); // { recipeId, day, member }
-
-  // Staples state
-  const [staplesList, setStaplesList] = useState(defaultStaples);
-  const [staplesLoaded, setStaplesLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
-  const staplesEtagRef = useRef(null);
-
-  // Pantry overrides state — starts from the localStorage cache so the UI is
-  // instantly right; the blob load (below) then wins once it arrives. Not part
-  // of the loading gate: not critical path, same as staples.
-  const [overrides, setOverrides] = useState(() => new Set(loadOverridesFromStorage()));
-  const overridesEtagRef = useRef(null);
-  const [picnicAssociations, setPicnicAssociations] = useState({});
-  const [picnicAssociationsLoaded, setPicnicAssociationsLoaded] = useState(() => !localStorage.getItem(AUTH_USER_KEY));
-  const [picnicAssocSaveFailed, setPicnicAssocSaveFailed] = useState(false);
-  const picnicAssociationsRef = useRef({});
-  const picnicAssociationsEtagRef = useRef(null);
-
-  // ── Ref sync ──────────────────────────────────────────────────────────────
-  useEffect(() => { selectedWeekPlanRef.current = selectedWeekPlan; }, [selectedWeekPlan]);
-  useEffect(() => { activeWeekKeyRef.current = activeWeekKey; }, [activeWeekKey]);
-  useEffect(() => { picnicAssociationsRef.current = picnicAssociations; }, [picnicAssociations]);
-  useEffect(() => {
-    localStorage.setItem(LS_OVERRIDES_KEY, JSON.stringify([...overrides]));
-  }, [overrides]);
-
-  useEffect(() => {
-    if (!plannerSearchQuery) return;
-    const q = plannerSearchQuery.toLowerCase();
-    const months = t("months");
-    const idx = months.findIndex((m) => m.toLowerCase().startsWith(q));
-    if (idx === -1) return;
-    const now = new Date();
-    const target = new Date(now.getFullYear(), idx, 1);
-    if (target < now && idx < now.getMonth()) target.setFullYear(now.getFullYear() + 1);
-    const diffDays = Math.round((target - getMondayOfWeek(0)) / (1000 * 60 * 60 * 24));
-    const newOffset = Math.round(diffDays / 7);
-    setWeekOffset(newOffset);
-    setWeekPlanLoaded(false);
-  }, [plannerSearchQuery]);
-
-  // ── Week plan API ─────────────────────────────────────────────────────────
-  const fetchWeekPlan = async (weekKey) => {
-    const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, {
-      cache: "no-store",
-    });
-    if (response.status === 404) return { weekPlan: emptyWeek(), etag: null };
-    if (!response.ok) throw new Error("Failed to load week plan");
-    const data = await response.json();
-    return { weekPlan: data.weekPlan ?? emptyWeek(), etag: data.etag ?? null };
-  };
-
-  const persistWeekPlan = async (weekKey, nextWeekPlan, etag) => {
-    const response = await fetch(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weekPlan: nextWeekPlan, etag }),
-    });
-    if (response.status === 412) {
-      const data = await response.json().catch(() => ({}));
-      return { conflict: true, weekPlan: data.weekPlan ?? null, etag: data.etag ?? null };
-    }
-    if (!response.ok) throw new Error("Failed to save week plan");
-    const data = await response.json().catch(() => ({}));
-    return { conflict: false, etag: data.etag ?? null };
-  };
-
-  const updateSelectedWeekPlan = (day, member, recipeId) => {
-    if (!currentUser) return;
-    const weekKey = activeWeekKeyRef.current;
-    const applyUpdater = (base) => ({
-      ...base,
-      [day]: { ...(base[day] ?? {}), [member]: recipeId },
-    });
-    const seq = (weekPlanWriteSeqRef.current += 1);
-
-    const optimistic = applyUpdater(selectedWeekPlanRef.current ?? emptyWeek());
-    selectedWeekPlanRef.current = optimistic;
-    setSelectedWeekPlan(optimistic);
-
-    weekPlanMutationQueueRef.current = weekPlanMutationQueueRef.current
-      .catch(() => {})
-      .then(async () => {
-        if (activeWeekKeyRef.current !== weekKey) return;
-
-        let base = weekPlanBaseRef.current ?? emptyWeek();
-        let etag = weekPlanEtagRef.current;
-        let next = applyUpdater(base);
-
-        for (let attempt = 0; attempt < MAX_WEEK_PLAN_WRITE_RETRIES; attempt += 1) {
-          const result = await persistWeekPlan(weekKey, next, etag).catch(() => null);
-          if (!result) return;
-
-          if (!result.conflict) {
-            weekPlanBaseRef.current = next;
-            weekPlanEtagRef.current = result.etag;
-            if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
-              selectedWeekPlanRef.current = next;
-              setSelectedWeekPlan(next);
-              setWeekPlanSaveFailed(false);
-            }
-            return;
-          }
-
-          if (!result.etag) {
-            if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
-              setWeekPlanSaveFailed(true);
-            }
-            return;
-          }
-          base = result.weekPlan ?? base;
-          etag = result.etag;
-          next = applyUpdater(base);
-        }
-
-        if (seq === weekPlanWriteSeqRef.current && activeWeekKeyRef.current === weekKey) {
-          setWeekPlanSaveFailed(true);
-        }
-      });
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-    fetchWeekPlan(activeWeekKey)
-      .then(({ weekPlan, etag }) => {
-        weekPlanBaseRef.current = weekPlan;
-        weekPlanEtagRef.current = etag;
-        selectedWeekPlanRef.current = weekPlan;
-        setSelectedWeekPlan(weekPlan);
-        setWeekPlanSaveFailed(false);
-      })
-      .catch(() => {})
-      .finally(() => { setWeekPlanLoaded(true); });
-  }, [activeWeekKey, currentUser]);
-
-  const reloadWeekPlanFromServer = () => {
-    const weekKey = activeWeekKeyRef.current;
-    fetchWeekPlan(weekKey)
-      .then(({ weekPlan, etag }) => {
-        if (activeWeekKeyRef.current !== weekKey) return;
-        weekPlanBaseRef.current = weekPlan;
-        weekPlanEtagRef.current = etag;
-        selectedWeekPlanRef.current = weekPlan;
-        setSelectedWeekPlan(weekPlan);
-        setWeekPlanSaveFailed(false);
-      })
-      .catch(() => {});
-  };
-
-  // ── Recipe API ────────────────────────────────────────────────────────────
-  const saveRecipesToBlob = async (nextRecipes) => {
-    const MAX_RETRIES = 3;
-    let etag = recipesEtagRef.current;
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        const response = await fetch("/api/recipes", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ recipes: nextRecipes, etag }),
-        });
-        if (response.ok) {
-          const data = await response.json().catch(() => ({}));
-          recipesEtagRef.current = data.etag ?? null;
-          setRecipesSaveFailed(false);
-          return;
-        }
-        if (response.status !== 412) { setRecipesSaveFailed(true); return; }
-        const data = await response.json().catch(() => ({}));
-        if (!data.etag) { setRecipesSaveFailed(true); return; }
-        // Got 412 — update to latest etag and retry with our version
-        etag = data.etag;
-        recipesEtagRef.current = etag;
-      } catch {
-        setRecipesSaveFailed(true);
-        return;
-      }
-    }
-    setRecipesSaveFailed(true);
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-    fetch("/api/recipes", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) {
-          // No blob yet
-          recipesEtagRef.current = null;
-          setRecipeList([]);
-          return;
-        }
-        if (!response.ok) throw new Error("Failed to load recipes");
-        const data = await response.json();
-        recipesEtagRef.current = data.etag ?? null;
-        setRecipeList(data.recipes ?? []);
-      })
-      .catch(() => {
-        // Network error — fall back to empty list silently
-        setRecipeList([]);
-      })
-      .finally(() => { setRecipesLoaded(true); });
-  }, [currentUser]);
-
-  // ── Staples API ───────────────────────────────────────────────────────────
-  const saveStaplesToBlob = async (nextStaples) => {
-    try {
-      const response = await fetch("/api/staples", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staples: nextStaples, etag: staplesEtagRef.current }),
-      });
-      if (response.status === 412) {
-        const data = await response.json().catch(() => ({}));
-        if (data.staples && data.etag) {
-          staplesEtagRef.current = data.etag;
-          setStaplesList(data.staples);
-        }
-        return;
-      }
-      if (!response.ok) return;
-      const data = await response.json().catch(() => ({}));
-      staplesEtagRef.current = data.etag ?? null;
-    } catch {
-      // silent — staples are not critical path
-    }
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-    fetch("/api/staples", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) {
-          staplesEtagRef.current = null;
-          setStaplesList(defaultStaples);
-          saveStaplesToBlob(defaultStaples);
-          return;
-        }
-        if (!response.ok) throw new Error("Failed to load staples");
-        const data = await response.json();
-        staplesEtagRef.current = data.etag ?? null;
-        setStaplesList(data.staples ?? defaultStaples);
-      })
-      .catch(() => { setStaplesList(defaultStaples); })
-      .finally(() => { setStaplesLoaded(true); });
-  }, [currentUser]);
-
-  // ── Pantry overrides API ──────────────────────────────────────────────────
-  const saveOverridesToBlob = async (nextOverrides) => {
-    try {
-      const response = await fetch("/api/pantry-overrides", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ overrides: nextOverrides, etag: overridesEtagRef.current }),
-      });
-      if (response.status === 412) {
-        const data = await response.json().catch(() => ({}));
-        if (data.overrides && data.etag) {
-          overridesEtagRef.current = data.etag;
-          setOverrides(new Set(data.overrides));
-        }
-        return;
-      }
-      if (!response.ok) return;
-      const data = await response.json().catch(() => ({}));
-      overridesEtagRef.current = data.etag ?? null;
-    } catch {
-      // silent — pantry overrides are not critical path
-    }
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-    fetch("/api/pantry-overrides", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) {
-          overridesEtagRef.current = null;
-          // Organic migration: push this device's local overrides up so other
-          // devices pick them up on their next load.
-          saveOverridesToBlob(loadOverridesFromStorage());
-          return;
-        }
-        if (!response.ok) throw new Error("Failed to load pantry overrides");
-        const data = await response.json();
-        overridesEtagRef.current = data.etag ?? null;
-        setOverrides(new Set(data.overrides ?? []));
-      })
-      .catch(() => {
-        // silent — keep whatever localStorage gave us at mount
-      });
-  }, [currentUser]);
-
-  // ── Recipe mutations ──────────────────────────────────────────────────────
-  const deleteRecipe = (id) => {
-    const next = recipeList.filter((r) => r.id !== id);
-    setRecipeList(next);
-    saveRecipesToBlob(next);
-  };
-
-  const updateRecipe = (updated) => {
-    const next = recipeList.map((r) => r.id === updated.id ? updated : r);
-    setRecipeList(next);
-    saveRecipesToBlob(next);
-  };
-
-  const addRecipe = (newRecipe) => {
-    const next = [...recipeList, newRecipe];
-    setRecipeList(next);
-    saveRecipesToBlob(next);
-  };
-
-  const importRecipes = (raw) => {
-    const { merged, imported, duplicates, invalid } = mergeImportedRecipes(raw, recipeList);
-    if (imported > 0) {
-      setRecipeList(merged);
-      saveRecipesToBlob(merged);
-    }
-    // ponytail: alert() as a quick outcome message; upgrade to the app's toast/banner
-    // pattern (e.g. recipesSaveFailed-style banner) if imports become a frequent flow.
-    const parts = [`${imported} recepten geïmporteerd`];
-    if (duplicates > 0) parts.push(`${duplicates} overgeslagen (duplicaat)`);
-    if (invalid > 0) parts.push(`${invalid} ongeldig`);
-    alert(parts.join(", "));
-  };
-
-  const downloadRecipes = () => {
-    const blob = new Blob([JSON.stringify(recipeList, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `familie-eten-recepten-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleRecipeImportFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      const raw = JSON.parse(await file.text());
-      importRecipes(raw);
-    } catch {
-      alert("Kon bestand niet lezen — ongeldige JSON.");
-    }
-  };
-
-  const reloadRecipes = () => {
-    fetch("/api/recipes", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.recipes) {
-          recipesEtagRef.current = data.etag ?? null;
-          setRecipeList(data.recipes);
-        }
-        setRecipesSaveFailed(false);
-      })
-      .catch(() => setRecipesSaveFailed(false));
-  };
-
-  const updateStaples = (nextStaples) => {
-    setStaplesList(nextStaples);
-    saveStaplesToBlob(nextStaples);
-  };
-
-  const updateOverrides = (nextOverrides) => {
-    setOverrides(new Set(nextOverrides));
-    saveOverridesToBlob(nextOverrides);
-  };
-
+  const weekKey = getIsoWeekKey(weekOffset);
+  const [plan, assign, planLoaded] = useWeekPlan(user, weekKey, emptyWeek);
+  const [recipes, saveRecipes] = useBlob(user, "/api/recipes", "recipes", []);
+  const [staples, saveStaples] = useBlob(user, "/api/staples", "staples", []);
+  const [overridesArr, saveOverrides] = useBlob(user, "/api/pantry-overrides", "overrides", []);
+  const overrides = useMemo(() => new Set(overridesArr), [overridesArr]);
   const toggleOverride = (name) => {
     const key = name.toLowerCase();
     const next = new Set(overrides);
     next.has(key) ? next.delete(key) : next.add(key);
-    updateOverrides([...next]);
+    saveOverrides([...next]);
   };
 
-  const persistPicnicAssociations = async (nextAssociations, etag) => {
-    const response = await fetch("/api/picnic-associations", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ associations: nextAssociations, etag }),
-    });
-    if (response.status === 412) {
-      const data = await response.json().catch(() => ({}));
-      return { conflict: true, associations: data.associations ?? {}, etag: data.etag ?? null };
-    }
-    if (!response.ok) throw new Error("Failed to save Picnic associations");
-    const data = await response.json().catch(() => ({}));
-    return { conflict: false, etag: data.etag ?? null };
-  };
+  const [picnicUser, setPicnicUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(PICNIC_KEY)) ?? null; } catch { return null; }
+  });
+  const [associations, saveAssociations] = useBlob(user, "/api/picnic-associations", "associations", {});
+  const onPicnicExpired = () => { localStorage.removeItem(PICNIC_KEY); setPicnicUser(null); };
 
-  const updatePicnicAssociation = async (itemKey, association) => {
-    const next = { ...(picnicAssociationsRef.current ?? {}) };
-    if (association) next[itemKey] = association;
-    else delete next[itemKey];
+  if (!user) return <Login onDone={setUser} />;
 
-    const etag = picnicAssociationsEtagRef.current;
-    picnicAssociationsRef.current = next;
-    setPicnicAssociations(next);
-    try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  const tabs = [
+    { key: "week", label: t.tabWeek, icon: Icons.calendar },
+    { key: "shopping", label: t.tabShopping, icon: Icons.cart },
+    { key: "recipes", label: t.tabRecipes, icon: Icons.book },
+  ];
 
-    try {
-      const result = await persistPicnicAssociations(next, etag);
-      if (result.conflict) {
-        setPicnicAssocSaveFailed(true);
-        return;
-      }
-      picnicAssociationsEtagRef.current = result.etag;
-    } catch {
-      // Network error: local state is already updated; silent failure
-    }
-  };
-
-  const reloadPicnicAssociations = () => {
-    setPicnicAssocSaveFailed(false);
-    const loadLocalAssociations = () => {
-      try {
-        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
-        return stored ? JSON.parse(stored) : {};
-      } catch { return {}; }
-    };
-    fetch("/api/picnic-associations", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) {
-          picnicAssociationsEtagRef.current = null;
-          picnicAssociationsRef.current = {};
-          setPicnicAssociations({});
-          return;
-        }
-        if (!response.ok) throw new Error("Failed to reload");
-        const data = await response.json();
-        const associations = data.associations ?? {};
-        picnicAssociationsEtagRef.current = data.etag ?? null;
-        picnicAssociationsRef.current = associations;
-        setPicnicAssociations(associations);
-        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
-      })
-      .catch(() => {
-        const local = loadLocalAssociations();
-        picnicAssociationsRef.current = local;
-        setPicnicAssociations(local);
-      });
-  };
-
-  useEffect(() => {
-    if (!currentUser) return;
-    const loadLocalAssociations = () => {
-      try {
-        const stored = localStorage.getItem(PICNIC_ASSOC_KEY);
-        return stored ? JSON.parse(stored) : {};
-      } catch { return {}; }
-    };
-    fetch("/api/picnic-associations", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) {
-          picnicAssociationsEtagRef.current = null;
-          const local = loadLocalAssociations();
-          picnicAssociationsRef.current = local;
-          setPicnicAssociations(local);
-          return;
-        }
-        if (!response.ok) throw new Error("Failed to load Picnic associations");
-        const data = await response.json();
-        const associations = data.associations ?? {};
-        picnicAssociationsEtagRef.current = data.etag ?? null;
-        picnicAssociationsRef.current = associations;
-        setPicnicAssociations(associations);
-        try { localStorage.setItem(PICNIC_ASSOC_KEY, JSON.stringify(associations)); } catch { /* ignore */ }
-      })
-      .catch(() => {
-        const local = loadLocalAssociations();
-        picnicAssociationsRef.current = local;
-        setPicnicAssociations(local);
-      })
-      .finally(() => { setPicnicAssociationsLoaded(true); });
-  }, [currentUser]);
-
-  // ── Week plan helpers ─────────────────────────────────────────────────────
-  const selectedWeekPlanData = selectedWeekPlan ?? emptyWeek();
-
-  const assignMeal = (day, member, recipeId) => {
-    updateSelectedWeekPlan(day, member, recipeId);
-  };
-
-  const clearMeal = (day, member) => assignMeal(day, member, null);
-
-  const handleWeekChange = (nextWeekOffset) => {
-    if (nextWeekOffset === weekOffset) return;
-    setWeekPlanLoaded(false);
-    setWeekOffset(nextWeekOffset);
-  };
-
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    setLoginError("");
-    setLoginBusy(true);
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginForm),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setLoginError(data?.message || t("loginFailed"));
-        return;
-      }
-      setWeekPlanLoaded(false);
-      setRecipesLoaded(false);
-      setStaplesLoaded(false);
-      setPicnicAssociationsLoaded(false);
-      setCurrentUser(data.user);
-      localStorage.setItem(AUTH_USER_KEY, data.user);
-      setLoginForm({ username: "", password: "" });
-    } catch {
-      setLoginError(t("serverUnreachable"));
-    } finally {
-      setLoginBusy(false);
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setWeekPlanLoaded(true);
-    setSelectedWeekPlan(emptyWeek());
-    weekPlanBaseRef.current = emptyWeek();
-    weekPlanEtagRef.current = null;
-    setRecipesLoaded(true);
-    setRecipeList([]);
-    recipesEtagRef.current = null;
-    setRecipesSaveFailed(false);
-    setStaplesLoaded(true);
-    setStaplesList(defaultStaples);
-    staplesEtagRef.current = null;
-    overridesEtagRef.current = null;
-    setPicnicAssociationsLoaded(true);
-    setPicnicAssociations({});
-    setPicnicAssocSaveFailed(false);
-    picnicAssociationsRef.current = {};
-    picnicAssociationsEtagRef.current = null;
-    localStorage.removeItem(AUTH_USER_KEY);
-    localStorage.removeItem(PICNIC_ASSOC_KEY);
-    setLoginError("");
-  };
-
-  // ── Render ────────────────────────────────────────────────────────────────
-  if (!currentUser) {
-    return (
-      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={null} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
-        <button className="header-dots-btn header-dots-btn--login" onClick={() => setMenuOpen(true)}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-        </button>
-        <main className="login-card">
-          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
-          <p className="subtitle">{t("loginSubtitle")}</p>
-          <form className="login-form" onSubmit={handleLogin}>
-            <label htmlFor="username">{t("username")}</label>
-            <input
-              id="username"
-              value={loginForm.username}
-              onChange={(event) => setLoginForm((prev) => ({ ...prev, username: event.target.value }))}
-              autoComplete="username"
-              required
-            />
-            <label htmlFor="password">{t("password")}</label>
-            <input
-              id="password"
-              type="password"
-              value={loginForm.password}
-              onChange={(event) => setLoginForm((prev) => ({ ...prev, password: event.target.value }))}
-              autoComplete="current-password"
-              required
-            />
-            {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" disabled={loginBusy}>
-              {loginBusy ? t("loginBusy") : t("loginBtn")}
-            </button>
-          </form>
-        </main>
-      </div>
-    );
-  }
-
-  if (!weekPlanLoaded || !recipesLoaded || !staplesLoaded || !picnicAssociationsLoaded) {
-    return (
-      <div className={`app login-screen${darkMode ? " dark" : ""}`}>
-        <main className="login-card">
-          <img src="/logo.png" alt="Familie Eten" className="app-logo-img" />
-          <p className="subtitle">{t("loading")}</p>
-        </main>
-      </div>
-    );
-  }
+  const openRecipe = (id) => { setOpenRecipeId(id); setTab("recipes"); };
 
   return (
-    <div className={`app${darkMode ? " dark" : ""}`}>
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={handleLogout} currentUser={currentUser} picnicUser={picnicUser} onPicnicLogin={handlePicnicLogin} onPicnicVerify2FA={handlePicnicVerify2FA} onPicnicLogout={handlePicnicLogout} visibleMembers={visibleMembers} onToggleMember={toggleMember} tab={tab} onTabChange={setTab} />
-      <header className="app-header">
-        {tab === "recipes" && (libraryViewRecipe || showArchived) ? (
-          <button className="header-dots-btn header-dots-btn--back" onClick={() => { setLibraryViewRecipe(null); if (!libraryViewRecipe) setShowArchived(false); }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-        ) : (
-          <button className="header-dots-btn" onClick={() => setMenuOpen(true)}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-          </button>
-        )}
-        {tab === "recipes" && libraryViewRecipe && (
-          <span className="header-recipe-title">{getRecipeName(libraryViewRecipe, lang)}</span>
-        )}
-        {tab === "recipes" && !libraryViewRecipe && showArchived && (
-          <span className="header-recipe-title">Archief</span>
-        )}
-        {tab === "planner" && (
-          plannerSearchOpen ? (
-            <div className="header-search-bar">
-              <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input
-                className="header-search-input"
-                type="text"
-                placeholder={t("search")}
-                value={plannerSearchQuery}
-                onChange={(e) => setPlannerSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button className="header-search-clear" onClick={() => { setPlannerSearchOpen(false); setPlannerSearchQuery(""); }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-          ) : (
-            <div className="header-pill-group">
-              <button className="header-pill-btn" onClick={() => setPlannerSearchOpen(true)} title={t("search")}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </button>
-              <button className="header-pill-btn" onClick={() => handleWeekChange(0)} title={t("today")}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              </button>
-            </div>
-          )
-        )}
-        {tab === "shopping" && (
-          shoppingSearchOpen ? (
-            <div className="header-search-bar">
-              <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input
-                className="header-search-input"
-                type="text"
-                placeholder={t("search")}
-                value={shoppingSearchQuery}
-                onChange={(e) => setShoppingSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button className="header-search-clear" onClick={() => { setShoppingSearchOpen(false); setShoppingSearchQuery(""); }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-          ) : (
-          <div className="header-pill-group">
-            <button className="header-pill-btn" onClick={() => setShoppingSearchOpen(true)} title={t("search")}>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-            {shoppingListTab === "staples" ? (
-              <button className="header-pill-btn" onClick={() => setStaplesEditMode((e) => !e)} title={staplesEditMode ? t("doneEditing") : t("editMode")}>
-                {staplesEditMode
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                }
-              </button>
-            ) : (
-              <button className="header-pill-btn" onClick={() => setShoppingEditMode((e) => !e)} title={shoppingEditMode ? t("doneEditing") : t("editMode")}>
-                {shoppingEditMode
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                }
-              </button>
-            )}
-            <button className="header-pill-btn" onClick={() => setShoppingPicnicSendKey((k) => k + 1)} title={t("sendPicnic")}>
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fc7600" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><line x1="9" y1="13" x2="9" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="15" y1="13" x2="15" y2="17"/></svg>
-            </button>
-            {picnicUser && (
-              <button className="header-pill-btn" onClick={() => setShoppingPicnicCartKey((k) => k + 1)} title={t("picnicViewCart")}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-              </button>
-            )}
-          </div>
-          )
-        )}
-        {tab === "recipes" && (
-          libraryViewRecipe ? (
-            libraryViewRecipe.archived ? (
-              <div className="header-pill-group">
-                <button className="header-pill-btn" title="Herstellen" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: false }); setLibraryViewRecipe(null); }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.18"/></svg>
-                </button>
-                <button className="header-pill-btn" title="Verwijder" onClick={() => { if (window.confirm(`"${getRecipeName(libraryViewRecipe, lang)}" permanent verwijderen?`)) { deleteRecipe(libraryViewRecipe.id); setLibraryViewRecipe(null); } }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                </button>
-              </div>
-            ) : (
-              <div className="header-pill-group">
-                <button className="header-pill-btn" title="Bewerk recept" onClick={() => setLibraryEditKey((k) => k + 1)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                </button>
-                <button className="header-pill-btn" title="Archiveer" onClick={() => { updateRecipe({ ...libraryViewRecipe, archived: true }); setLibraryViewRecipe(null); }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-                </button>
-              </div>
-            )
-          ) : showArchived ? (
-            <div className="header-pill-group">
-              <button className="header-pill-btn" onClick={() => setRecipeEditListMode((e) => !e)} title={recipeEditListMode ? t("doneEditing") : t("editMode")}>
-                {recipeEditListMode
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                }
-              </button>
-            </div>
-          ) : (
-            recipeSearchOpen ? (
-              <div className="header-search-bar">
-                <svg className="header-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input
-                  className="header-search-input"
-                  type="text"
-                  placeholder={t("search")}
-                  value={recipeSearchQuery}
-                  onChange={(e) => setRecipeSearchQuery(e.target.value)}
-                  autoFocus
-                />
-                <button className="header-search-clear" onClick={() => { setRecipeSearchOpen(false); setRecipeSearchQuery(""); }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-            ) : (
-              <div className="header-pill-group">
-                <button className="header-pill-btn" onClick={() => setRecipeSearchOpen(true)} title={t("search")}>
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </button>
-                <button className="header-pill-btn" onClick={() => setRecipeAddKey((k) => k + 1)} title={t("addRecipe")}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </button>
-                <button className="header-pill-btn" onClick={() => setRecipeEditListMode((e) => !e)} title={recipeEditListMode ? t("doneEditing") : t("editMode")}>
-                  {recipeEditListMode
-                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  }
-                </button>
-                <button className="header-pill-btn" onClick={() => setShowArchived(true)} title="Archief">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-                </button>
-                <button className="header-pill-btn" onClick={downloadRecipes} title={t("downloadRecipes")}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>
-                <button className="header-pill-btn" onClick={() => recipeImportInputRef.current?.click()} title={t("uploadRecipes")}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                </button>
-                <input
-                  ref={recipeImportInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  style={{ display: "none" }}
-                  onChange={handleRecipeImportFile}
-                />
-              </div>
-            )
-          )
-        )}
-      </header>
-
-
-      <main className="app-main">
-        {tab === "planner" && (
-          <WeekPlanner
-            days={DAYS}
-            family={visibleMembers}
-            weekPlan={selectedWeekPlanData}
-            weekOffset={weekOffset}
-            onWeekChange={handleWeekChange}
-            recipes={recipeList}
-            onAssign={assignMeal}
-            onClear={clearMeal}
-            saveFailed={weekPlanSaveFailed}
-            onReloadWeekPlan={reloadWeekPlanFromServer}
-            onViewRecipe={(recipeId, day, member) => setRecipeView({ recipeId, day, member })}
-          />
-        )}
-        {tab === "recipes" && (
-          <RecipeLibrary
-            recipes={recipeList}
-            onAdd={addRecipe}
-            onDelete={deleteRecipe}
-            onUpdate={updateRecipe}
-            saveFailed={recipesSaveFailed}
-            onDismissSaveFailed={reloadRecipes}
-            searchQuery={recipeSearchQuery}
-            editListMode={recipeEditListMode}
-            showArchived={showArchived}
-            newRecipeKey={recipeAddKey}
-            viewRecipe={libraryViewRecipe}
-            onViewRecipe={setLibraryViewRecipe}
-            editViewedKey={libraryEditKey}
-            days={DAYS}
-            plannedDays={libraryViewRecipe ? DAYS.filter((day) => selectedWeekPlanData[day]?.[currentUser] === libraryViewRecipe.id) : []}
-            lockedDays={DAYS.filter((day) => visibleMembers.some((m) => m !== currentUser && selectedWeekPlanData[day]?.[m]))}
-            onPlanRecipe={(day, recipeId) => updateSelectedWeekPlan(day, currentUser, recipeId)}
-          />
-        )}
-        {tab === "shopping" && (
-          <ShoppingList
-            weekPlan={selectedWeekPlanData}
-            recipes={recipeList}
-            family={visibleMembers}
-            days={DAYS}
-            staples={staplesList}
-            onUpdateStaples={updateStaples}
-            overrides={overrides}
-            onToggleOverride={toggleOverride}
-            picnicUser={picnicUser}
-            picnicAssociations={picnicAssociations}
-            onUpdatePicnicAssociation={updatePicnicAssociation}
-            picnicAssocSaveFailed={picnicAssocSaveFailed}
-            onReloadPicnicAssociations={reloadPicnicAssociations}
-            onPicnicSessionExpired={handlePicnicSessionExpired}
-            picnicSendKey={shoppingPicnicSendKey}
-            picnicCartKey={shoppingPicnicCartKey}
-            activeListTab={shoppingListTab}
-            onActiveListTabChange={setShoppingListTab}
-            staplesEditMode={staplesEditMode}
-            onStaplesEditModeChange={setStaplesEditMode}
-            shoppingEditMode={shoppingEditMode}
-            onShoppingEditModeChange={setShoppingEditMode}
-            searchQuery={shoppingSearchQuery}
-          />
-        )}
-      </main>
-
-      <nav className="bottom-nav">
-        {[
-          {
-            key: "planner", label: t("navPlanner"),
-            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-          },
-          {
-            key: "shopping", label: t("navShopping"),
-            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
-          },
-          {
-            key: "recipes", label: t("navRecipes"),
-            icon: <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
-          },
-        ].map(({ key, label, icon }) => (
-          <button
-            key={key}
-            className={`bottom-nav-btn${tab === key ? " active" : ""}`}
-            onClick={() => setTab(key)}
-          >
-            <span className="bottom-nav-icon">{icon}</span>
-            <span className="bottom-nav-label">{label}</span>
-          </button>
-        ))}
-      </nav>
-
-      {recipeView && (
-        <RecipeDetail
-          recipe={recipeList.find((r) => r.id === recipeView.recipeId)}
-          day={recipeView.day}
-          member={recipeView.member}
-          onBack={() => setRecipeView(null)}
+    <div className="shell">
+      {tab === "week" && (
+        <WeekScreen
+          user={user} plan={plan} assign={assign} loaded={planLoaded}
+          weekOffset={weekOffset} setWeekOffset={setWeekOffset}
+          recipes={recipes} onOpenRecipe={openRecipe}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
+      {tab === "recipes" && (
+        <RecipesScreen
+          user={user} recipes={recipes} saveRecipes={saveRecipes}
+          plan={plan} assign={assign} weekOffset={weekOffset}
+          openRecipeId={openRecipeId} onOpenRecipe={setOpenRecipeId} onCloseRecipe={() => setOpenRecipeId(null)}
+          toast={toast}
+        />
+      )}
+      {tab === "shopping" && (
+        <ShoppingScreen
+          plan={plan} recipes={recipes}
+          staples={staples} saveStaples={saveStaples}
+          overrides={overrides} toggleOverride={toggleOverride}
+          picnicUser={picnicUser} associations={associations} saveAssociations={saveAssociations}
+          onPicnicExpired={onPicnicExpired}
+          toast={toast}
+        />
+      )}
+      <TabBar tabs={tabs} active={tab} onChange={(k) => { setTab(k); if (k !== "recipes") setOpenRecipeId(null); }} />
+
+      <SettingsSheet
+        open={settingsOpen} onClose={() => setSettingsOpen(false)}
+        user={user} lang={lang} setLang={setLang}
+        picnicUser={picnicUser} setPicnicUser={setPicnicUser}
+        onLogout={() => { localStorage.removeItem(AUTH_KEY); setUser(null); }}
+        toast={toast}
+      />
+      <Toast msg={toastMsg} />
     </div>
+  );
+}
+
+function Login({ onDone }) {
+  const { t } = useLang();
+  const [u, setU] = useState("");
+  const [p, setP] = useState("");
+  const [err, setErr] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setErr(false);
+    try { onDone(await login(u, p)); } catch { setErr(true); }
+    setBusy(false);
+  };
+  return (
+    <form className="login" onSubmit={submit}>
+      <img src="/logo.png" alt="familie eten" />
+      <h1 className="t-large" style={{ marginTop: 28 }}>{t.welcome}</h1>
+      <div className="t-sub muted" style={{ marginTop: 4 }}>{t.loginHint}</div>
+      <div className="field-lb">{t.username}</div>
+      <input className="field" autoCapitalize="none" value={u} onChange={(e) => setU(e.target.value)} />
+      <div className="field-lb">{t.password}</div>
+      <input className="field" type="password" value={p} onChange={(e) => setP(e.target.value)} />
+      {err && <div className="t-foot" style={{ color: "var(--red)", marginTop: 10 }}>{t.wrongLogin}</div>}
+      <button className="btn mt20" disabled={busy || !u || !p}>{t.login}</button>
+    </form>
+  );
+}
+
+function SettingsSheet({ open, onClose, user, lang, setLang, picnicUser, setPicnicUser, onLogout, toast }) {
+  const { t } = useLang();
+  const [form, setForm] = useState(null); // null | {u,p} | {code}
+  const [busy, setBusy] = useState(false);
+
+  const doPicnicLogin = async () => {
+    setBusy(true);
+    try {
+      const r = await picnicLogin(form.u, form.p);
+      if (r.requiresTwoFactor) setForm({ code: "" });
+      else { setPicnicUser(r.user ?? { name: form.u }); setForm(null); toast("✓ Picnic"); }
+    } catch { toast("⚠️ Picnic"); }
+    setBusy(false);
+  };
+  const doVerify = async () => {
+    setBusy(true);
+    try {
+      const r = await picnicVerify(form.code);
+      setPicnicUser(r.user ?? { name: "Picnic" }); setForm(null); toast("✓ Picnic");
+    } catch { toast("⚠️ 2FA"); }
+    setBusy(false);
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} title={t.settings}
+      rightAction={<button className="nav-txt-btn" style={{ padding: 0 }} onClick={onClose}>{t.done}</button>}>
+      <List header={t.language}>
+        <div className="row static">
+          <div className="chips" style={{ margin: 0, padding: 0 }}>
+            {[["nl", "Nederlands"], ["en", "English"], ["ru", "Русский"]].map(([code, label]) => (
+              <button key={code} className={`chip sm${lang === code ? " on" : ""}`} onClick={() => setLang(code)}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </List>
+
+      <List header={t.picnic}>
+        {picnicUser ? (
+          <>
+            <Row className="static" lead={<Icons.cart size={20} />} title={picnicUser.name ?? "Picnic"} sub={t.loggedInAs} />
+            <Row title={<span style={{ color: "var(--orange)" }}>{t.picnicLogout}</span>}
+              onClick={() => { localStorage.removeItem(PICNIC_KEY); setPicnicUser(null); }} />
+          </>
+        ) : form == null ? (
+          <Row title={<span style={{ color: "var(--orange)" }}>{t.picnicLogin}</span>} onClick={() => setForm({ u: "", p: "" })} />
+        ) : "code" in form ? (
+          <div className="row static" style={{ display: "block" }}>
+            <input className="field" inputMode="numeric" autoComplete="one-time-code" placeholder={t.picnicCode}
+              value={form.code} onChange={(e) => setForm({ code: e.target.value })} />
+            <button className="btn orange mt8" disabled={busy || !form.code} onClick={doVerify}>{t.login}</button>
+          </div>
+        ) : (
+          <div className="row static" style={{ display: "block" }}>
+            <input className="field" autoCapitalize="none" placeholder={t.picnicUser}
+              value={form.u} onChange={(e) => setForm({ ...form, u: e.target.value })} />
+            <input className="field mt8" type="password" placeholder={t.picnicPass}
+              value={form.p} onChange={(e) => setForm({ ...form, p: e.target.value })} />
+            <button className="btn orange mt8" disabled={busy || !form.u || !form.p} onClick={doPicnicLogin}>{t.picnicLogin}</button>
+          </div>
+        )}
+      </List>
+
+      <List header={`${t.loggedInAs} ${user}`}>
+        <Row title={<span style={{ color: "var(--red)" }}>{t.logout}</span>} onClick={onLogout} />
+      </List>
+      <div style={{ height: 16 }} />
+    </Sheet>
+  );
+}
+
+export default function App() {
+  return (
+    <LangProvider>
+      <Root />
+    </LangProvider>
   );
 }
