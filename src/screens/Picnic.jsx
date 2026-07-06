@@ -41,8 +41,12 @@ export function AssociationLine({ item, association, onOpenPicker }) {
     : t.picnicNone;
   const imageUrl = association?.imageId ? `${PICNIC_IMAGE_BASE}/${association.imageId}/small.png` : null;
 
+  // Swallow touch + click events so interacting with the Picnic controls
+  // never reaches the row's swipe handler (which would reveal "Kast").
+  const stop = (e) => e.stopPropagation();
+
   return (
-    <div className="assoc-block" onClick={(e) => e.stopPropagation()}>
+    <div className="assoc-block" onClick={stop} onTouchStart={stop} onTouchMove={stop} onTouchEnd={stop}>
       <div className="assoc-line">
         <span className="assoc-text">
           <b>{t.picnic}</b>: {summary}
