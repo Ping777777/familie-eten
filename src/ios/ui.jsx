@@ -142,8 +142,13 @@ export function SwipeRow({ actions = [], children }) {
     if (!start.current) return;
     const mx = e.touches[0].clientX - start.current.x;
     const my = e.touches[0].clientY - start.current.y;
-    if (Math.abs(my) > Math.abs(mx) && !drag) { start.current = null; return; }
-    setDrag(true);
+    if (!drag) {
+      // Ignore small jitter so tapping a button inside the row (e.g. a
+      // Picnic action) never engages the swipe reveal.
+      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      if (Math.abs(my) > Math.abs(mx)) { start.current = null; return; }
+      setDrag(true);
+    }
     setDx(Math.min(0, Math.max(-width - 30, start.current.dx + mx)));
   };
   const onTouchEnd = () => {
