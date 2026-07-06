@@ -147,6 +147,15 @@ export async function patchPicnicCart(productId, count) {
   if (!r.ok) throw new Error(String(r.status));
   return r.json().catch(() => ({}));
 }
+export async function picnicProductDetail(productId) {
+  const r = await fetch("/api/picnic-product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId }),
+  });
+  if (!r.ok) throw new Error(String(r.status));
+  return r.json().catch(() => ({}));
+}
 export async function sendToPicnicCart(productIds) {
   const r = await fetch("/api/picnic-cart", {
     method: "POST",

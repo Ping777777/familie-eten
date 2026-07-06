@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useLang, ingredientName, recipeName, trUnit } from "../lib/i18n";
 import { DAYS, FAMILY, aisleFor, AISLE_ORDER, pantryByDefault } from "../lib/food";
 import { sendToPicnicCart } from "../lib/api";
-import { Screen, NavBtn, List, Row, SwipeRow, Icons } from "../ios/ui";
-import { PicnicPicker, PicnicCart, assocFor } from "./Picnic";
+import { Screen, NavBtn, List, SwipeRow, Icons } from "../ios/ui";
+import { PicnicPicker, PicnicCart, AssociationLine, assocFor } from "./Picnic";
 
 const CHECKS_KEY = "familie-eten:checks";
 const EXTRAS_KEY = "familie-eten:extras";
@@ -28,6 +28,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
   const setExtras = (next) => { setExtrasState(next); localStorage.setItem(EXTRAS_KEY, JSON.stringify(next)); };
   const checked = checks.checked;
   const toggle = (id) => setChecks({ ...checks, checked: { ...checked, [id]: !checked[id] } });
+  const setMany = (ids, value) => setChecks({ ...checks, checked: { ...checked, ...Object.fromEntries(ids.map((id) => [id, value])) } });
 
   // aggregate this week's ingredients
   const items = useMemo(() => {
@@ -71,7 +72,10 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     return g;
   }, [buyItems, extras]);
 
-  const allRows = [...buyItems.map((i) => i.id), ...extras.map((e) => `x:${e.id}`), ...staples.map((s) => `s:${s.id}`)];
+  const buyIds = [...buyItems.map((i) => i.id), ...extras.map((e) => `x:${e.id}`)];
+  const stapleIds = staples.map((s) => `s:${s.id}`);
+  const pantryIds = pantryItems.map((i) => i.id);
+  const allRows = [...buyIds, ...stapleIds];
   const doneCount = allRows.filter((id) => checked[id]).length;
 
   const addExtra = () => {
@@ -84,7 +88,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
   const sendPicnic = async () => {
     const ids = [];
     let missing = 0;
-    allRows.filter((id) => checked[id] && !id.startsWith("x:")).forEach((id) => {
+    allRows.filter((id) => checked[id]).forEach((id) => {
       const key = id.startsWith("s:") ? staples.find((s) => `s:${s.id}` === id)?.name?.toLowerCase() : id;
       const a = key && assocFor(associations, key);
       if (a?.id) ids.push(String(a.id)); else missing++;
@@ -98,27 +102,34 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     setSending(false);
   };
 
-  const picnicTrail = (key, name) => {
-    if (!picnicUser || key.startsWith("x:")) return null;
-    const a = assocFor(associations, key);
+  // Select-all toggle for a set of row ids — mirrors the original app's
+  // per-section "select all" affordance.
+  const renderSelectAll = (ids) => {
+    if (!ids.length) return null;
+    const allOn = ids.every((id) => checked[id]);
     return (
-      <button className={`assoc-dot${a ? " on" : ""}`} aria-label="Picnic"
-        onClick={(e) => { e.stopPropagation(); setPicking({ key, name, searchName: key }); }}>
-        {a ? <Icons.check size={11} weight={3.2} /> : <Icons.plus size={11} weight={3} />}
+      <button className={`select-all-row${allOn ? " on" : ""}`} onClick={() => setMany(ids, !allOn)}>
+        <span className="circ">{allOn && <Icons.check size={12} weight={3.4} />}</span>
+        {allOn ? t.deselectAll : t.selectAll}
       </button>
     );
   };
 
   const itemRow = (i, actions) => (
     <SwipeRow key={i.id} actions={actions}>
-      <Row
-        lead={<span className={`check${checked[i.id] ? " on" : ""}`}>{checked[i.id] && <Icons.check size={13} weight={3} />}</span>}
-        title={i.name}
-        sub={[i.amounts?.join(" + "), [...(i.meals ?? [])].join(", ")].filter(Boolean).join(" — ")}
-        strike={!!checked[i.id]}
-        trail={picnicTrail(i.id, i.name)}
-        onClick={() => toggle(i.id)}
-      />
+      <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span className={`check${checked[i.id] ? " on" : ""}`}>{checked[i.id] && <Icons.check size={13} weight={3} />}</span>
+          <div className="row-body">
+            <div className={`row-title${checked[i.id] ? " struck" : ""}`}>{i.name}</div>
+            {i.meals?.size > 0 && <div className="row-sub">{[...i.meals].join(", ")}</div>}
+          </div>
+        </div>
+        {picnicUser && !i.extra && (
+          <AssociationLine item={{ ...i, key: i.id }} association={assocFor(associations, i.id)}
+            onOpenPicker={(it) => setPicking({ key: it.id, name: it.name, searchName: it.id })} />
+        )}
+      </div>
     </SwipeRow>
   );
 
@@ -152,6 +163,8 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
         </div>
       )}
 
+      {buyIds.length > 0 && <div className="mt14">{renderSelectAll(buyIds)}</div>}
+
       {AISLE_ORDER.filter((a) => groups[a]?.length).map((aisle) => (
         <List key={aisle} header={t[`aisle_${aisle}`]}>
           {groups[aisle].map((i) =>
@@ -163,48 +176,71 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
       ))}
 
       {staples.length > 0 && (
-        <List header={t.staples}
-          headerAction={<button onClick={() => setEditStaples(!editStaples)}>{editStaples ? t.done : t.edit}</button>}>
-          {staples.map((s) => {
-            const id = `s:${s.id}`;
-            return (
-              <SwipeRow key={id} actions={[{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => saveStaples(staples.filter((x) => x.id !== s.id)) }]}>
-                <Row
-                  lead={editStaples
-                    ? <span style={{ color: "var(--red)" }}><Icons.trash size={18} /></span>
-                    : <span className={`check${checked[id] ? " on" : ""}`}>{checked[id] && <Icons.check size={13} weight={3} />}</span>}
-                  title={s.name}
-                  sub={s.category}
-                  strike={!editStaples && !!checked[id]}
-                  trail={!editStaples ? picnicTrail(s.name.toLowerCase(), s.name) : null}
-                  onClick={() => (editStaples ? saveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}
-                />
-              </SwipeRow>
-            );
-          })}
-          {editStaples && (
-            <div className="row static">
-              <StapleAdder onAdd={(name) => {
-                const nid = staples.reduce((m, s) => Math.max(m, Number(s.id) || 0), 0) + 1;
-                saveStaples([...staples, { id: nid, category: "Overig", name }]);
-              }} placeholder={t.addItem} />
-            </div>
-          )}
-        </List>
+        <>
+          {renderSelectAll(stapleIds)}
+          <List header={t.staples}
+            headerAction={<button onClick={() => setEditStaples(!editStaples)}>{editStaples ? t.done : t.edit}</button>}>
+            {staples.map((s) => {
+              const id = `s:${s.id}`;
+              return (
+                <SwipeRow key={id} actions={[{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => saveStaples(staples.filter((x) => x.id !== s.id)) }]}>
+                  <div className="row" style={{ display: "block" }}
+                    onClick={() => (editStaples ? saveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span className="row-lead">
+                        {editStaples
+                          ? <span style={{ color: "var(--red)" }}><Icons.trash size={18} /></span>
+                          : <span className={`check${checked[id] ? " on" : ""}`}>{checked[id] && <Icons.check size={13} weight={3} />}</span>}
+                      </span>
+                      <div className="row-body">
+                        <div className={`row-title${!editStaples && checked[id] ? " struck" : ""}`}>{s.name}</div>
+                        <div className="row-sub">{s.category}</div>
+                      </div>
+                    </div>
+                    {picnicUser && !editStaples && (
+                      <AssociationLine item={{ id, name: s.name, key: s.name.toLowerCase(), amounts: [] }}
+                        association={assocFor(associations, s.name.toLowerCase())}
+                        onOpenPicker={(it) => setPicking({ key: it.key, name: it.name, searchName: it.key })} />
+                    )}
+                  </div>
+                </SwipeRow>
+              );
+            })}
+            {editStaples && (
+              <div className="row static">
+                <StapleAdder onAdd={(name) => {
+                  const nid = staples.reduce((m, s) => Math.max(m, Number(s.id) || 0), 0) + 1;
+                  saveStaples([...staples, { id: nid, category: "Overig", name }]);
+                }} placeholder={t.addItem} />
+              </div>
+            )}
+          </List>
+        </>
       )}
 
       {pantryItems.length > 0 && (
-        <List header={t.pantry} footer={`← ${t.toList}: swipe`}>
-          {pantryItems.map((i) => (
-            <SwipeRow key={i.id} actions={[{ label: t.toList, color: "teal", icon: Icons.cart, onClick: () => toggleOverride(i.id) }]}>
-              <Row className="static"
-                lead={<span style={{ color: "var(--label-3)" }}><Icons.house size={18} /></span>}
-                title={<span className="muted">{i.name}</span>}
-                sub={[...(i.meals ?? [])].join(", ")}
-              />
-            </SwipeRow>
-          ))}
-        </List>
+        <>
+          {renderSelectAll(pantryIds)}
+          <List header={t.pantry} footer={`← ${t.toList}: swipe`}>
+            {pantryItems.map((i) => (
+              <SwipeRow key={i.id} actions={[{ label: t.toList, color: "teal", icon: Icons.cart, onClick: () => toggleOverride(i.id) }]}>
+                <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span className={`check${checked[i.id] ? " on" : ""}`}>{checked[i.id] && <Icons.check size={13} weight={3} />}</span>
+                    <div className="row-body">
+                      <div className={`row-title${checked[i.id] ? " struck" : ""}`}><Icons.house size={13} weight={2.2} style={{ verticalAlign: -2, marginRight: 4, color: "var(--label-3)" }} />{i.name}</div>
+                      {i.meals?.size > 0 && <div className="row-sub">{[...i.meals].join(", ")}</div>}
+                    </div>
+                  </div>
+                  {picnicUser && (
+                    <AssociationLine item={{ ...i, key: i.id }} association={assocFor(associations, i.id)}
+                      onOpenPicker={(it) => setPicking({ key: it.id, name: it.name, searchName: it.id })} />
+                  )}
+                </div>
+              </SwipeRow>
+            ))}
+          </List>
+        </>
       )}
 
       {picnicUser && doneCount > 0 && (

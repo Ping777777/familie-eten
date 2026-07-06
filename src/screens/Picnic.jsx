@@ -1,8 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "../lib/i18n";
-import { picnicSearch, getPicnicCart, patchPicnicCart } from "../lib/api";
+import { picnicSearch, picnicProductDetail, getPicnicCart, patchPicnicCart } from "../lib/api";
 import { List, Row, Sheet, Icons } from "../ios/ui";
+
+const PICNIC_IMAGE_BASE = "https://storefront-prod.nl.picnicinternational.com/static/images";
 
 export const eur = (cents) => (typeof cents === "number" ? `€ ${(cents / 100).toFixed(2)}` : "");
 
@@ -14,6 +16,63 @@ export function assocFor(associations, key) {
     if (v?.ingredient?.toLowerCase() === lower) return v;
   }
   return associations[lower];
+}
+
+/* Always-visible line under a shopping item: which Picnic product it's
+   linked to (or none), the total amount needed, an inline "i" disclosure
+   with image/description, and a Kies/Wijzig button that opens the picker. */
+export function AssociationLine({ item, association, onOpenPicker }) {
+  const { t } = useLang();
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const fetchedFor = useRef(null);
+
+  useEffect(() => {
+    if (!infoOpen || !association?.id || fetchedFor.current === association.id) return;
+    let live = true;
+    picnicProductDetail(association.id)
+      .then((d) => { if (live) { setDetail(d); fetchedFor.current = association.id; } })
+      .catch(() => { if (live) { setDetail({}); fetchedFor.current = association.id; } });
+    return () => { live = false; };
+  }, [infoOpen, association?.id]);
+
+  const summary = association
+    ? [association.name, association.unitQuantity, eur(association.displayPrice)].filter(Boolean).join(" · ")
+    : t.picnicNone;
+  const imageUrl = association?.imageId ? `${PICNIC_IMAGE_BASE}/${association.imageId}/small.png` : null;
+
+  return (
+    <div className="assoc-block" onClick={(e) => e.stopPropagation()}>
+      <div className="assoc-line">
+        <span className="assoc-text">
+          <b>{t.picnic}</b>: {summary}
+          {item.amounts?.length > 0 && <> — <b>{t.picnicNeeded}</b>: {item.amounts.join(" + ")}</>}
+        </span>
+        {association && (
+          <button className="info-dot" aria-label="Info" onClick={() => setInfoOpen((o) => !o)}>i</button>
+        )}
+        <button className="assoc-choose" onClick={() => onOpenPicker(item)}>
+          {association ? t.picnicChange : t.picnicChoose}
+        </button>
+      </div>
+      {infoOpen && association && (
+        <div className="popover-card">
+          {imageUrl && <img src={imageUrl} alt={association.name} loading="lazy" />}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="popover-name">{association.name}</div>
+            {(association.unitQuantity || typeof association.displayPrice === "number") && (
+              <div className="popover-meta">{[association.unitQuantity, eur(association.displayPrice)].filter(Boolean).join(" · ")}</div>
+            )}
+            {detail === null
+              ? <div className="popover-desc muted">{t.loading}</div>
+              : detail.description
+                ? <div className="popover-desc">{detail.description}</div>
+                : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* Product picker: choose/change which Picnic product an item maps to. */

@@ -495,3 +495,47 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .stepper button:disabled { opacity: 0.4; }
 .stepper .n { min-width: 22px; text-align: center; font-weight: 600; font-size: 15px; color: var(--label); }
 .stepper .p { min-width: 58px; text-align: right; font-size: 14px; color: var(--label-2); }
+
+/* ── Picnic association line (under each shopping item) ── */
+.assoc-block { margin-top: 6px; }
+.assoc-line { display: flex; align-items: center; gap: 6px; }
+.assoc-text {
+  flex: 1; min-width: 0;
+  font-size: 13px; color: var(--label-2); line-height: 1.35;
+}
+.assoc-text b { color: var(--label); font-weight: 600; }
+.info-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.3px solid var(--orange); color: var(--orange);
+  font-size: 11px; font-style: italic; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.assoc-choose { font-size: 13px; font-weight: 600; color: var(--orange); flex-shrink: 0; white-space: nowrap; }
+.popover-card {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--fill-2);
+  display: flex; gap: 10px;
+}
+.popover-card img { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; flex-shrink: 0; }
+.popover-name { font-weight: 600; font-size: 14px; }
+.popover-meta { font-size: 12px; color: var(--label-2); margin-top: 2px; }
+.popover-desc { font-size: 13px; color: var(--label-2); margin-top: 6px; line-height: 1.4; }
+
+/* ── select-all row ── */
+.select-all-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-elev);
+  color: var(--tint);
+  font-size: 15px; font-weight: 600;
+}
+.select-all-row .circ {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--tint);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+}
+.select-all-row.on .circ { background: var(--tint); }
