@@ -199,7 +199,9 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
 .swipe-wrap + .swipe-wrap .row::before {
   content: "";
   position: absolute;
-  left: 16px; right: 0; top: 0;
+  /* iOS insets separators to the text start; rows with a leading
+     element set --sep to padding + lead width + gap. */
+  left: var(--sep, 16px); right: 0; top: 0;
   height: 0.5px;
   background: var(--separator);
 }
@@ -575,7 +577,7 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .select-all-row::after {
   content: "";
   position: absolute;
-  left: 16px; right: 0; bottom: 0;
+  left: var(--sep, 16px); right: 0; bottom: 0;
   height: 0.5px;
   background: var(--separator);
 }

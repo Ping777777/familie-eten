@@ -95,10 +95,10 @@ export function List({ header, footer, children, headerAction }) {
   );
 }
 
-export function Row({ title, sub, lead, trail, onClick, chevron, className = "", strike }) {
+export function Row({ title, sub, lead, trail, onClick, chevron, className = "", strike, sep }) {
   const Tag = onClick ? "button" : "div";
   return (
-    <Tag className={`row${onClick ? "" : " static"} ${className}`} onClick={onClick}>
+    <Tag className={`row${onClick ? "" : " static"} ${className}`} onClick={onClick} style={sep ? { "--sep": sep } : undefined}>
       {lead && <span className="row-lead">{lead}</span>}
       <span className="row-body">
         <div className={`row-title${strike ? " struck" : ""}`}>{title}</div>

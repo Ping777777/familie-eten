@@ -105,7 +105,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
             );
             if (info?.meal) {
               return (
-                <Row key={day} lead={lead}
+                <Row key={day} lead={lead} sep="68px"
                   title={recipeName(info.meal, lang) ?? info.meal.name}
                   sub={info.member}
                   onClick={() => (info.meal.id > 0 ? onOpenRecipe(info.meal.id, day) : setPicking({ day }))}
@@ -114,7 +114,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
               );
             }
             return (
-              <Row key={day} lead={lead}
+              <Row key={day} lead={lead} sep="68px"
                 title={<span className="muted3">{t.freeDay}</span>}
                 trail={<span className="plus-pill"><Icons.plus size={16} weight={2.4} /></span>}
                 onClick={() => setPicking({ day })}
