@@ -187,6 +187,10 @@ function SettingsSheet({ open, onClose, user, lang, setLang, picnicUser, setPicn
       <List header={`${t.loggedInAs} ${user}`}>
         <Row title={<span style={{ color: "var(--red)" }}>{t.logout}</span>} onClick={onLogout} />
       </List>
+      <div className="t-foot muted" style={{ textAlign: "center", padding: "18px 0 8px" }}>
+        {/* eslint-disable-next-line no-undef */}
+        Versie {typeof __BUILD_ID__ === "undefined" ? "dev" : __BUILD_ID__}
+      </div>
       <div style={{ height: 16 }} />
     </Sheet>
   );
