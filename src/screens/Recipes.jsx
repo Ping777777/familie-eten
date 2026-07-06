@@ -92,7 +92,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
                   ]
             }>
               <Row
-                lead={<span className="emoji-tile">{r.emoji}</span>}
+                lead={<span className="emoji-tile">{r.emoji}</span>} sep="68px"
                 title={recipeName(r, lang) ?? r.name}
                 sub={r.tags?.map((x) => trTag(x, lang)).slice(0, 3).join(" · ")}
                 trail={r.favourite ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
@@ -115,10 +115,8 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
           onClose={onCloseRecipe}
           onEdit={() => setEditing(detail)}
           onDelete={() => {
-            if (window.confirm(t.confirmDelete)) {
-              saveRecipes(recipes.filter((r) => r.id !== detail.id));
-              onCloseRecipe();
-            }
+            saveRecipes(recipes.filter((r) => r.id !== detail.id));
+            onCloseRecipe();
           }}
         />
       )}
@@ -161,6 +159,8 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
 function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit, onDelete }) {
   const { t, lang } = useLang();
   const [done, setDone] = useState({});
+  const [scrolled, setScrolled] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const steps = instructions(recipe, lang);
   const monday = getMondayOfWeek(weekOffset);
 
@@ -168,12 +168,12 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit,
   const lockedDays = DAYS.filter((d) => FAMILY.some((m) => m !== user && plan?.[d]?.[m]));
 
   return (
-    <div className="push">
-      <div className="nav scrolled">
+    <div className="push" onScroll={(e) => setScrolled(e.target.scrollTop > 110)}>
+      <div className={`nav${scrolled ? " scrolled" : ""}`}>
         <div className="nav-side">
           <NavBtn icon={Icons.chevL} onClick={onClose} label={t.close} />
         </div>
-        <span className="nav-inline" style={{ opacity: 1 }}>{recipeName(recipe, lang)}</span>
+        <span className="nav-inline">{recipeName(recipe, lang)}</span>
         <div className="nav-side right">
           <NavBtn icon={Icons.pencil} onClick={onEdit} label={t.edit} />
         </div>
@@ -183,8 +183,8 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit,
         <div style={{ fontSize: 64 }}>{recipe.emoji}</div>
         <h1 className="t-title2" style={{ marginTop: 6 }}>{recipeName(recipe, lang)}</h1>
         <div className="t-sub muted" style={{ marginTop: 4 }}>
-          {recipe.servings} {t.persons}
-          {recipe.tags?.length ? " · " + recipe.tags.map((x) => trTag(x, lang)).join(" · ") : ""}
+          {[recipe.servings && `${recipe.servings} ${t.persons}`, ...(recipe.tags ?? []).map((x) => trTag(x, lang))]
+            .filter(Boolean).join(" · ")}
         </div>
       </div>
 
@@ -209,7 +209,7 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit,
 
       <List header={t.ingredients}>
         {recipe.ingredients?.map((ing, i) => (
-          <Row key={i} className="static"
+          <Row key={i} className="static" sep="92px"
             lead={<span className="t-sub muted" style={{ width: 64, textAlign: "right" }}>{[ing.amount, trUnit(ing.unit, lang)].filter(Boolean).join(" ")}</span>}
             title={ingredientName(recipe, i, lang)} />
         ))}
@@ -229,7 +229,19 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit,
         </List>
       )}
 
-      <button className="btn destructive mt14" onClick={onDelete}>{t.deleteRecipe}</button>
+      {!confirmDel ? (
+        <List>
+          <button className="row" style={{ justifyContent: "center", color: "var(--red)", fontWeight: 600 }}
+            onClick={() => setConfirmDel(true)}>{t.deleteRecipe}</button>
+        </List>
+      ) : (
+        <List header={t.confirmDelete}>
+          <button className="row" style={{ justifyContent: "center", color: "var(--red)", fontWeight: 600 }}
+            onClick={onDelete}>{t.deleteRecipe}</button>
+          <button className="row" style={{ justifyContent: "center", color: "var(--tint)" }}
+            onClick={() => setConfirmDel(false)}>{t.cancel}</button>
+        </List>
+      )}
     </div>
   );
 }

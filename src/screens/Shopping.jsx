@@ -108,7 +108,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     if (!ids.length) return null;
     const allOn = ids.every((id) => checked[id]);
     return (
-      <button className={`select-all-row${allOn ? " on" : ""}`} onClick={() => setMany(ids, !allOn)}>
+      <button className={`select-all-row${allOn ? " on" : ""}`} style={{ "--sep": "52px" }} onClick={() => setMany(ids, !allOn)}>
         <span className="circ">{allOn && <Icons.check size={12} weight={3.4} />}</span>
         {allOn ? t.deselectAll : t.selectAll}
       </button>
@@ -117,7 +117,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
 
   const itemRow = (i, actions) => (
     <SwipeRow key={i.id} actions={actions}>
-      <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>
+      <div className="row" style={{ display: "block", "--sep": "52px" }} onClick={() => toggle(i.id)}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span className={`check${checked[i.id] ? " on" : ""}`}>{checked[i.id] && <Icons.check size={13} weight={3} />}</span>
           <div className="row-body">
@@ -184,7 +184,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
               const id = `s:${s.id}`;
               return (
                 <SwipeRow key={id} actions={[{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => saveStaples(staples.filter((x) => x.id !== s.id)) }]}>
-                  <div className="row" style={{ display: "block" }}
+                  <div className="row" style={{ display: "block", "--sep": "52px" }}
                     onClick={() => (editStaples ? saveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <span className="row-lead">
@@ -224,7 +224,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
             {renderSelectAll(pantryIds)}
             {pantryItems.map((i) => (
               <SwipeRow key={i.id} actions={[{ label: t.toList, color: "teal", icon: Icons.cart, onClick: () => toggleOverride(i.id) }]}>
-                <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>
+                <div className="row" style={{ display: "block", "--sep": "52px" }} onClick={() => toggle(i.id)}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span className={`check${checked[i.id] ? " on" : ""}`}>{checked[i.id] && <Icons.check size={13} weight={3} />}</span>
                     <div className="row-body">
