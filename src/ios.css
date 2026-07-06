@@ -57,12 +57,18 @@
 /* Dynamic Type: -apple-system-body makes the root font size track the
    device's Text Size setting on iOS; the whole type scale is in rem so it
    follows. Other browsers keep a fixed 17px-equivalent base (106.25% of 16). */
-html { height: 100%; height: 100dvh; font-size: 106.25%; }
+html { height: 100%; font-size: 106.25%; }
 @supports (font: -apple-system-body) {
   html { font: -apple-system-body; }
 }
 body {
-  height: 100%; height: 100dvh;
+  /* Lock the page like a native app: the canvas itself can never scroll or
+     pan (iOS pans/strands the layout viewport otherwise — keyboard opens,
+     rubber-banding — leaving fixed chrome like the tab bar mid-screen).
+     Only inner containers (.screen, sheets) scroll. */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
   background: var(--bg);
   color: var(--label);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -70,9 +76,9 @@ body {
   line-height: 1.29;
   -webkit-font-smoothing: antialiased;
   text-size-adjust: none;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
 }
-#root { height: 100%; height: 100dvh; }
+#root { height: 100%; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 /* Editable fields still need normal text selection. */
 input, textarea, select { font: inherit; color: inherit; -webkit-user-select: auto; user-select: auto; }
