@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLang, ingredientName, recipeName, trUnit } from "../lib/i18n";
+import { useLang, ingredientName, recipeName, trUnit, trCategory } from "../lib/i18n";
 import { DAYS, FAMILY, aisleFor, AISLE_ORDER, pantryByDefault } from "../lib/food";
 import { sendToPicnicCart } from "../lib/api";
 import { Screen, NavBtn, List, SwipeRow, Icons } from "../ios/ui";
@@ -195,7 +195,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
                       </span>
                       <div className="row-body">
                         <div className={`row-title${!editStaples && checked[id] ? " struck" : ""}`}>{s.name}</div>
-                        <div className="row-sub">{s.category}</div>
+                        <div className="row-sub">{trCategory(s.category, t)}</div>
                       </div>
                     </div>
                     {picnicUser && !editStaples && (
@@ -222,7 +222,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
       {pantryItems.length > 0 && (
         <>
           {renderSelectAll(pantryIds)}
-          <List header={t.pantry} footer={`← ${t.toList}: swipe`}>
+          <List header={t.pantry} footer={`← ${t.toList}: ${t.swipeHint}`}>
             {pantryItems.map((i) => (
               <SwipeRow key={i.id} actions={[{ label: t.toList, color: "teal", icon: Icons.cart, onClick: () => toggleOverride(i.id) }]}>
                 <div className="row" style={{ display: "block" }} onClick={() => toggle(i.id)}>

@@ -32,6 +32,9 @@ const S = {
     aisle_dairy: "Zuivel & Eieren", aisle_bakery: "Brood & Ontbijt",
     aisle_pantry: "Houdbaar", aisle_frozen: "Diepvries", aisle_other: "Overig",
     aisle_extra: "Zelf toegevoegd",
+    catOntbijt: "Ontbijt", catLunch: "Lunch", catTussendoor: "Tussendoor", catOverig: "Overig",
+    prevWeek: "Vorige week", nextWeek: "Volgende week",
+    swipeHint: "vegen",
     nothingToBuy: "Niets te kopen", planSomething: "Plan eerst wat maaltijden voor deze week.",
     sendPicnic: "Naar Picnic", sentPicnic: (n) => `${n} artikelen naar je Picnic-mandje`,
     noAssociation: (n) => `${n} zonder Picnic-koppeling overgeslagen`,
@@ -79,6 +82,9 @@ const S = {
     aisle_dairy: "Dairy & Eggs", aisle_bakery: "Bread & Breakfast",
     aisle_pantry: "Cupboard", aisle_frozen: "Frozen", aisle_other: "Other",
     aisle_extra: "Added by you",
+    catOntbijt: "Breakfast", catLunch: "Lunch", catTussendoor: "Snacks", catOverig: "Other",
+    prevWeek: "Previous week", nextWeek: "Next week",
+    swipeHint: "swipe",
     nothingToBuy: "Nothing to buy", planSomething: "Plan some meals for this week first.",
     sendPicnic: "Send to Picnic", sentPicnic: (n) => `${n} items sent to your Picnic basket`,
     noAssociation: (n) => `${n} without Picnic link skipped`,
@@ -126,6 +132,9 @@ const S = {
     aisle_dairy: "Молочное и яйца", aisle_bakery: "Хлеб и завтрак",
     aisle_pantry: "Бакалея", aisle_frozen: "Заморозка", aisle_other: "Прочее",
     aisle_extra: "Добавлено вручную",
+    catOntbijt: "Завтрак", catLunch: "Обед", catTussendoor: "Перекус", catOverig: "Прочее",
+    prevWeek: "Предыдущая неделя", nextWeek: "Следующая неделя",
+    swipeHint: "смахните",
     nothingToBuy: "Покупать нечего", planSomething: "Сначала запланируйте блюда на неделю.",
     sendPicnic: "В Picnic", sentPicnic: (n) => `${n} товаров в корзину Picnic`,
     noAssociation: (n) => `${n} без привязки Picnic пропущено`,
@@ -185,4 +194,8 @@ export function trTag(tag, lang) {
 export function trUnit(unit, lang) {
   if (!unit || lang === "nl") return unit;
   return UNIT_MAP[lang]?.[unit.toLowerCase()] ?? unit;
+}
+const CAT_KEY = { Ontbijt: "catOntbijt", Lunch: "catLunch", Tussendoor: "catTussendoor", Overig: "catOverig" };
+export function trCategory(category, t) {
+  return t[CAT_KEY[category]] ?? category;
 }

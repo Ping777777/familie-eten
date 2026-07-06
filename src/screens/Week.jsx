@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { getMondayOfWeek } from "../week";
-import { useLang, recipeName } from "../lib/i18n";
+import { useLang, recipeName, trTag } from "../lib/i18n";
 import { DAYS, MEMBER_COLORS, SPECIAL_MEALS, CATEGORIES, matchesCategory } from "../lib/food";
 import { Screen, NavBtn, List, Row, Sheet, Icons, Avatar } from "../ios/ui";
 
@@ -65,8 +65,8 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
         left={<NavBtn icon={Icons.gear} onClick={onOpenSettings} label={t.settings} />}
         right={
           <span className="week-nav-row">
-            <NavBtn icon={Icons.chevL} onClick={() => setWeekOffset(weekOffset - 1)} label="prev" />
-            <NavBtn icon={Icons.chevR} onClick={() => setWeekOffset(weekOffset + 1)} label="next" />
+            <NavBtn icon={Icons.chevL} onClick={() => setWeekOffset(weekOffset - 1)} label={t.prevWeek} />
+            <NavBtn icon={Icons.chevR} onClick={() => setWeekOffset(weekOffset + 1)} label={t.nextWeek} />
           </span>
         }
       >
@@ -126,7 +126,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
         {varietyNotes.length > 0 && (
           <div className="list-f warn mt8">
             <span>⚠️</span>
-            <span>{varietyNotes.map(([k, n]) => t.varietyNote(CATEGORIES.find((c) => c.key === k).emoji + " " + k, n)).join(" ")}</span>
+            <span>{varietyNotes.map(([k, n]) => t.varietyNote(CATEGORIES.find((c) => c.key === k).emoji + " " + trTag(k, lang), n)).join(" ")}</span>
           </div>
         )}
       </Screen>
@@ -178,7 +178,7 @@ function MealPicker({ open, day, onClose, recipes, specials, plan, onPick, onCle
         <button className={`chip sm${cat === null ? " on" : ""}`} onClick={() => setCat(null)}>{t.all}</button>
         {CATEGORIES.map((c) => (
           <button key={c.key} className={`chip sm${cat === c.key ? " on" : ""}`} onClick={() => setCat(cat === c.key ? null : c.key)}>
-            {c.emoji} {c.key}
+            {c.emoji} {trTag(c.key, lang)}
           </button>
         ))}
       </div>
@@ -192,7 +192,7 @@ function MealPicker({ open, day, onClose, recipes, specials, plan, onPick, onCle
             <Row key={r.id}
               lead={<span className="emoji-tile">{r.emoji}</span>}
               title={<span className={used ? "muted3" : ""}>{recipeName(r, lang) ?? r.name}</span>}
-              sub={used ? t.used : r.tags?.slice(0, 3).join(" · ")}
+              sub={used ? t.used : r.tags?.map((x) => trTag(x, lang)).slice(0, 3).join(" · ")}
               trail={r.favourite ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
               onClick={() => onPick(r.id)}
             />

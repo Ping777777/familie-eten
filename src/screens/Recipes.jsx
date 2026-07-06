@@ -64,7 +64,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
         left={showArchive && <NavBtn icon={Icons.chevL} onClick={() => setShowArchive(false)} label={t.close} />}
         right={
           <>
-            <NavBtn icon={Icons.dots} onClick={() => setMenuOpen(true)} label="menu" />
+            <NavBtn icon={Icons.dots} onClick={() => setMenuOpen(true)} label={t.recipes} />
             <NavBtn icon={Icons.plus} onClick={() => setEditing("new")} label={t.newRecipe} />
           </>
         }
