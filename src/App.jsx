@@ -107,7 +107,7 @@ function Login({ onDone }) {
   };
   return (
     <form className="login" onSubmit={submit}>
-      <img src="/apple-touch-icon.png?v=4" alt="" className="login-mark" />
+      <img src="/apple-touch-icon.png?v=5" alt="" className="login-mark" />
       <h1 className="t-large">{t.welcome}</h1>
       <div className="t-sub muted mt4">{t.loginHint}</div>
       <div className="login-card">
