@@ -161,8 +161,12 @@ export function SwipeRow({ actions = [], children }) {
     start.current = null;
   };
   const fire = (fn) => { setDx(0); fn(); };
+  // "engaged" = actively dragging or open; only then are the underlying
+  // action buttons visible at all (WhatsApp-style). Otherwise they could
+  // shine through the row's translucent pressed state on a plain tap.
+  const engaged = drag || dx !== 0;
   return (
-    <div className="swipe-wrap" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    <div className={`swipe-wrap${engaged ? " engaged" : ""}`} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <div className="swipe-actions" style={{ width }}>
         {actions.map((a, i) => (
           <button key={i} className={`swipe-act ${a.color}`} onClick={() => fire(a.onClick)}>

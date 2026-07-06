@@ -385,7 +385,13 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .swipe-actions {
   position: absolute; top: 0; bottom: 0; right: 0;
   display: flex;
+  /* Hidden unless the row is swiped open — never shines through the row's
+     translucent pressed state on a tap. Delay matches the slide-back
+     animation so the buttons don't vanish mid-close. */
+  visibility: hidden;
+  transition: visibility 0s linear 0.35s;
 }
+.swipe-wrap.engaged .swipe-actions { visibility: visible; transition-delay: 0s; }
 .swipe-act {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   width: 76px;
