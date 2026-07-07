@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { getMondayOfWeek } from "../week";
-import { useLang, recipeName, trTag } from "../lib/i18n";
+import { getMondayOfWeek, getIsoWeekInfo } from "../week";
+import { useLang, recipeName, trTag, weekTitle } from "../lib/i18n";
 import { DAYS, MEMBER_COLORS, SPECIAL_MEALS, CATEGORIES, matchesCategory } from "../lib/food";
 import { Screen, NavBtn, List, Row, Sheet, Icons, Avatar } from "../ios/ui";
 
@@ -60,7 +60,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
   return (
     <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Screen
-        title={t.thisWeek}
+        title={weekTitle(weekOffset, t, getIsoWeekInfo(weekOffset).week)}
         sub={rangeLabel}
         left={<NavBtn icon={Icons.gear} onClick={onOpenSettings} label={t.settings} />}
         right={

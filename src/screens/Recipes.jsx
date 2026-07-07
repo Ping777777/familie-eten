@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { useLang, recipeName, ingredientName, instructions, trTag, trUnit } from "../lib/i18n";
+import { useLang, recipeName, ingredientName, instructions, trTag, trUnit, weekTitle } from "../lib/i18n";
 import { DAYS, FAMILY, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLine } from "../lib/food";
-import { getMondayOfWeek } from "../week";
+import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
 
-export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign, weekOffset, openRecipeId, onOpenRecipe, onCloseRecipe, toast }) {
+export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, toast }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
@@ -112,6 +112,8 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
           plan={plan}
           assign={assign}
           weekOffset={weekOffset}
+          setWeekOffset={setWeekOffset}
+          planLoaded={planLoaded}
           onClose={onCloseRecipe}
           onEdit={() => setEditing(detail)}
           onDelete={() => {
@@ -156,7 +158,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
   );
 }
 
-function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit, onDelete }) {
+function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, planLoaded, onClose, onEdit, onDelete }) {
   const { t, lang } = useLang();
   const [done, setDone] = useState({});
   const [scrolled, setScrolled] = useState(false);
@@ -188,9 +190,16 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, onClose, onEdit,
         </div>
       </div>
 
-      <List header={t.planForDay}>
+      <List header={t.plan}
+        headerAction={
+          <span className="week-step">
+            <button onClick={() => setWeekOffset(weekOffset - 1)} aria-label={t.prevWeek}><Icons.chevL size={14} weight={2.6} /></button>
+            <span className="week-step-lb">{weekTitle(weekOffset, t, getIsoWeekInfo(weekOffset).week)}</span>
+            <button onClick={() => setWeekOffset(weekOffset + 1)} aria-label={t.nextWeek}><Icons.chevR size={14} weight={2.6} /></button>
+          </span>
+        }>
         <div className="row static" style={{ display: "block" }}>
-          <div className="day-chips">
+          <div className="day-chips" style={planLoaded ? undefined : { opacity: 0.4, pointerEvents: "none" }}>
             {DAYS.map((d, i) => {
               const date = new Date(monday); date.setDate(monday.getDate() + i);
               const on = plannedDays.includes(d);

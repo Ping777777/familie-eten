@@ -194,6 +194,15 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
 }
 .list-h button { color: var(--tint); font-size: 0.7647rem; text-transform: none; letter-spacing: 0; }
 .list-f { padding: 7px 16px 0; font-size: 0.7647rem; color: var(--label-2); line-height: 1.35; }
+/* compact ‹ label › week stepper in a section header (recipe plan bar) */
+.week-step { display: inline-flex; align-items: center; gap: 2px; }
+.week-step button {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 22px;
+  color: var(--tint);
+}
+.week-step button:active { opacity: 0.5; }
+.week-step-lb { color: var(--tint); font-weight: 600; text-transform: none; letter-spacing: 0; }
 .group {
   background: var(--bg-elev);
   border-radius: 12px;
