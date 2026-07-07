@@ -10,9 +10,14 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo.png?v=2" />
 
-    <!-- iOS PWA -->
+    <!-- iOS PWA. Status bar style deliberately "black", NOT "black-translucent":
+         translucent triggers an iOS compositing bug where the web view is sized
+         for below-the-bar geometry (screen minus status bar, e.g. 812 of 874)
+         but rendered top-anchored — shifting the app up 62px and leaving an
+         unpaintable black band at the bottom. With "black" the view sits below
+         the bar and reaches the physical bottom, so position and size agree. -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="FamEten" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=7" />
 
