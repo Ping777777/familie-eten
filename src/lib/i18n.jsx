@@ -17,7 +17,7 @@ const S = {
     recipes: "Recepten", favorites: "Favorieten", archive: "Archief",
     restore: "Zet terug", newRecipe: "Nieuw recept",
     ingredients: "Ingrediënten", steps: "Bereiding", persons: "pers.",
-    planForDay: "Plan deze week", dayTaken: "bezet",
+    plan: "Plan", dayTaken: "bezet",
     exportRecipes: "Exporteer recepten", importRecipes: "Importeer recepten",
     imported: (n) => `${n} recepten geïmporteerd`,
     importSkipped: (d, i) => `${d} dubbel, ${i} ongeldig`,
@@ -33,7 +33,7 @@ const S = {
     aisle_pantry: "Houdbaar", aisle_frozen: "Diepvries", aisle_other: "Overig",
     aisle_extra: "Zelf toegevoegd",
     catOntbijt: "Ontbijt", catLunch: "Lunch", catTussendoor: "Tussendoor", catOverig: "Overig",
-    prevWeek: "Vorige week", nextWeek: "Volgende week",
+    prevWeek: "Vorige week", nextWeek: "Volgende week", weekN: (n) => `Week ${n}`,
     swipeHint: "vegen",
     nothingToBuy: "Niets te kopen", planSomething: "Plan eerst wat maaltijden voor deze week.",
     sendPicnic: "Naar Picnic", sentPicnic: (n) => `${n} artikelen naar je Picnic-mandje`,
@@ -67,7 +67,7 @@ const S = {
     recipes: "Recipes", favorites: "Favorites", archive: "Archive",
     restore: "Restore", newRecipe: "New recipe",
     ingredients: "Ingredients", steps: "Method", persons: "servings",
-    planForDay: "Plan this week", dayTaken: "taken",
+    plan: "Plan", dayTaken: "taken",
     exportRecipes: "Export recipes", importRecipes: "Import recipes",
     imported: (n) => `${n} recipes imported`,
     importSkipped: (d, i) => `${d} duplicates, ${i} invalid`,
@@ -83,7 +83,7 @@ const S = {
     aisle_pantry: "Cupboard", aisle_frozen: "Frozen", aisle_other: "Other",
     aisle_extra: "Added by you",
     catOntbijt: "Breakfast", catLunch: "Lunch", catTussendoor: "Snacks", catOverig: "Other",
-    prevWeek: "Previous week", nextWeek: "Next week",
+    prevWeek: "Previous week", nextWeek: "Next week", weekN: (n) => `Week ${n}`,
     swipeHint: "swipe",
     nothingToBuy: "Nothing to buy", planSomething: "Plan some meals for this week first.",
     sendPicnic: "Send to Picnic", sentPicnic: (n) => `${n} items sent to your Picnic basket`,
@@ -117,7 +117,7 @@ const S = {
     recipes: "Рецепты", favorites: "Избранное", archive: "Архив",
     restore: "Вернуть", newRecipe: "Новый рецепт",
     ingredients: "Ингредиенты", steps: "Приготовление", persons: "порц.",
-    planForDay: "Запланировать", dayTaken: "занято",
+    plan: "План", dayTaken: "занято",
     exportRecipes: "Экспорт рецептов", importRecipes: "Импорт рецептов",
     imported: (n) => `Импортировано: ${n}`,
     importSkipped: (d, i) => `${d} дублей, ${i} неверных`,
@@ -133,7 +133,7 @@ const S = {
     aisle_pantry: "Бакалея", aisle_frozen: "Заморозка", aisle_other: "Прочее",
     aisle_extra: "Добавлено вручную",
     catOntbijt: "Завтрак", catLunch: "Обед", catTussendoor: "Перекус", catOverig: "Прочее",
-    prevWeek: "Предыдущая неделя", nextWeek: "Следующая неделя",
+    prevWeek: "Предыдущая неделя", nextWeek: "Следующая неделя", weekN: (n) => `Неделя ${n}`,
     swipeHint: "смахните",
     nothingToBuy: "Покупать нечего", planSomething: "Сначала запланируйте блюда на неделю.",
     sendPicnic: "В Picnic", sentPicnic: (n) => `${n} товаров в корзину Picnic`,
@@ -198,4 +198,13 @@ export function trUnit(unit, lang) {
 const CAT_KEY = { Ontbijt: "catOntbijt", Lunch: "catLunch", Tussendoor: "catTussendoor", Overig: "catOverig" };
 export function trCategory(category, t) {
   return t[CAT_KEY[category]] ?? category;
+}
+
+// Title for a week relative to today: "Deze week" / "Volgende week" /
+// "Vorige week", or "Week N" beyond that (issue #138).
+export function weekTitle(offset, t, isoWeek) {
+  if (offset === 0) return t.thisWeek;
+  if (offset === 1) return t.nextWeek;
+  if (offset === -1) return t.prevWeek;
+  return t.weekN(isoWeek);
 }

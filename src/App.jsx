@@ -82,7 +82,7 @@ function Root() {
       {tab === "recipes" && (
         <RecipesScreen
           user={user} recipes={recipes} saveRecipes={saveRecipes}
-          plan={plan} assign={assign} weekOffset={weekOffset}
+          plan={plan} assign={assign} weekOffset={weekOffset} setWeekOffset={setWeekOffset} planLoaded={planLoaded}
           openRecipeId={openRecipeId} onOpenRecipe={setOpenRecipeId} onCloseRecipe={() => setOpenRecipeId(null)}
           toast={toast}
         />
