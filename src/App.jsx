@@ -150,11 +150,13 @@ function ViewportDiag() {
       const sab = st.getPropertyValue("--diag-sab").trim() || "?";
       const sat = st.getPropertyValue("--diag-sat").trim() || "?";
       const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      const tb = document.querySelector(".tabbar")?.getBoundingClientRect();
+      const bodyR = document.body.getBoundingClientRect();
       setS([
         `scherm ${window.screen.width}×${window.screen.height}`,
         `venster ${window.innerWidth}×${window.innerHeight}`,
-        `vv ${Math.round(window.visualViewport?.width ?? 0)}×${Math.round(window.visualViewport?.height ?? 0)}`,
-        `body ${Math.round(document.body.getBoundingClientRect().height)}`,
+        `body top ${Math.round(bodyR.top)} h ${Math.round(bodyR.height)}`,
+        tb ? `pill ${Math.round(tb.top)}→${Math.round(tb.bottom)} (scherm ${window.screen.height})` : "pill ?",
         `sa ${sat}/${sab}`,
         standalone ? "standalone" : "browser",
       ].join(" · "));
