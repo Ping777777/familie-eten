@@ -4,7 +4,7 @@ import { DAYS, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLin
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
 
-export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, toast }) {
+export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, onOpenSettings, toast }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
@@ -61,7 +61,9 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
       <Screen
         title={showArchive ? t.archive : t.recipes}
         sub={`${(showArchive ? archived : active).length} ${t.recipes.toLowerCase()}`}
-        left={showArchive && <NavBtn icon={Icons.chevL} onClick={() => setShowArchive(false)} label={t.close} />}
+        left={showArchive
+          ? <NavBtn icon={Icons.chevL} onClick={() => setShowArchive(false)} label={t.close} />
+          : <NavBtn icon={Icons.gear} onClick={onOpenSettings} label={t.settings} />}
         right={
           <>
             <NavBtn icon={Icons.dots} onClick={() => setMenuOpen(true)} label={t.recipes} />

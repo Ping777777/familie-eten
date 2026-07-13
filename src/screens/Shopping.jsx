@@ -12,7 +12,7 @@ const loadJson = (key, fallback) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 };
 
-export default function ShoppingScreen({ plan, recipes, staples, saveStaples, overrides, toggleOverride, picnicUser, associations, saveAssociations, onPicnicExpired, toast }) {
+export default function ShoppingScreen({ plan, recipes, staples, saveStaples, overrides, toggleOverride, picnicUser, associations, saveAssociations, onPicnicExpired, onOpenSettings, toast }) {
   const { t, lang } = useLang();
   const [checks, setChecksState] = useState(() => loadJson(CHECKS_KEY, { checked: {}, dismissed: {} }));
   // ponytail: ad-hoc items are device-local for now; upgrade path is a small
@@ -140,6 +140,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     <Screen
       title={t.shopping}
       sub={allRows.length ? `${doneCount}/${allRows.length} ${t.checkedOff}` : null}
+      left={<NavBtn icon={Icons.gear} onClick={onOpenSettings} label={t.settings} />}
       right={picnicUser && <NavBtn icon={Icons.cart} onClick={() => setCartOpen(true)} label={t.picnicCart} />}
     >
       <div className="search" style={{ marginTop: 8 }}>
