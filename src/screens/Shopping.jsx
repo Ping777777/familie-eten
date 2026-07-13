@@ -140,14 +140,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     <Screen
       title={t.shopping}
       sub={allRows.length ? `${doneCount}/${allRows.length} ${t.checkedOff}` : null}
-      right={
-        <>
-          {doneCount > 0 && (
-            <button className="nav-txt-btn" onClick={() => setChecks({ ...checks, checked: {} })}>{t.clearChecked}</button>
-          )}
-          {picnicUser && <NavBtn icon={Icons.cart} onClick={() => setCartOpen(true)} label={t.picnicCart} />}
-        </>
-      }
+      right={picnicUser && <NavBtn icon={Icons.cart} onClick={() => setCartOpen(true)} label={t.picnicCart} />}
     >
       <div className="search" style={{ marginTop: 8 }}>
         <Icons.plus size={17} weight={2.2} />
@@ -250,15 +243,9 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
       )}
       <PicnicCart open={cartOpen} onClose={() => setCartOpen(false)}
         associations={associations} mealsByIngredient={mealsByIngredient}
+        doneCount={doneCount} sending={sending} onSend={sendPicnic}
         onExpired={onPicnicExpired} toast={toast} />
     </Screen>
-
-    {picnicUser && doneCount > 0 && (
-      <button className="picnic-fab" disabled={sending} onClick={sendPicnic} aria-label={`${t.sendPicnic} (${doneCount})`}>
-        <Icons.cart size={24} weight={2.2} />
-        <span className="picnic-fab-badge">{doneCount}</span>
-      </button>
-    )}
     </>
   );
 }

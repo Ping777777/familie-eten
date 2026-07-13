@@ -152,22 +152,28 @@ export function PicnicPicker({ item, associations, saveAssociations, onClose, on
 }
 
 /* Cart: live Picnic basket with quantity steppers and linked meals. */
-export function PicnicCart({ open, onClose, associations, mealsByIngredient, onExpired, toast }) {
+export function PicnicCart({ open, onClose, associations, mealsByIngredient, doneCount = 0, sending = false, onSend, onExpired, toast }) {
   const { t } = useLang();
   const [cart, setCart] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
+  const loadCart = () => {
+    setCart(null);
+    return getPicnicCart()
+      .then(setCart)
+      .catch((e) => { if (e.auth) { onExpired(); onClose(); } toast("⚠️ Picnic"); });
+  };
+
   useEffect(() => {
     if (!open) return;
     let live = true;
-    const id = setTimeout(() => {
-      setCart(null);
-      getPicnicCart()
-        .then((c) => live && setCart(c))
-        .catch((e) => { if (!live) return; if (e.auth) { onExpired(); onClose(); } toast("⚠️ Picnic"); });
-    }, 0);
+    const id = setTimeout(() => { if (live) loadCart(); }, 0);
     return () => { live = false; clearTimeout(id); };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Send the checked shopping items to the basket, then refresh so the new
+  // items show up in this same sheet.
+  const doSend = async () => { await onSend?.(); await loadCart(); };
 
   if (!open) return null;
   const items = cart?.items ?? [];
@@ -202,6 +208,9 @@ export function PicnicCart({ open, onClose, associations, mealsByIngredient, onE
 
   return (
     <Sheet open onClose={onClose} title={t.picnicCart}
+      leftAction={doneCount > 0 && (
+        <button className="nav-txt-btn" style={{ color: "var(--orange)", padding: 0, fontWeight: 600 }} disabled={sending} onClick={doSend}>{t.sendPicnic} ({doneCount})</button>
+      )}
       rightAction={<button className="nav-txt-btn" style={{ padding: 0 }} onClick={onClose}>{t.done}</button>}>
       {!cart && <div className="spin" />}
       {cart && (
