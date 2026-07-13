@@ -163,7 +163,9 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
   left: 0; right: 0; bottom: 0;
   z-index: 20;
   display: flex;
-  padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  /* Inga: tabs must sit 20px lower — eat into the home-indicator inset
+     (34px on device) instead of stacking padding on top of it. */
+  padding: 8px 8px max(calc(env(safe-area-inset-bottom, 0px) - 14px), 6px);
   background: var(--glass);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
