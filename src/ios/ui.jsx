@@ -111,7 +111,18 @@ export function Row({ title, sub, lead, trail, onClick, chevron, className = "",
 }
 
 /* ── bottom sheet ── */
+// Ref-count open sheets so the underlying .screen is scroll-locked while any
+// sheet is up. Without this, a sheet whose body doesn't overflow lets iOS
+// route the drag to the shopping list behind it (overscroll-behavior:contain
+// only helps once the body itself is scrollable). Locking the background
+// scroller is the native modal behaviour and is robust regardless.
+let openSheets = 0;
 export function Sheet({ open, onClose, title, leftAction, rightAction, children }) {
+  useEffect(() => {
+    if (!open) return;
+    if (openSheets++ === 0) document.body.classList.add("sheet-open");
+    return () => { if (--openSheets === 0) document.body.classList.remove("sheet-open"); };
+  }, [open]);
   if (!open) return null;
   return (
     <>
