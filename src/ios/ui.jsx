@@ -136,9 +136,12 @@ export function SwipeRow({ actions = [], children }) {
   const start = useRef(null);
   const width = actions.length * 76;
   const onTouchStart = (e) => {
-    // Don't track swipes that start on a button or other control inside the
-    // row (e.g. a Picnic action) — those are meant to be tapped, not dragged.
-    if (e.target.closest("button, a, input, textarea, select")) { start.current = null; return; }
+    // Don't track swipes that start on a control nested inside the row
+    // (e.g. a Picnic action) — those are meant to be tapped, not dragged.
+    // The row itself may BE a button (Row with onClick): that one must
+    // stay swipeable.
+    const ctrl = e.target.closest("button, a, input, textarea, select");
+    if (ctrl && !ctrl.classList.contains("row")) { start.current = null; return; }
     start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx };
   };
   const onTouchMove = (e) => {

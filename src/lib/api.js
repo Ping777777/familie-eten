@@ -76,7 +76,9 @@ export function useWeekPlan(user, weekKey, emptyWeek) {
   }, [user, weekKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const assign = useCallback((day, member, recipeId) => {
     setPlan((prev) => {
-      const next = { ...prev, [day]: { ...(prev[day] ?? {}), [member]: recipeId } };
+      // One meal per day: assigning replaces whatever anyone had planned,
+      // so swapping via the picker never leaves a stale entry behind.
+      const next = { ...prev, [day]: { [member]: recipeId } };
       putWithEtag(`/api/week-plan?weekKey=${encodeURIComponent(weekKey)}`, "weekPlan", next, etag, setPlan);
       return next;
     });
