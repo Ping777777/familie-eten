@@ -10,6 +10,7 @@ export const Icons = {
   calendar: I(<><rect x="3" y="5" width="18" height="17" rx="4" /><path d="M3 10h18M8 3v4M16 3v4" /></>),
   book: I(<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 0 4 5.5v14z" /><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" /></>),
   cart: I(<><circle cx="9" cy="20.5" r="1.3" fill="currentColor" stroke="none" /><circle cx="17.5" cy="20.5" r="1.3" fill="currentColor" stroke="none" /><path d="M2.5 3.5h2.6l2.5 12.2a1.6 1.6 0 0 0 1.6 1.3h8.3a1.6 1.6 0 0 0 1.6-1.3l1.7-8.2H6" /></>),
+  basket: I(<><path d="M4 10h16l-1.4 9a2 2 0 0 1-2 1.7H7.4a2 2 0 0 1-2-1.7L4 10Z" /><path d="m8 10 4-5 4 5" /><path d="M4 14h16" /><path d="M10 14v3M14 14v3" /></>),
   plus: I(<path d="M12 5v14M5 12h14" />),
   chevL: I(<path d="M14.5 5.5 8 12l6.5 6.5" />),
   chevR: I(<path d="M9.5 5.5 16 12l-6.5 6.5" />),

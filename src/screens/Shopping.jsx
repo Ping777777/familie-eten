@@ -256,8 +256,8 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
     </Screen>
 
     {picnicUser && doneCount > 0 && (
-      <button className="action-bar" disabled={sending} onClick={sendPicnic}>
-        <Icons.cart size={18} weight={2.2} /> {t.sendPicnic} ({doneCount})
+      <button className="action-bar" disabled={sending} onClick={sendPicnic} aria-label={`${t.sendPicnic} (${doneCount})`}>
+        <Icons.basket size={26} weight={2.2} />
       </button>
     )}
     </>

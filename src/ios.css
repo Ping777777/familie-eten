@@ -617,18 +617,19 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 }
 .select-all-row.on .circ { background: var(--tint); }
 
-/* ── floating action bar (pinned above tab bar) ── */
+/* ── floating send-to-picnic button (corner, above tab bar) ── */
 .action-bar {
   position: fixed;
-  left: 16px; right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+  width: 56px;
+  height: 56px;
   z-index: 25;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  height: 50px;
-  border-radius: 16px;
-  background: var(--orange);
-  color: #fff;
-  font-size: 1rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--orange);
+  border: 1px solid var(--separator);
   box-shadow: var(--shadow);
   animation: barup 0.35s cubic-bezier(0.32, 1.6, 0.55, 1);
   transition: transform 0.2s, opacity 0.15s;
