@@ -395,7 +395,16 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .sheet-head .t-head { flex: 1; text-align: center; }
 .sheet-head .side { min-width: 60px; }
 .sheet-head .side.r { text-align: right; }
-.sheet-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 20px; }
+.sheet-body {
+  /* flex:1 + min-height:0 make THIS the scroll region (not the whole
+     sheet); overscroll-behavior:contain stops the scroll from chaining
+     to the shopping list behind the sheet. */
+  flex: 1; min-height: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 0 16px 20px;
+}
 
 /* full screen push (recipe detail) */
 .push {
