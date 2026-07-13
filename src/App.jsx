@@ -84,6 +84,7 @@ function Root() {
           user={user} recipes={recipes} saveRecipes={saveRecipes}
           plan={plan} assign={assign} weekOffset={weekOffset} setWeekOffset={setWeekOffset} planLoaded={planLoaded}
           openRecipeId={openRecipeId} onOpenRecipe={setOpenRecipeId} onCloseRecipe={() => setOpenRecipeId(null)}
+          onOpenSettings={() => setSettingsOpen(true)}
           toast={toast}
         />
       )}
@@ -94,6 +95,7 @@ function Root() {
           overrides={overrides} toggleOverride={toggleOverride}
           picnicUser={picnicUser} associations={associations} saveAssociations={saveAssociations}
           onPicnicExpired={onPicnicExpired}
+          onOpenSettings={() => setSettingsOpen(true)}
           toast={toast}
         />
       )}
