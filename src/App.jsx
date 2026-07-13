@@ -142,34 +142,6 @@ function Login({ onDone }) {
   );
 }
 
-// Temporary geometry readout to debug the stranded/short-viewport issue on
-// Inga's device — shows what iOS actually reports. Remove when solved.
-function ViewportDiag() {
-  const [s, setS] = useState("");
-  useEffect(() => {
-    const read = () => {
-      const st = getComputedStyle(document.documentElement);
-      const sab = st.getPropertyValue("--diag-sab").trim() || "?";
-      const sat = st.getPropertyValue("--diag-sat").trim() || "?";
-      const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-      const tb = document.querySelector(".tabbar")?.getBoundingClientRect();
-      const bodyR = document.body.getBoundingClientRect();
-      setS([
-        `scherm ${window.screen.width}×${window.screen.height}`,
-        `venster ${window.innerWidth}×${window.innerHeight}`,
-        `body top ${Math.round(bodyR.top)} h ${Math.round(bodyR.height)}`,
-        tb ? `pill ${Math.round(tb.top)}→${Math.round(tb.bottom)} (scherm ${window.screen.height})` : "pill ?",
-        `sa ${sat}/${sab}`,
-        standalone ? "standalone" : "browser",
-      ].join(" · "));
-    };
-    read();
-    window.visualViewport?.addEventListener("resize", read);
-    return () => window.visualViewport?.removeEventListener("resize", read);
-  }, []);
-  return <div className="t-cap muted3" style={{ textAlign: "center", padding: "0 16px 6px", lineHeight: 1.5 }}>{s}</div>;
-}
-
 function SettingsSheet({ open, onClose, user, lang, setLang, picnicUser, setPicnicUser, onLogout, toast }) {
   const { t } = useLang();
   const [form, setForm] = useState(null); // null | {u,p} | {code}
@@ -239,7 +211,6 @@ function SettingsSheet({ open, onClose, user, lang, setLang, picnicUser, setPicn
         {/* eslint-disable-next-line no-undef */}
         Versie {typeof __BUILD_ID__ === "undefined" ? "dev" : __BUILD_ID__}
       </div>
-      <ViewportDiag />
       <div style={{ height: 16 }} />
     </Sheet>
   );

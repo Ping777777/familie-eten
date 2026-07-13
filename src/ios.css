@@ -25,9 +25,6 @@
   --sheet-bg: rgba(248, 248, 250, 0.92);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --kb: env(safe-area-inset-bottom, 0px);
-  /* readable copies for the ViewportDiag debug readout */
-  --diag-sat: env(safe-area-inset-top, 0px);
-  --diag-sab: env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -92,12 +89,10 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
 /* ── type scale ── */
 .t-large { font-size: 2rem; font-weight: 700; letter-spacing: 0.37px; line-height: 1.2; }
 .t-title2 { font-size: 1.2941rem; font-weight: 700; letter-spacing: 0.35px; }
-.t-title3 { font-size: 1.1765rem; font-weight: 600; letter-spacing: 0.38px; }
 .t-head { font-size: 1rem; font-weight: 600; letter-spacing: -0.41px; }
 .t-body { font-size: 1rem; letter-spacing: -0.41px; }
 .t-sub { font-size: 0.8824rem; letter-spacing: -0.24px; }
 .t-foot { font-size: 0.7647rem; letter-spacing: -0.08px; }
-.t-cap { font-size: 0.7059rem; }
 .muted { color: var(--label-2); }
 .muted3 { color: var(--label-3); }
 
@@ -308,7 +303,6 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
 .btn.gray { background: var(--fill); color: var(--tint); }
 .btn.orange { background: var(--orange); }
 .btn.plain { background: none; color: var(--tint); min-height: 44px; }
-.btn.destructive { background: none; color: var(--red); min-height: 44px; }
 
 /* ── chips ── */
 .chips {
@@ -553,8 +547,7 @@ body.sheet-open .screen { overflow: hidden; }
 @keyframes toastup { from { transform: translate(-50%, 16px); opacity: 0; } }
 .empty { text-align: center; padding: 48px 20px; color: var(--label-2); }
 .empty .big { font-size: 2.5882rem; margin-bottom: 10px; }
-.pad-h { padding: 0 2px; }
-.mt4 { margin-top: 4px; } .mt8 { margin-top: 8px; } .mt14 { margin-top: 14px; } .mt20 { margin-top: 20px; }
+.mt4 { margin-top: 4px; } .mt8 { margin-top: 8px; } .mt20 { margin-top: 20px; }
 
 /* ── Picnic ── */
 .assoc-dot {
@@ -637,33 +630,3 @@ body.sheet-open .screen { overflow: hidden; }
 }
 .select-all-row.on .circ { background: var(--tint); }
 
-/* ── Picnic send button — floating orange FAB in the bottom-right ── */
-.picnic-fab {
-  position: fixed;
-  right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
-  z-index: 25;
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--orange);
-  color: #fff;
-  box-shadow: var(--shadow);
-  animation: barup 0.35s cubic-bezier(0.32, 1.6, 0.55, 1);
-  transition: transform 0.2s, opacity 0.15s;
-}
-.picnic-fab:active { transform: scale(0.9); }
-.picnic-fab:disabled { opacity: 0.6; }
-.picnic-fab-badge {
-  position: absolute;
-  top: -3px; right: -3px;
-  min-width: 22px; height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
-  background: var(--tint);
-  border: 2px solid var(--bg);
-  color: #fff;
-  font-size: 0.7059rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-@keyframes barup { from { transform: translateY(28px); opacity: 0; } }
