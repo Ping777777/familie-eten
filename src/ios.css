@@ -367,6 +367,9 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
   background: rgba(0, 0, 0, 0.4);
   animation: fadein 0.25s;
 }
+/* Freeze the background scroller while a sheet is open so drags inside the
+   sheet can never scroll the list behind it. */
+body.sheet-open .screen { overflow: hidden; }
 @keyframes fadein { from { opacity: 0; } }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
