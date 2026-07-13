@@ -118,21 +118,63 @@ export function Row({ title, sub, lead, trail, onClick, chevron, className = "",
 // scroller is the native modal behaviour and is robust regardless.
 let openSheets = 0;
 export function Sheet({ open, onClose, title, leftAction, rightAction, children }) {
+  const sheetRef = useRef(null);
+  const drag = useRef(null);
+  const [expanded, setExpanded] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     if (openSheets++ === 0) document.body.classList.add("sheet-open");
     return () => { if (--openSheets === 0) document.body.classList.remove("sheet-open"); };
   }, [open]);
+
+  // Reset to the default detent whenever the sheet re-opens (render-time
+  // adjustment, no effect needed).
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) { setPrevOpen(open); if (expanded) setExpanded(false); }
+
   if (!open) return null;
+
+  // Drag the grabber/header to resize the sheet (anchored at the bottom, so it
+  // grows/shrinks from the top under the finger). Release snaps to a detent;
+  // pull down far enough and it dismisses. Buttons in the header are excluded
+  // so their taps still register.
+  const onDown = (e) => {
+    if (e.target.closest("button")) return;
+    const el = sheetRef.current;
+    drag.current = { y0: e.clientY, baseH: el.getBoundingClientRect().height };
+    el.style.transition = "none";
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onMove = (e) => {
+    if (!drag.current) return;
+    const vh = window.innerHeight;
+    const h = Math.min(Math.max(drag.current.baseH - (e.clientY - drag.current.y0), vh * 0.2), vh * 0.95);
+    sheetRef.current.style.height = h + "px";
+  };
+  const onUp = () => {
+    if (!drag.current) return;
+    drag.current = null;
+    const el = sheetRef.current;
+    const vh = window.innerHeight;
+    const h = el.getBoundingClientRect().height;
+    el.style.transition = "";
+    el.style.height = "";
+    if (h < vh * 0.42) onClose();
+    else setExpanded(h > vh * 0.72);
+  };
+
   return (
     <>
       <div className="sheet-back" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-label={title}>
-        <div className="grabber" />
-        <div className="sheet-head">
-          <span className="side">{leftAction}</span>
-          <span className="t-head">{title}</span>
-          <span className="side r">{rightAction}</span>
+      <div className={`sheet${expanded ? " tall" : ""}`} ref={sheetRef} role="dialog" aria-label={title}>
+        <div className="sheet-drag" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+          <div className="grabber" />
+          <div className="sheet-head">
+            <span className="side">{leftAction}</span>
+            <span className="t-head">{title}</span>
+            <span className="side r">{rightAction}</span>
+          </div>
         </div>
         <div className="sheet-body">{children}</div>
       </div>
