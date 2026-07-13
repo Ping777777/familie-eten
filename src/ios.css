@@ -160,16 +160,14 @@ input, textarea, select { font: inherit; color: inherit; -webkit-user-select: au
 /* ── tab bar (floating capsule, Safari-toolbar style) ── */
 .tabbar {
   position: fixed;
-  left: 16px; right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  left: 0; right: 0; bottom: 0;
   z-index: 20;
   display: flex;
-  padding: 8px 8px;
+  padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 6px);
   background: var(--glass);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 32px;
-  box-shadow: var(--shadow), 0 0 0 0.5px var(--glass-border);
+  box-shadow: 0 -0.5px 0 var(--glass-border);
 }
 .tab {
   flex: 1;
@@ -621,7 +619,7 @@ textarea.field { resize: vertical; min-height: 76px; line-height: 1.35; }
 .picnic-fab {
   position: fixed;
   right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
   z-index: 25;
   width: 56px; height: 56px;
   border-radius: 50%;
