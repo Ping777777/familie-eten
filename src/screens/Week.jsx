@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { useLang, recipeName, trTag, weekTitle } from "../lib/i18n";
 import { DAYS, MEMBER_COLORS, SPECIAL_MEALS, CATEGORIES, matchesCategory } from "../lib/food";
-import { Screen, NavBtn, List, Row, Sheet, Icons, Avatar } from "../ios/ui";
+import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons, Avatar } from "../ios/ui";
 
 export default function WeekScreen({ user, plan, assign, loaded, weekOffset, setWeekOffset, recipes, onOpenRecipe, onOpenSettings }) {
   const { t, lang } = useLang();
@@ -49,10 +49,14 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
     ? `${monday.getDate()} – ${sunday.getDate()} ${months[monday.getMonth()]}`
     : `${monday.getDate()} ${months[monday.getMonth()]} – ${sunday.getDate()} ${months[sunday.getMonth()]}`;
 
-  // swipe between weeks
+  // swipe between weeks — but not when the touch starts on a swipeable row,
+  // whose own left-swipe reveals the Wissel/Verwijder actions.
   const touchX = useRef(0);
-  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; };
+  const onTouchStart = (e) => {
+    touchX.current = e.target.closest(".swipe-wrap") ? null : e.touches[0].clientX;
+  };
   const onTouchEnd = (e) => {
+    if (touchX.current == null) return;
     const dx = e.changedTouches[0].clientX - touchX.current;
     if (Math.abs(dx) > 70) setWeekOffset(weekOffset + (dx < 0 ? 1 : -1));
   };
@@ -105,12 +109,17 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
             );
             if (info?.meal) {
               return (
-                <Row key={day} lead={lead} sep="68px"
-                  title={recipeName(info.meal, lang) ?? info.meal.name}
-                  sub={info.member}
-                  onClick={() => (info.meal.id > 0 ? onOpenRecipe(info.meal.id, day) : setPicking({ day }))}
-                  chevron={info.meal.id > 0}
-                />
+                <SwipeRow key={day} actions={[
+                  { label: t.swap, color: "gray", icon: Icons.fork, onClick: () => setPicking({ day }) },
+                  { label: t.remove, color: "red", icon: Icons.trash, onClick: () => assign(day, info.member, null) },
+                ]}>
+                  <Row lead={lead} sep="68px"
+                    title={recipeName(info.meal, lang) ?? info.meal.name}
+                    sub={info.member}
+                    onClick={() => (info.meal.id > 0 ? onOpenRecipe(info.meal.id, day) : setPicking({ day }))}
+                    chevron={info.meal.id > 0}
+                  />
+                </SwipeRow>
               );
             }
             return (
