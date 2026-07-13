@@ -373,7 +373,9 @@ body.sheet-open .screen { overflow: hidden; }
 @keyframes fadein { from { opacity: 0; } }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
-  max-height: 88%;
+  /* Opens at a comfortable detent; drag the grabber to grow to .tall or pull
+     down to dismiss (see Sheet in ui.jsx). */
+  height: 62dvh; max-height: 95dvh;
   display: flex; flex-direction: column;
   border-radius: 22px 22px 0 0;
   background: var(--sheet-bg);
@@ -381,9 +383,15 @@ body.sheet-open .screen { overflow: hidden; }
   backdrop-filter: blur(28px) saturate(180%);
   box-shadow: 0 -10px 40px rgba(0,0,0,0.25);
   animation: sheetup 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: height 0.34s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+.sheet.tall { height: 92dvh; }
 @keyframes sheetup { from { transform: translateY(100%); } }
+/* Whole grabber+header is the drag handle; touch-action:none so the drag
+   resizes the sheet instead of scrolling the page. */
+.sheet-drag { flex-shrink: 0; touch-action: none; cursor: grab; }
+.sheet-drag:active { cursor: grabbing; }
 .grabber {
   width: 36px; height: 5px; border-radius: 3px;
   background: var(--label-3);
