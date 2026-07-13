@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLang, recipeName, ingredientName, instructions, trTag, trUnit, weekTitle } from "../lib/i18n";
-import { DAYS, FAMILY, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLine } from "../lib/food";
+import { DAYS, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLine } from "../lib/food";
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
 
@@ -167,7 +167,9 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, p
   const monday = getMondayOfWeek(weekOffset);
 
   const plannedDays = DAYS.filter((d) => plan?.[d]?.[user] === recipe.id);
-  const lockedDays = DAYS.filter((d) => FAMILY.some((m) => m !== user && plan?.[d]?.[m]));
+  // Any day that already has a meal (by anyone, incl. your own other recipe)
+  // is greyed out (issue #145); change it via Wissel in the planner instead.
+  const lockedDays = DAYS.filter((d) => Object.values(plan?.[d] ?? {}).some(Boolean));
 
   return (
     <div className="push" onScroll={(e) => setScrolled(e.target.scrollTop > 110)}>
