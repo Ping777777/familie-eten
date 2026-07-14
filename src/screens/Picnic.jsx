@@ -139,8 +139,14 @@ export function PicnicPicker({ item, associations, saveAssociations, onClose, on
         {results.map((r) => (
           <Row key={r.id}
             title={r.name}
-            sub={[r.unitQuantity, eur(r.displayPrice)].filter(Boolean).join(" · ")}
-            trail={current?.id === r.id ? <span style={{ color: "var(--tint)" }}><Icons.check size={17} weight={2.6} /></span> : null}
+            sub={[r.unitQuantity, r.maxCount === 0 ? null : eur(r.displayPrice)].filter(Boolean).join(" · ")}
+            trail={
+              r.maxCount === 0
+                ? <span className="oos">{t.picnicOutOfStock}</span>
+                : current?.id === r.id
+                  ? <span style={{ color: "var(--tint)" }}><Icons.check size={17} weight={2.6} /></span>
+                  : null
+            }
             onClick={() => select(r)}
           />
         ))}
@@ -204,7 +210,7 @@ export function PicnicCart({ open, onClose, associations, mealsByIngredient, don
     setBusyId(null);
   };
 
-  const total = items.reduce((s, i) => s + (i.price ?? 0) * (i.count ?? 1), 0);
+  const total = items.reduce((s, i) => s + (i.available === false ? 0 : (i.price ?? 0) * (i.count ?? 1)), 0);
 
   return (
     <Sheet open onClose={onClose} title={t.picnicCart}
@@ -227,7 +233,9 @@ export function PicnicCart({ open, onClose, associations, mealsByIngredient, don
                       <button disabled={busyId === i.id} onClick={() => setCount(i, (i.count ?? 1) - 1)}>−</button>
                       <span className="n">{i.count ?? 1}</span>
                       <button disabled={busyId === i.id} onClick={() => setCount(i, (i.count ?? 1) + 1)}>+</button>
-                      <span className="p">{eur((i.price ?? 0) * (i.count ?? 1))}</span>
+                      {i.available === false
+                        ? <span className="oos">{t.picnicOutOfStock}</span>
+                        : <span className="p">{eur((i.price ?? 0) * (i.count ?? 1))}</span>}
                     </span>
                   }
                 />
