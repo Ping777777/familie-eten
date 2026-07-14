@@ -570,6 +570,7 @@ body.sheet-open .screen { overflow: hidden; }
 .stepper button:disabled { opacity: 0.4; }
 .stepper .n { min-width: 22px; text-align: center; font-weight: 600; font-size: 0.8824rem; color: var(--label); }
 .stepper .p { min-width: 58px; text-align: right; font-size: 0.8235rem; color: var(--label-2); }
+.oos { font-size: 0.7647rem; font-weight: 600; color: var(--red); white-space: nowrap; }
 
 /* ── Picnic association line (under each shopping item) ── */
 .assoc-block { margin-top: 6px; }
