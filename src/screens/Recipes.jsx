@@ -9,6 +9,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
   const [showArchive, setShowArchive] = useState(false);
+  const [favOnly, setFavOnly] = useState(false);
   const [editing, setEditing] = useState(null); // recipe object or "new"
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -16,6 +17,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
   const archived = recipes.filter((r) => r.archived);
   const ql = q.toLowerCase();
   const visible = (showArchive ? archived : active)
+    .filter((r) => !favOnly || r.favourite)
     .filter((r) => matchesCategory(r, cat))
     .filter((r) => !ql || (recipeName(r, lang) ?? r.name).toLowerCase().includes(ql) || r.tags?.some((x) => x.toLowerCase().includes(ql)))
     .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0) || (recipeName(a, lang) ?? "").localeCompare(recipeName(b, lang) ?? ""));
@@ -77,6 +79,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
         </div>
         <div className="chips">
           <button className={`chip sm${cat === null ? " on" : ""}`} onClick={() => setCat(null)}>{t.all}</button>
+          <button className={`chip sm${favOnly ? " on" : ""}`} onClick={() => setFavOnly((v) => !v)}>{t.favorites}</button>
           {CATEGORIES.map((c) => (
             <button key={c.key} className={`chip sm${cat === c.key ? " on" : ""}`} onClick={() => setCat(cat === c.key ? null : c.key)}>
               {c.emoji} {trTag(c.key, lang)}
