@@ -34,6 +34,13 @@ async function putWithEtag(url, bodyKey, value, etagRef, adoptServer) {
 // the real data would otherwise be free to overwrite it with whatever it
 // has locally (e.g. []). So `loaded` only flips true on a real success, and
 // `update` refuses to write until then; a failed load retries instead.
+//
+// A 200 response with real data but no etag is the same danger in
+// disguise: the client would hold a full, editable list with etag.current
+// still null, so any ordinary edit would skip ifMatch and overwrite
+// unconditionally. Only a confirmed 404 (genuinely no blob yet) is allowed
+// to leave the etag null — anything else without one is treated as a
+// failed load, not a loaded-and-safe-to-write state.
 export function useBlob(user, path, bodyKey, initial) {
   const [value, setValue] = useState(initial);
   const [loadedFor, setLoadedFor] = useState(null);
@@ -45,13 +52,15 @@ export function useBlob(user, path, bodyKey, initial) {
     let live = true;
     fetch(path, { cache: "no-store" })
       .then((r) => {
-        if (r.status === 404) { etag.current = null; return null; }
+        if (r.status === 404) return { empty: true };
         return json(r);
       })
       .then((d) => {
         if (!live) return;
-        if (d) etag.current = d.etag ?? null;
-        setValue(d ? d[bodyKey] ?? initial : initial);
+        if (d.empty) { etag.current = null; setValue(initial); setLoadedFor(user); return; }
+        if (!d.etag) throw new Error("load succeeded but returned no etag");
+        etag.current = d.etag;
+        setValue(d[bodyKey] ?? initial);
         setLoadedFor(user);
       })
       .catch(() => {

@@ -22,7 +22,15 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
     .filter((r) => !ql || (recipeName(r, lang) ?? r.name).toLowerCase().includes(ql) || r.tags?.some((x) => x.toLowerCase().includes(ql)))
     .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0) || (recipeName(a, lang) ?? "").localeCompare(recipeName(b, lang) ?? ""));
 
-  const patch = (id, changes) => saveRecipes(recipes.map((r) => (r.id === id ? { ...r, ...changes } : r)));
+  // saveRecipes refuses to write (returns false) if the list hasn't actually
+  // loaded — e.g. a network blip during load, or a load that came back
+  // without a usable etag. Surface that instead of pretending it worked.
+  const trySave = (next) => {
+    const saved = saveRecipes(next);
+    if (!saved) toast(t.recipesNotLoaded);
+    return saved;
+  };
+  const patch = (id, changes) => trySave(recipes.map((r) => (r.id === id ? { ...r, ...changes } : r)));
   const detail = recipes.find((r) => r.id === openRecipeId);
 
   const doImport = async (file) => {
@@ -46,7 +54,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
         merged.push({ ...e, id });
         ok++;
       }
-      if (ok) saveRecipes(merged);
+      if (ok && !trySave(merged)) return;
       toast(t.imported(ok) + (dup || bad ? ` · ${t.importSkipped(dup, bad)}` : ""));
     } catch { toast("⚠️ JSON"); }
   };
@@ -122,10 +130,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
           planLoaded={planLoaded}
           onClose={onCloseRecipe}
           onEdit={() => setEditing(detail)}
-          onDelete={() => {
-            saveRecipes(recipes.filter((r) => r.id !== detail.id));
-            onCloseRecipe();
-          }}
+          onDelete={() => { if (trySave(recipes.filter((r) => r.id !== detail.id))) onCloseRecipe(); }}
         />
       )}
 
@@ -134,14 +139,11 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
         recipe={editing === "new" ? null : editing}
         onClose={() => setEditing(null)}
         onSave={(data) => {
-          if (editing === "new") {
-            const id = recipes.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0) + 1;
-            saveRecipes([...recipes, { ...data, id, favourite: false, archived: false }]);
-          } else {
-            // edited in the current language? we edit the Dutch base fields
-            patch(editing.id, data);
-          }
-          setEditing(null);
+          // edited in the current language? we edit the Dutch base fields
+          const saved = editing === "new"
+            ? trySave([...recipes, { ...data, id: recipes.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0) + 1, favourite: false, archived: false }])
+            : patch(editing.id, data);
+          if (saved) setEditing(null);
         }}
       />
 
