@@ -50,7 +50,7 @@ function Root() {
     const key = name.toLowerCase();
     const next = new Set(overrides);
     next.has(key) ? next.delete(key) : next.add(key);
-    saveOverrides([...next]);
+    if (!saveOverrides([...next])) toast(t.notLoadedYet);
   };
 
   const [picnicUser, setPicnicUser] = useState(() => {

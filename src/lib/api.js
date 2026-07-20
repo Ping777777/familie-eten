@@ -50,6 +50,7 @@ export function useBlob(user, path, bodyKey, initial) {
   useEffect(() => {
     if (!user) return;
     let live = true;
+    let retryTimer = null;
     fetch(path, { cache: "no-store" })
       .then((r) => {
         if (r.status === 404) return { empty: true };
@@ -65,9 +66,9 @@ export function useBlob(user, path, bodyKey, initial) {
       })
       .catch(() => {
         // ponytail: fixed 4s retry, add backoff if this ever hammers the API
-        if (live) setTimeout(() => live && setRetryTick((n) => n + 1), 4000);
+        if (live) retryTimer = setTimeout(() => setRetryTick((n) => n + 1), 4000);
       });
-    return () => { live = false; };
+    return () => { live = false; clearTimeout(retryTimer); };
   }, [user, path, bodyKey, retryTick]); // eslint-disable-line react-hooks/exhaustive-deps
   const update = useCallback((next) => {
     if (!loaded) return false;

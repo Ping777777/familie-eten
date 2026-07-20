@@ -27,14 +27,14 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
   // without a usable etag. Surface that instead of pretending it worked.
   const trySave = (next) => {
     const saved = saveRecipes(next);
-    if (!saved) toast(t.recipesNotLoaded);
+    if (!saved) toast(t.notLoadedYet);
     return saved;
   };
   const patch = (id, changes) => trySave(recipes.map((r) => (r.id === id ? { ...r, ...changes } : r)));
   const detail = recipes.find((r) => r.id === openRecipeId);
 
   const doImport = async (file) => {
-    if (!recipesLoaded) return toast(t.recipesNotLoaded);
+    if (!recipesLoaded) return toast(t.notLoadedYet);
     try {
       const raw = JSON.parse(await file.text());
       const entries = Array.isArray(raw) ? raw : [raw];
@@ -78,7 +78,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
         right={
           <>
             <NavBtn icon={Icons.dots} onClick={() => setMenuOpen(true)} label={t.recipes} />
-            <NavBtn icon={Icons.plus} onClick={() => (recipesLoaded ? setEditing("new") : toast(t.recipesNotLoaded))} label={t.newRecipe} />
+            <NavBtn icon={Icons.plus} onClick={() => (recipesLoaded ? setEditing("new") : toast(t.notLoadedYet))} label={t.newRecipe} />
           </>
         }
       >
