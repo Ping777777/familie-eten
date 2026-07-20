@@ -27,9 +27,17 @@ async function putWithEtag(url, bodyKey, value, etagRef, adoptServer) {
 }
 
 // Generic synced blob resource (recipes, staples, overrides).
+//
+// A failed GET must never look like "confirmed empty" — the PUT handler
+// skips its ifMatch precondition when we have no etag (so a first-ever
+// write can seed the blob), which means a client that never actually saw
+// the real data would otherwise be free to overwrite it with whatever it
+// has locally (e.g. []). So `loaded` only flips true on a real success, and
+// `update` refuses to write until then; a failed load retries instead.
 export function useBlob(user, path, bodyKey, initial) {
   const [value, setValue] = useState(initial);
   const [loadedFor, setLoadedFor] = useState(null);
+  const [retryTick, setRetryTick] = useState(0);
   const etag = useRef(null);
   const loaded = loadedFor === user;
   useEffect(() => {
@@ -41,16 +49,23 @@ export function useBlob(user, path, bodyKey, initial) {
         return json(r);
       })
       .then((d) => {
-        if (live && d) { etag.current = d.etag ?? null; setValue(d[bodyKey] ?? initial); }
+        if (!live) return;
+        if (d) etag.current = d.etag ?? null;
+        setValue(d ? d[bodyKey] ?? initial : initial);
+        setLoadedFor(user);
       })
-      .catch(() => {})
-      .finally(() => { if (live) setLoadedFor(user); });
+      .catch(() => {
+        // ponytail: fixed 4s retry, add backoff if this ever hammers the API
+        if (live) setTimeout(() => live && setRetryTick((n) => n + 1), 4000);
+      });
     return () => { live = false; };
-  }, [user, path, bodyKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, path, bodyKey, retryTick]); // eslint-disable-line react-hooks/exhaustive-deps
   const update = useCallback((next) => {
+    if (!loaded) return false;
     setValue(next);
     putWithEtag(path, bodyKey, next, etag, setValue);
-  }, [path, bodyKey]);
+    return true;
+  }, [path, bodyKey, loaded]);
   return [value, update, loaded];
 }
 

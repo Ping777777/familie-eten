@@ -4,7 +4,7 @@ import { DAYS, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLin
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
 
-export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, onOpenSettings, toast }) {
+export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoaded, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, onOpenSettings, toast }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
@@ -26,6 +26,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
   const detail = recipes.find((r) => r.id === openRecipeId);
 
   const doImport = async (file) => {
+    if (!recipesLoaded) return toast(t.recipesNotLoaded);
     try {
       const raw = JSON.parse(await file.text());
       const entries = Array.isArray(raw) ? raw : [raw];
@@ -69,7 +70,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
         right={
           <>
             <NavBtn icon={Icons.dots} onClick={() => setMenuOpen(true)} label={t.recipes} />
-            <NavBtn icon={Icons.plus} onClick={() => setEditing("new")} label={t.newRecipe} />
+            <NavBtn icon={Icons.plus} onClick={() => (recipesLoaded ? setEditing("new") : toast(t.recipesNotLoaded))} label={t.newRecipe} />
           </>
         }
       >

@@ -42,7 +42,7 @@ function Root() {
 
   const weekKey = getIsoWeekKey(weekOffset);
   const [plan, assign, planLoaded] = useWeekPlan(user, weekKey, emptyWeek);
-  const [recipes, saveRecipes] = useBlob(user, "/api/recipes", "recipes", []);
+  const [recipes, saveRecipes, recipesLoaded] = useBlob(user, "/api/recipes", "recipes", []);
   const [staples, saveStaples] = useBlob(user, "/api/staples", "staples", []);
   const [overridesArr, saveOverrides] = useBlob(user, "/api/pantry-overrides", "overrides", []);
   const overrides = useMemo(() => new Set(overridesArr), [overridesArr]);
@@ -81,7 +81,7 @@ function Root() {
       )}
       {tab === "recipes" && (
         <RecipesScreen
-          user={user} recipes={recipes} saveRecipes={saveRecipes}
+          user={user} recipes={recipes} saveRecipes={saveRecipes} recipesLoaded={recipesLoaded}
           plan={plan} assign={assign} weekOffset={weekOffset} setWeekOffset={setWeekOffset} planLoaded={planLoaded}
           openRecipeId={openRecipeId} onOpenRecipe={setOpenRecipeId} onCloseRecipe={() => setOpenRecipeId(null)}
           onOpenSettings={() => setSettingsOpen(true)}
