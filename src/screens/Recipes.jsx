@@ -4,7 +4,7 @@ import { DAYS, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLin
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
 
-export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoaded, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, onOpenSettings, toast }) {
+export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoaded, favorites, onToggleFavorite, plan, assign, weekOffset, setWeekOffset, planLoaded, openRecipeId, onOpenRecipe, onCloseRecipe, onOpenSettings, toast }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
@@ -17,10 +17,10 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
   const archived = recipes.filter((r) => r.archived);
   const ql = q.toLowerCase();
   const visible = (showArchive ? archived : active)
-    .filter((r) => !favOnly || r.favourite)
+    .filter((r) => !favOnly || favorites.has(r.id))
     .filter((r) => matchesCategory(r, cat))
     .filter((r) => !ql || (recipeName(r, lang) ?? r.name).toLowerCase().includes(ql) || r.tags?.some((x) => x.toLowerCase().includes(ql)))
-    .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0) || (recipeName(a, lang) ?? "").localeCompare(recipeName(b, lang) ?? ""));
+    .sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0) || (recipeName(a, lang) ?? "").localeCompare(recipeName(b, lang) ?? ""));
 
   // saveRecipes refuses to write (returns false) if the list hasn't actually
   // loaded — e.g. a network blip during load, or a load that came back
@@ -101,7 +101,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
               showArchive
                 ? [{ label: t.restore, color: "teal", icon: Icons.boxUp, onClick: () => patch(r.id, { archived: false }) }]
                 : [
-                    { label: "♥", color: "gray", icon: r.favourite ? Icons.starFill : Icons.star, onClick: () => patch(r.id, { favourite: !r.favourite }) },
+                    { label: "♥", color: "gray", icon: favorites.has(r.id) ? Icons.starFill : Icons.star, onClick: () => onToggleFavorite(r.id) },
                     { label: t.archive, color: "red", icon: Icons.boxDown, onClick: () => patch(r.id, { archived: true }) },
                   ]
             }>
@@ -109,7 +109,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
                 lead={<span className="emoji-tile">{r.emoji}</span>} sep="68px"
                 title={recipeName(r, lang) ?? r.name}
                 sub={r.tags?.map((x) => trTag(x, lang)).slice(0, 3).join(" · ")}
-                trail={r.favourite ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
+                trail={favorites.has(r.id) ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
                 onClick={() => onOpenRecipe(r.id)}
                 chevron
               />
@@ -130,7 +130,8 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
           planLoaded={planLoaded}
           onClose={onCloseRecipe}
           onEdit={() => setEditing(detail)}
-          onToggleFavorite={() => patch(detail.id, { favourite: !detail.favourite })}
+          isFavorite={favorites.has(detail.id)}
+          onToggleFavorite={() => onToggleFavorite(detail.id)}
           onDelete={() => { if (trySave(recipes.filter((r) => r.id !== detail.id))) onCloseRecipe(); }}
         />
       )}
@@ -142,7 +143,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
         onSave={(data) => {
           // edited in the current language? we edit the Dutch base fields
           const saved = editing === "new"
-            ? trySave([...recipes, { ...data, id: recipes.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0) + 1, favourite: false, archived: false }])
+            ? trySave([...recipes, { ...data, id: recipes.reduce((m, r) => (typeof r.id === "number" && r.id > m ? r.id : m), 0) + 1, archived: false }])
             : patch(editing.id, data);
           if (saved) setEditing(null);
         }}
@@ -167,7 +168,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, recipesLoade
   );
 }
 
-function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, planLoaded, onClose, onEdit, onToggleFavorite, onDelete }) {
+function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, planLoaded, onClose, onEdit, isFavorite, onToggleFavorite, onDelete }) {
   const { t, lang } = useLang();
   const [done, setDone] = useState({});
   const [scrolled, setScrolled] = useState(false);
@@ -188,7 +189,7 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, p
         </div>
         <span className="nav-inline">{recipeName(recipe, lang)}</span>
         <div className="nav-side right">
-          <NavBtn icon={recipe.favourite ? Icons.starFill : Icons.star} onClick={onToggleFavorite} label={t.favorites} />
+          <NavBtn icon={isFavorite ? Icons.starFill : Icons.star} onClick={onToggleFavorite} label={t.favorites} />
           <NavBtn icon={Icons.pencil} onClick={onEdit} label={t.edit} />
         </div>
       </div>
