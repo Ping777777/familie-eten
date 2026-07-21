@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLang, recipeName, ingredientName, instructions, trTag, trUnit, weekTitle } from "../lib/i18n";
+import { useLang, recipeName, ingredientName, instructions, trTag, trUnit, trCookTime, weekTitle } from "../lib/i18n";
 import { DAYS, CATEGORIES, matchesCategory, parseIngredient, formatIngredientLine } from "../lib/food";
 import { getMondayOfWeek, getIsoWeekInfo } from "../week";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons } from "../ios/ui";
@@ -192,7 +192,7 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, p
         <div style={{ fontSize: 64 }}>{recipe.emoji}</div>
         <h1 className="t-title2" style={{ marginTop: 6 }}>{recipeName(recipe, lang)}</h1>
         <div className="t-sub muted" style={{ marginTop: 4 }}>
-          {[recipe.servings && `${recipe.servings} ${t.persons}`, recipe.cookTime, ...(recipe.tags ?? []).map((x) => trTag(x, lang))]
+          {[recipe.servings && `${recipe.servings} ${t.persons}`, trCookTime(recipe.cookTime, lang), ...(recipe.tags ?? []).map((x) => trTag(x, lang))]
             .filter(Boolean).join(" · ")}
         </div>
       </div>

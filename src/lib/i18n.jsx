@@ -198,6 +198,10 @@ export function trUnit(unit, lang) {
   if (!unit || lang === "nl") return unit;
   return UNIT_MAP[lang]?.[unit.toLowerCase()] ?? unit;
 }
+export function trCookTime(cookTime, lang) {
+  if (!cookTime || lang !== "ru") return cookTime;
+  return cookTime.replace(/min/g, "мин");
+}
 const CAT_KEY = { Ontbijt: "catOntbijt", Lunch: "catLunch", Tussendoor: "catTussendoor", Overig: "catOverig" };
 export function trCategory(category, t) {
   return t[CAT_KEY[category]] ?? category;
