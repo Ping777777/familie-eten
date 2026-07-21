@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getIsoWeekKey } from "./week";
 import { LangProvider, useLang } from "./lib/i18n";
-import { DAYS, FAMILY } from "./lib/food";
+import { DAYS, FAMILY, fixEmoji } from "./lib/food";
 import { AUTH_KEY, PICNIC_KEY, login, useBlob, useWeekPlan, picnicLogin, picnicVerify } from "./lib/api";
 import { TabBar, Sheet, List, Row, Icons, Toast } from "./ios/ui";
 import WeekScreen from "./screens/Week";
@@ -78,6 +78,20 @@ function Root() {
     const seed = recipes.filter((r) => r.favourite).map((r) => r.id);
     saveSettings({ ...settings, favorites: [...new Set([...(settings.favorites ?? []), ...seed])], seeded: true });
   }, [recipesLoaded, settingsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // One-time repair: some recipes were imported with mojibake emoji (a UTF-8
+  // emoji mis-read as Windows-1252, e.g. 🍚 stored as "ðŸš"). Un-mangle them
+  // and write the recipe list back once. fixEmoji is a no-op on already-correct
+  // emoji and on plain text, so this is safe to run on every load.
+  const emojiRepairRef = useRef(false);
+  useEffect(() => {
+    if (emojiRepairRef.current || !recipesLoaded || !recipes.length) return;
+    const fixed = recipes.map((r) => { const e = fixEmoji(r.emoji); return e === r.emoji ? r : { ...r, emoji: e }; });
+    if (fixed.some((r, i) => r !== recipes[i])) {
+      emojiRepairRef.current = true;
+      saveRecipes(fixed);
+    }
+  }, [recipesLoaded, recipes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Adopt the user's saved language once, when settings first load.
   const langAppliedRef = useRef(false);
