@@ -192,7 +192,7 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, p
         <div style={{ fontSize: 64 }}>{recipe.emoji}</div>
         <h1 className="t-title2" style={{ marginTop: 6 }}>{recipeName(recipe, lang)}</h1>
         <div className="t-sub muted" style={{ marginTop: 4 }}>
-          {[recipe.servings && `${recipe.servings} ${t.persons}`, ...(recipe.tags ?? []).map((x) => trTag(x, lang))]
+          {[recipe.servings && `${recipe.servings} ${t.persons}`, recipe.cookTime, ...(recipe.tags ?? []).map((x) => trTag(x, lang))]
             .filter(Boolean).join(" · ")}
         </div>
       </div>
