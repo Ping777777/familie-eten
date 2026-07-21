@@ -121,6 +121,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
           planLoaded={planLoaded}
           onClose={onCloseRecipe}
           onEdit={() => setEditing(detail)}
+          onToggleFavorite={() => patch(detail.id, { favourite: !detail.favourite })}
           onDelete={() => {
             saveRecipes(recipes.filter((r) => r.id !== detail.id));
             onCloseRecipe();
@@ -163,7 +164,7 @@ export default function RecipesScreen({ user, recipes, saveRecipes, plan, assign
   );
 }
 
-function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, planLoaded, onClose, onEdit, onDelete }) {
+function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, planLoaded, onClose, onEdit, onToggleFavorite, onDelete }) {
   const { t, lang } = useLang();
   const [done, setDone] = useState({});
   const [scrolled, setScrolled] = useState(false);
@@ -184,6 +185,7 @@ function RecipeDetail({ recipe, user, plan, assign, weekOffset, setWeekOffset, p
         </div>
         <span className="nav-inline">{recipeName(recipe, lang)}</span>
         <div className="nav-side right">
+          <NavBtn icon={recipe.favourite ? Icons.starFill : Icons.star} onClick={onToggleFavorite} label={t.favorites} />
           <NavBtn icon={Icons.pencil} onClick={onEdit} label={t.edit} />
         </div>
       </div>
