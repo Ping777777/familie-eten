@@ -105,16 +105,16 @@ export function PicnicPicker({ item, associations, saveAssociations, onClose, on
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const select = (product) => {
-    saveAssociations({ ...associations, [item.key]: { ...product, ingredient: item.key } });
-    onClose();
+    if (saveAssociations({ ...associations, [item.key]: { ...product, ingredient: item.key } })) onClose();
+    else toast(t.notLoadedYet);
   };
   const unlink = () => {
     const next = { ...associations };
     for (const [k, v] of Object.entries(next)) {
       if (k === item.key || v?.ingredient?.toLowerCase() === item.key) delete next[k];
     }
-    saveAssociations(next);
-    onClose();
+    if (saveAssociations(next)) onClose();
+    else toast(t.notLoadedYet);
   };
 
   return (

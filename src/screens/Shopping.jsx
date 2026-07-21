@@ -14,6 +14,11 @@ const loadJson = (key, fallback) => {
 
 export default function ShoppingScreen({ plan, recipes, staples, saveStaples, overrides, toggleOverride, picnicUser, associations, saveAssociations, onPicnicExpired, onOpenSettings, toast }) {
   const { t, lang } = useLang();
+  const trySaveStaples = (next) => {
+    const saved = saveStaples(next);
+    if (!saved) toast(t.notLoadedYet);
+    return saved;
+  };
   const [checks, setChecksState] = useState(() => loadJson(CHECKS_KEY, { checked: {}, dismissed: {} }));
   // ponytail: ad-hoc items are device-local for now; upgrade path is a small
   // extras blob endpoint like pantry-overrides if the family wants them synced.
@@ -177,9 +182,9 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
             {staples.map((s) => {
               const id = `s:${s.id}`;
               return (
-                <SwipeRow key={id} actions={[{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => saveStaples(staples.filter((x) => x.id !== s.id)) }]}>
+                <SwipeRow key={id} actions={[{ label: t.remove, color: "red", icon: Icons.trash, onClick: () => trySaveStaples(staples.filter((x) => x.id !== s.id)) }]}>
                   <div className="row" style={{ display: "block", "--sep": "52px" }}
-                    onClick={() => (editStaples ? saveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}>
+                    onClick={() => (editStaples ? trySaveStaples(staples.filter((x) => x.id !== s.id)) : toggle(id))}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <span className="row-lead">
                         {editStaples
@@ -204,7 +209,7 @@ export default function ShoppingScreen({ plan, recipes, staples, saveStaples, ov
               <div className="row static">
                 <StapleAdder onAdd={(name) => {
                   const nid = staples.reduce((m, s) => Math.max(m, Number(s.id) || 0), 0) + 1;
-                  saveStaples([...staples, { id: nid, category: "Overig", name }]);
+                  trySaveStaples([...staples, { id: nid, category: "Overig", name }]);
                 }} placeholder={t.addItem} />
               </div>
             )}
