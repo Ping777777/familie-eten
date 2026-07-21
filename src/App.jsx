@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getIsoWeekKey } from "./week";
 import { LangProvider, useLang } from "./lib/i18n";
 import { DAYS, FAMILY } from "./lib/food";
@@ -11,6 +11,9 @@ import "./ios.css";
 
 const emptyWeek = () =>
   DAYS.reduce((acc, d) => { acc[d] = FAMILY.reduce((a, m) => { a[m] = null; return a; }, {}); return acc; }, {});
+
+// Stable default for the per-user settings blob (never mutated).
+const EMPTY_SETTINGS = {};
 
 function Root() {
   const { t, lang, setLang } = useLang();
@@ -59,7 +62,40 @@ function Root() {
   const [associations, saveAssociations] = useBlob(user, "/api/picnic-associations", "associations", {});
   const onPicnicExpired = () => { localStorage.removeItem(PICNIC_KEY); setPicnicUser(null); };
 
+  // Per-user settings (favourites + preferred language) — issue #168. Kept out
+  // of the shared recipes blob so favouriting is personal and never rewrites
+  // the family's recipe list.
+  const settingsPath = user ? `/api/user-settings?user=${encodeURIComponent(user)}` : "/api/user-settings";
+  const [settings, saveSettings, settingsLoaded] = useBlob(user, settingsPath, "settings", EMPTY_SETTINGS);
+  const favorites = useMemo(() => new Set(settings.favorites ?? []), [settings]);
+
+  // One-time migration: seed this user's personal favourites from the old
+  // global stars still stored on recipes, so nobody loses their marks.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !recipesLoaded || !settingsLoaded || settings.seeded) return;
+    seededRef.current = true;
+    const seed = recipes.filter((r) => r.favourite).map((r) => r.id);
+    saveSettings({ ...settings, favorites: [...new Set([...(settings.favorites ?? []), ...seed])], seeded: true });
+  }, [recipesLoaded, settingsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Adopt the user's saved language once, when settings first load.
+  const langAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!settingsLoaded || langAppliedRef.current) return;
+    langAppliedRef.current = true;
+    if (settings.lang && settings.lang !== lang) setLang(settings.lang);
+  }, [settingsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!user) return <Login onDone={setUser} />;
+
+  const toggleFavorite = (id) => {
+    const next = new Set(favorites);
+    next.has(id) ? next.delete(id) : next.add(id);
+    if (!saveSettings({ ...settings, favorites: [...next], seeded: true })) toast(t.notLoadedYet);
+  };
+  // Change language live and remember it for this user across devices.
+  const setLangPersist = (code) => { setLang(code); if (settingsLoaded) saveSettings({ ...settings, lang: code }); };
 
   const tabs = [
     { key: "week", label: t.tabWeek, icon: Icons.calendar },
@@ -75,13 +111,14 @@ function Root() {
         <WeekScreen
           user={user} plan={plan} assign={assign} loaded={planLoaded}
           weekOffset={weekOffset} setWeekOffset={setWeekOffset}
-          recipes={recipes} onOpenRecipe={openRecipe}
+          recipes={recipes} favorites={favorites} onOpenRecipe={openRecipe}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
       {tab === "recipes" && (
         <RecipesScreen
           user={user} recipes={recipes} saveRecipes={saveRecipes} recipesLoaded={recipesLoaded}
+          favorites={favorites} onToggleFavorite={toggleFavorite}
           plan={plan} assign={assign} weekOffset={weekOffset} setWeekOffset={setWeekOffset} planLoaded={planLoaded}
           openRecipeId={openRecipeId} onOpenRecipe={setOpenRecipeId} onCloseRecipe={() => setOpenRecipeId(null)}
           onOpenSettings={() => setSettingsOpen(true)}
@@ -103,7 +140,7 @@ function Root() {
 
       <SettingsSheet
         open={settingsOpen} onClose={() => setSettingsOpen(false)}
-        user={user} lang={lang} setLang={setLang}
+        user={user} lang={lang} setLang={setLangPersist}
         picnicUser={picnicUser} setPicnicUser={setPicnicUser}
         onLogout={() => { localStorage.removeItem(AUTH_KEY); setUser(null); }}
         toast={toast}

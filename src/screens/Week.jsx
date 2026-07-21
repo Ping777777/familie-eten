@@ -4,7 +4,7 @@ import { useLang, recipeName, trTag, weekTitle } from "../lib/i18n";
 import { DAYS, MEMBER_COLORS, SPECIAL_MEALS, CATEGORIES, matchesCategory } from "../lib/food";
 import { Screen, NavBtn, List, Row, Sheet, SwipeRow, Icons, Avatar } from "../ios/ui";
 
-export default function WeekScreen({ user, plan, assign, loaded, weekOffset, setWeekOffset, recipes, onOpenRecipe, onOpenSettings }) {
+export default function WeekScreen({ user, plan, assign, loaded, weekOffset, setWeekOffset, recipes, favorites, onOpenRecipe, onOpenSettings }) {
   const { t, lang } = useLang();
   const [picking, setPicking] = useState(null); // { day }
   const monday = getMondayOfWeek(weekOffset);
@@ -145,6 +145,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
         day={picking?.day}
         onClose={() => setPicking(null)}
         recipes={recipes}
+        favorites={favorites}
         specials={specials}
         plan={plan}
         onPick={(id) => { assign(picking.day, user, id); setPicking(null); }}
@@ -158,7 +159,7 @@ export default function WeekScreen({ user, plan, assign, loaded, weekOffset, set
   );
 }
 
-function MealPicker({ open, day, onClose, recipes, specials, plan, onPick, onClear }) {
+function MealPicker({ open, day, onClose, recipes, favorites, specials, plan, onPick, onClear }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(null);
@@ -171,7 +172,7 @@ function MealPicker({ open, day, onClose, recipes, specials, plan, onPick, onCle
     .filter((r) => !r.archived)
     .filter((r) => matchesCategory(r, cat))
     .filter((r) => !ql || (recipeName(r, lang) ?? r.name).toLowerCase().includes(ql) || r.tags?.some((x) => x.toLowerCase().includes(ql)))
-    .sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0) || (usedIds.has(a.id) ? 1 : 0) - (usedIds.has(b.id) ? 1 : 0));
+    .sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0) || (usedIds.has(a.id) ? 1 : 0) - (usedIds.has(b.id) ? 1 : 0));
 
   return (
     <Sheet open onClose={onClose}
@@ -202,7 +203,7 @@ function MealPicker({ open, day, onClose, recipes, specials, plan, onPick, onCle
               lead={<span className="emoji-tile">{r.emoji}</span>}
               title={<span className={used ? "muted3" : ""}>{recipeName(r, lang) ?? r.name}</span>}
               sub={used ? t.used : r.tags?.map((x) => trTag(x, lang)).slice(0, 3).join(" · ")}
-              trail={r.favourite ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
+              trail={favorites.has(r.id) ? <span style={{ color: "var(--yellow)" }}><Icons.starFill size={16} /></span> : null}
               onClick={() => onPick(r.id)}
             />
           );
